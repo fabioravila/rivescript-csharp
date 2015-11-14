@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace RiveScript
 {
-    public class Class1
+    public static class Constants
     {
+        public static string Undefined = "undefined";
     }
 }
