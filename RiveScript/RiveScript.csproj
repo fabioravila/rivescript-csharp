@@ -43,11 +43,15 @@
     <Compile Include="Client.cs" />
     <Compile Include="ClientManager.cs" />
     <Compile Include="Constants.cs" />
+    <Compile Include="Helpers\ExtensionsMethods.cs" />
+    <Compile Include="Inheritance.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Rot13.cs" />
-    <Compile Include="StringCompare.cs" />
+    <Compile Include="Helpers\Rot13.cs" />
+    <Compile Include="Helpers\StringLongToShortComparer.cs" />
+    <Compile Include="Topic.cs" />
+    <Compile Include="TopicManager.cs" />
     <Compile Include="Trigger.cs" />
-    <Compile Include="Util.cs" />
+    <Compile Include="Helpers\Util.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

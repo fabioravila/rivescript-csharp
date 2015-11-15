@@ -34,7 +34,7 @@ namespace RiveScript
         /// <param name="hash">A hash that pairs the sorted list with the replacement texts</param>
         /// <param name="text">Text to apply the substitution</param>
         /// <returns></returns>
-        public static string Subistitute(string[] sorted, IDictionary<string, string> hash, string text)
+        public static string Substitute(string[] sorted, IDictionary<string, string> hash, string text)
         {
             for (int i = 0; i < sorted.Length; i++)
             {

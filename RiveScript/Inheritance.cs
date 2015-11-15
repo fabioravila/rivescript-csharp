@@ -91,53 +91,59 @@ namespace RiveScript
         {
             if (false == atomic.ContainsKey(wc))
             {
-                atomic.Add(wc, new List<string> { trigger });
+                atomic.Add(wc, new List<string>());
             }
+
+            atomic[wc].Add(trigger);
         }
 
         public void AddOption(int wc, string trigger)
         {
             if (false == option.ContainsKey(wc))
             {
-                option.Add(wc, new List<string> { trigger });
+                option.Add(wc, new List<string>());
             }
+            option[wc].Add(trigger);
         }
 
         public void AddAlpha(int wc, string trigger)
         {
             if (false == alpha.ContainsKey(wc))
             {
-                alpha.Add(wc, new List<string> { trigger });
+                alpha.Add(wc, new List<string>());
             }
+            alpha[wc].Add(trigger);
         }
 
         public void AddNumber(int wc, string trigger)
         {
             if (false == number.ContainsKey(wc))
             {
-                number.Add(wc, new List<string> { trigger });
+                number.Add(wc, new List<string>());
             }
+            number[wc].Add(trigger);
         }
 
         public void AddWild(int wc, string trigger)
         {
             if (false == wild.ContainsKey(wc))
             {
-                wild.Add(wc, new List<string> { trigger });
+                wild.Add(wc, new List<string>());
             }
+            wild[wc].Add(trigger);
         }
 
-        public void AddPound(int wc, string trigger)
+        public void AddPound(string trigger)
         {
             pound.Add(trigger);
         }
 
-        public void AddUnder(int wc, string trigger)
+        public void AddUnder(string trigger)
         {
             under.Add(trigger);
         }
 
-        public void AddStar(int wc, string trigger)
+        public void AddStar(string trigger)
         {
             star.Add(trigger);
         }
