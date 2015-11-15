@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace RiveScript
 {
+    /// <summary>
+    ///  Manager for all the bot's users.
+    /// </summary>
     public class ClientManager
     {
         private Dictionary<string, Client> clients = new Dictionary<string, Client>();

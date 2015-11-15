@@ -29,6 +29,7 @@ namespace RiveScript
 
                 array[i] = (char)c;
             }
+
             return new string(array);
         }
     }

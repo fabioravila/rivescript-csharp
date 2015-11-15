@@ -6,10 +6,13 @@ using System.Threading.Tasks;
 
 namespace RiveScript
 {
-    public class StringCompare : StringComparer
+    public class StringLongToShortComparer : StringComparer
     {
         public override int Compare(string x, string y)
         {
+            //??
+            //x.Length.CompareTo(y.Length);
+
             if (x.Length < y.Length)
             {
                 return 1;
@@ -29,7 +32,7 @@ namespace RiveScript
 
         public override int GetHashCode(string obj)
         {
-            throw new NotImplementedException();
+            return (obj ?? string.Empty).GetHashCode();
         }
     }
 }
