@@ -91,7 +91,7 @@ namespace RiveScript
         /// </summary>
         /// <param name="raw"> Get a raw unsorted list instead of a sorted one.</param>
         /// <returns></returns>
-        private string[] ListTriggers(bool raw)
+        public string[] ListTriggers(bool raw)
         {
             // If raw, get the unsorted triggers directly from the hash.
             if (raw)
@@ -491,7 +491,7 @@ namespace RiveScript
         /// Retrieve a list of inherited topics.
         /// </summary>
         /// <returns></returns>
-        public string[] ListTnherits()
+        public string[] ListInherits()
         {
             return inherits.ToArray();
         }
