@@ -11,10 +11,13 @@ rivescript-java - https://github.com/aichaos/rivescript-java
 
 ## MILESTONES
 
-1. Make a port of actual rivescript-java
-2. Create basic tests
-3. Perform refactories and language
-4. Try develop a native objects capabilites
+1. **Make a port of actual rivescript-java** - Create the code in C # based on the current code in Java, without fully understanding how the software works
+2. Create some tests
+4. Push to github for public repositaory
+5. Perform refactories and language
+6. Develop a native objects for csharp
+7. Make a project able to 'Visual Studio Code'  
+
 [..]
 
 
@@ -51,4 +54,4 @@ SOFTWARE.
 ## AUTHOR
 
 Fábio Ávila, https://br.linkedin.com/in/fabioravila 
-based on Noah Petherbridge code´s
+based on Noah Petherbridge´s code
