@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace RiveScript
 {
-    public static class Rot13
+    internal static class Rot13
     {
         /// <summary>
         /// Performs the ROT13 character rotation.

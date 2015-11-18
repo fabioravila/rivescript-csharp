@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace RiveScript
 {
-    public static class Util
+    internal static class Util
     {
         /// <summary>
         /// Shift an item to the beginning of an array and rotate.
@@ -94,6 +94,17 @@ namespace RiveScript
         {
             Array.Sort(list, new StringLongToShortComparer());
             return list;
+        }
+
+
+        public static bool IsTrue(string value)
+        {
+            return value == "true" || value == "1" || value == "yes";
+        }
+
+        public static bool IsFalse(string value)
+        {
+            return value == "false" || value == "0" || value == "no";
         }
 
     }

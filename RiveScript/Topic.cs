@@ -332,7 +332,6 @@ namespace RiveScript
             this.sorted = sorted.ToArray();
         }
 
-
         /// <summary>
         /// Add a mapping between a trigger and a %Previous that follows it.
         /// </summary>
@@ -359,7 +358,6 @@ namespace RiveScript
                 return hasPrevious;
             }
         }
-
 
         /// <summary>
         /// Get a list of all the %Previous keys.
@@ -389,7 +387,6 @@ namespace RiveScript
 
             return new string[0];
         }
-
 
         /// <summary>
         /// Sort the %Previous buffer.
@@ -430,17 +427,15 @@ namespace RiveScript
             this.previous = prev2trig;
         }
 
-
         /// <summary>
         /// Query whether a %Previous is registered with this topic.
         /// </summary>
         /// <param name="previous">The pattern in the %Previous.</param>
         /// <returns></returns>
-        public bool previousExists(string previous)
+        public bool PreviousExists(string previous)
         {
             return this.previous.ContainsKey(previous);
         }
-
 
         /// <summary>
         ///  Retrieve a string array of the +Triggers that are associated with a %Previous.
@@ -456,7 +451,6 @@ namespace RiveScript
 
             return new string[0];
         }
-
 
         /// <summary>
         /// Add a topic that this one includes.
@@ -476,8 +470,6 @@ namespace RiveScript
             inherits.Add(topic);
         }
 
-
-
         /// <summary>
         /// Retrieve a list of includes topics.
         /// </summary>
@@ -495,7 +487,6 @@ namespace RiveScript
         {
             return inherits.ToArray();
         }
-
 
         /// <summary>
         /// JUst a debug funcion

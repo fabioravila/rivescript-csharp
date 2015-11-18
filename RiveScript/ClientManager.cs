@@ -27,7 +27,7 @@ namespace RiveScript
         {
             if (false == clients.ContainsKey(username))
             {
-                clients.Add(username, new RiveScript.Client(username));
+                clients.Add(username, new Client(username));
             }
 
             return clients[username];

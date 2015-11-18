@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace RiveScript
 {
-    public class StringLongToShortComparer : StringComparer
+    internal class StringLongToShortComparer : StringComparer
     {
         public override int Compare(string x, string y)
         {

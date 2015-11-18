@@ -12,7 +12,7 @@ namespace RiveScript
     public class Client
     {
         private string id;
-        private Dictionary<string, string> data = new Dictionary<string, string>();
+        private IDictionary<string, string> data = new Dictionary<string, string>();
         private string[] input = new string[10];
         private string[] reply = new string[10];
 
@@ -85,7 +85,7 @@ namespace RiveScript
         /// </summary>
         /// <param name="newData"></param>
         /// <returns></returns>
-        public bool ReplaceData(Dictionary<string, string> newData)
+        public bool ReplaceData(IDictionary<string, string> newData)
         {
             this.data = newData;
             return true;
