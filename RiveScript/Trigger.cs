@@ -18,36 +18,30 @@ namespace RiveScript
         private ICollection<string> condition = new List<string>();
         private bool previous = false;
 
-
         public Trigger(string topic, string pattern)
         {
             inTopic = topic;
             this.pattern = pattern;
         }
 
-        public string Topic
+        public string topic()
         {
-            get
-            {
-                return inTopic;
-            }
+            return inTopic;
         }
 
-        public bool HasPrevious
+        public bool hasPrevious()
         {
-            get
-            {
-                return previous;
-            }
-            set
-            {
-                //original implementation
-                //previous = true;
-                previous = value;
-            }
+            return previous;
         }
 
-        public void AddReply(string reply)
+        public void hasPrevious(bool paired)
+        {
+            //original implementation
+            previous = true;
+            //previous = paired; - My inserstant
+        }
+
+        public void addReply(string reply)
         {
             this.reply.Add(reply);
         }
@@ -60,30 +54,24 @@ namespace RiveScript
             }
         }
 
-        public void AddRedirect(string meant)
+        public void addRedirect(string meant)
         {
             redirect.Add(meant);
         }
 
-        public string[] Redirects
+        public string[] listRedirects()
         {
-            get
-            {
-                return redirect.ToArray();
-            }
+            return redirect.ToArray();
         }
 
-        public void AddCondition(string condition)
+        public void addCondition(string condition)
         {
             this.condition.Add(condition);
         }
 
-        public string[] Conditions
+        public string[] listConditions()
         {
-            get
-            {
-                return condition.ToArray();
-            }
+            return condition.ToArray();
         }
     }
 }

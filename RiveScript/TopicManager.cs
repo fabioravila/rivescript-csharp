@@ -12,7 +12,7 @@ namespace RiveScript
     public class TopicManager
     {
         private Dictionary<string, Topic> topics = new Dictionary<string, Topic>(); // Hash of managed topics
-        private ICollection<string> listTopics = new List<string>(); // A vector of topics
+        private ICollection<string> lTopics = new List<string>(); // A vector of topics
 
         /// <summary>
         /// Create a topic manager. Only one per RiveScript interpreter needed.
@@ -24,12 +24,12 @@ namespace RiveScript
         /// </summary>
         /// <param name="topic"></param>
         /// <returns></returns>
-        public Topic Topic(string topic)
+        public Topic topic(string topic)
         {
             if (false == topics.ContainsKey(topic))
             {
                 topics.Add(topic, new Topic(topic));
-                listTopics.Add(topic);
+                lTopics.Add(topic);
             }
 
             return topics[topic];
@@ -40,7 +40,7 @@ namespace RiveScript
         /// </summary>
         /// <param name="topic"></param>
         /// <returns></returns>
-        public bool Exists(string topic)
+        public bool exists(string topic)
         {
             return topics.ContainsKey(topic);
         }
@@ -48,12 +48,9 @@ namespace RiveScript
         /// <summary>
         ///  Retrieve a list of the existing topics.
         /// </summary>
-        public string[] Topics
+        public string[] listTopics()
         {
-            get
-            {
-                return listTopics.ToArray();
-            }
+            return lTopics.ToArray();
         }
 
         /// <summary>
@@ -61,18 +58,18 @@ namespace RiveScript
         /// the topics(taking into account topic inheritence/includes) and sending
         /// the final trigger list into each topic's individual sortTriggers() method.
         /// </summary>
-        public void SortReplies()
+        public void sortReplies()
         {
-            foreach (var topic in this.Topics)
+            foreach (var topic in this.listTopics())
             {
 
-                var allTrig = this.TopicTriggers(topic, 0, 0, false);
+                var allTrig = this.topicTriggers(topic, 0, 0, false);
 
                 // Make this topic sort using this trigger list.
-                this.Topic(topic).SortTriggers(allTrig);
+                this.topic(topic).sortTriggers(allTrig);
 
                 // Make the topic update its %Previous buffer.
-                this.Topic(topic).SortPrevious();
+                this.topic(topic).sortPrevious();
             }
         }
 
@@ -84,7 +81,7 @@ namespace RiveScript
         /// <param name="inheritance"></param>
         /// <param name="inherited"></param>
         /// <returns></returns>
-        private string[] TopicTriggers(string topic, int depth, int inheritance, bool inherited)
+        private string[] topicTriggers(string topic, int depth, int inheritance, bool inherited)
         {
             // Break if we're too deep.
             if (depth > 50)
@@ -112,13 +109,13 @@ namespace RiveScript
             var triggers = new List<string>();
 
             // Does this topic include others?
-            var includes = this.Topic(topic).ListIncludes();
+            var includes = this.topic(topic).listIncludes();
             if (includes.Length > 0)
             {
                 for (int i = 0; i < includes.Length; i++)
                 {
                     // Recurse.
-                    var recursive = this.TopicTriggers(includes[i], (depth + 1), inheritance, false);
+                    var recursive = this.topicTriggers(includes[i], (depth + 1), inheritance, false);
                     for (int j = 0; j < recursive.Length; j++)
                     {
                         triggers.Add(recursive[j]);
@@ -127,13 +124,13 @@ namespace RiveScript
             }
 
             // Does this topic inherit others?
-            var inherits = this.Topic(topic).ListInherits();
+            var inherits = this.topic(topic).listInherits();
             if (inherits.Length > 0)
             {
                 for (int i = 0; i < inherits.Length; i++)
                 {
                     // Recurse.
-                    var recursive = this.TopicTriggers(inherits[i], (depth + 1), (inheritance + 1), true);
+                    var recursive = this.topicTriggers(inherits[i], (depth + 1), (inheritance + 1), true);
                     for (int j = 0; j < recursive.Length; j++)
                     {
                         triggers.Add(recursive[j]);
@@ -144,7 +141,7 @@ namespace RiveScript
             // Collect the triggers for *this* topic. If this topic inherits any other
             // topics, it means that this topic's triggers have higher priority than
             // those in any inherited topics. Enforce this with an {inherits} tag.
-            var localTriggers = this.Topic(topic).ListTriggers(true);
+            var localTriggers = this.topic(topic).listTriggers(true);
             if (inherits.Length > 0 || inherited)
             {
                 // Get the raw unsorted triggers.
@@ -192,7 +189,7 @@ namespace RiveScript
         /// <param name="pattern"></param>
         /// <param name="depth"></param>
         /// <returns></returns>
-        public Trigger FindTriggerByInheritance(string topic, string pattern, int depth)
+        public Trigger findTriggerByInheritance(string topic, string pattern, int depth)
         {
             // Break if we're too deep.
             if (depth > 50)
@@ -202,19 +199,19 @@ namespace RiveScript
             }
 
             // Inheritance is more important than inclusion.
-            var inherits = this.Topic(topic).ListInherits();
+            var inherits = this.topic(topic).listInherits();
             for (int i = 0; i < inherits.Length; i++)
             {
                 // Does this topic have our trigger?
-                if (this.Topic(inherits[i]).TriggerExists(pattern))
+                if (this.topic(inherits[i]).triggerExists(pattern))
                 {
                     // Good! Return it!
-                    return this.Topic(inherits[i]).Trigger(pattern);
+                    return this.topic(inherits[i]).trigger(pattern);
                 }
                 else
                 {
                     // Recurse.
-                    var match = this.FindTriggerByInheritance(inherits[i], pattern, (depth + 1));
+                    var match = this.findTriggerByInheritance(inherits[i], pattern, (depth + 1));
                     if (match != null)
                     {
                         // Found it!
@@ -224,19 +221,19 @@ namespace RiveScript
             }
 
             // Now check for "includes".
-            var includes = this.Topic(topic).ListIncludes();
+            var includes = this.topic(topic).listIncludes();
             for (int i = 0; i < includes.Length; i++)
             {
                 // Does this topic have our trigger?
-                if (this.Topic(includes[i]).TriggerExists(pattern))
+                if (this.topic(includes[i]).triggerExists(pattern))
                 {
                     // Good! Return it!
-                    return this.Topic(includes[i]).Trigger(pattern);
+                    return this.topic(includes[i]).trigger(pattern);
                 }
                 else
                 {
                     // Recurse.
-                    var match = this.FindTriggerByInheritance(includes[i], pattern, (depth + 1));
+                    var match = this.findTriggerByInheritance(includes[i], pattern, (depth + 1));
                     if (match != null)
                     {
                         // Found it!
@@ -255,7 +252,7 @@ namespace RiveScript
         /// <param name="topic"></param>
         /// <param name="depth"></param>
         /// <returns></returns>
-        public string[] GetTopicTree(string topic, int depth)
+        public string[] getTopicTree(string topic, int depth)
         {
             // Avoid deep recursion.
             if (depth >= 50)
@@ -269,11 +266,11 @@ namespace RiveScript
             result.Add(topic);
 
             // Does this topic include others?
-            String[] includes = this.Topic(topic).ListIncludes();
+            String[] includes = this.topic(topic).listIncludes();
             for (int i = 0; i < includes.Length; i++)
             {
                 //Recurse.
-                var children = this.GetTopicTree(includes[i], (depth + 1));
+                var children = this.getTopicTree(includes[i], (depth + 1));
                 for (int j = 0; j < children.Length; j++)
                 {
                     result.Add(children[j]);
@@ -281,11 +278,11 @@ namespace RiveScript
             }
 
             // Does it inherit?
-            String[] inherits = this.Topic(topic).ListInherits();
+            String[] inherits = this.topic(topic).listInherits();
             for (int i = 0; i < inherits.Length; i++)
             {
                 //Recurse
-                var children = this.GetTopicTree(includes[i], (depth + 1));
+                var children = this.getTopicTree(includes[i], (depth + 1));
                 for (int j = 0; j < children.Length; j++)
                 {
                     result.Add(children[j]);

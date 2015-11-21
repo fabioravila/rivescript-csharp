@@ -14,7 +14,7 @@ namespace RiveScript
     {
         private static bool debug = false;
         private Dictionary<string, Trigger> triggers = new Dictionary<string, Trigger>(); // Topics contain triggers
-        private bool hasPrevious = false; // Has at least one %Previous
+        private bool _hasPrevious = false; // Has at least one %Previous
         private Dictionary<string, ICollection<string>> previous = new Dictionary<string, ICollection<string>>();// Mapping of %Previous's to their triggers
         private ICollection<string> includes = new List<string>();// Included topics
         private ICollection<string> inherits = new List<string>();// Inherited topics
@@ -39,7 +39,7 @@ namespace RiveScript
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static bool SetDebug(bool value)
+        public static bool setDebug(bool value)
         {
             debug = value;
             return debug;
@@ -51,7 +51,7 @@ namespace RiveScript
         /// </summary>
         /// <param name="pattern"></param>
         /// <returns></returns>
-        public Trigger Trigger(string pattern)
+        public Trigger trigger(string pattern)
         {
             if (false == triggers.ContainsKey(pattern))
             {
@@ -66,7 +66,7 @@ namespace RiveScript
         /// </summary>
         /// <param name="pattern"></param>
         /// <returns></returns>
-        public bool TriggerExists(string pattern)
+        public bool triggerExists(string pattern)
         {
             return triggers.ContainsKey(pattern);
         }
@@ -78,9 +78,9 @@ namespace RiveScript
         /// so just make sure you call sortReplies() after loading new replies).
         /// </summary>
         /// <returns></returns>
-        public string[] ListTriggers()
+        public string[] listTriggers()
         {
-            return ListTriggers(false);
+            return listTriggers(false);
         }
 
         /// <summary>
@@ -91,7 +91,7 @@ namespace RiveScript
         /// </summary>
         /// <param name="raw"> Get a raw unsorted list instead of a sorted one.</param>
         /// <returns></returns>
-        public string[] ListTriggers(bool raw)
+        public string[] listTriggers(bool raw)
         {
             // If raw, get the unsorted triggers directly from the hash.
             if (raw)
@@ -122,7 +122,7 @@ namespace RiveScript
         /// (Re)create the internal sort cache for this topic's triggers.
         /// </summary>
         /// <param name="alltrigs"></param>
-        public void SortTriggers(string[] alltrigs)
+        public void sortTriggers(string[] alltrigs)
         {
             // Get our list of triggers.
             var sorted = new List<string>();
@@ -274,11 +274,11 @@ namespace RiveScript
                             // It has the alpha wildcard, _.
                             if (wc > 0)
                             {
-                                bucket.AddAlpha(wc, trigger);
+                                bucket.addAlpha(wc, trigger);
                             }
                             else
                             {
-                                bucket.AddUnder(trigger);
+                                bucket.addUnder(trigger);
                             }
                         }
                         else if (trigger.IndexOf("#") > -1)
@@ -286,11 +286,11 @@ namespace RiveScript
                             // It has the numeric wildcard, #.
                             if (wc > 0)
                             {
-                                bucket.AddNumber(wc, trigger);
+                                bucket.addNumber(wc, trigger);
                             }
                             else
                             {
-                                bucket.AddPound(trigger);
+                                bucket.addPound(trigger);
                             }
                         }
                         else if (trigger.IndexOf("*") > -1)
@@ -298,22 +298,22 @@ namespace RiveScript
                             // It has the global wildcard, *.
                             if (wc > 0)
                             {
-                                bucket.AddWild(wc, trigger);
+                                bucket.addWild(wc, trigger);
                             }
                             else
                             {
-                                bucket.AddStar(trigger);
+                                bucket.addStar(trigger);
                             }
                         }
                         else if (trigger.IndexOf("[") > -1)
                         {
                             // It has optional parts.
-                            bucket.AddOption(wc, trigger);
+                            bucket.addOption(wc, trigger);
                         }
                         else
                         {
                             // Totally atomic.
-                            bucket.AddAtomic(wc, trigger);
+                            bucket.addAtomic(wc, trigger);
                         }
                     }
 
@@ -337,7 +337,7 @@ namespace RiveScript
         /// </summary>
         /// <param name="pattern"></param>
         /// <param name="previous"></param>
-        public void AddPrevious(string pattern, string previous)
+        public void addPrevious(string pattern, string previous)
         {
             if (false == this.previous.ContainsKey(previous))
             {
@@ -351,18 +351,15 @@ namespace RiveScript
         /// Check if any trigger in the topic has a %Previous (only good after
 	    /// sortPrevious, from RiveScript.sortReplies is called).
         /// </summary>
-        public bool HasPrevious
+        public bool hasPrevious()
         {
-            get
-            {
-                return hasPrevious;
-            }
+            return _hasPrevious;
         }
 
         /// <summary>
         /// Get a list of all the %Previous keys.
         /// </summary>
-        public string[] ListPrevious()
+        public string[] listPrevious()
         {
             var list = new List<string>();
             foreach (ICollection<string> value in previous.Values)
@@ -377,7 +374,7 @@ namespace RiveScript
         /// </summary>
         /// <param name="previous">The %Previous pattern.</param>
         /// <returns></returns>
-        public string[] ListPreviousTriggers(string previous)
+        public string[] listPreviousTriggers(string previous)
         {
             // TODO return sorted list
             if (this.previous.ContainsKey(previous))
@@ -391,24 +388,24 @@ namespace RiveScript
         /// <summary>
         /// Sort the %Previous buffer.
         /// </summary>
-        public void SortPrevious()
+        public void sortPrevious()
         {
             // Keep track if ANYTHING has a %Previous.
-            hasPrevious = false;
+            _hasPrevious = false;
 
             // Find all the triggers that have a %Previous. This hash maps a %Previous
             // label to the list of triggers that are associated with it.
             var prev2trig = new Dictionary<string, ICollection<string>>();
 
             // Loop through the triggers to find those with a %Previous.
-            var triggers = ListTriggers(true);
+            var triggers = listTriggers(true);
             for (int i = 0; i < triggers.Length; i++)
             {
                 var pattern = triggers[i];
                 if (pattern.IndexOf("{previous}") > -1)
                 {
                     // This one has it.
-                    this.hasPrevious = true;
+                    _hasPrevious = true;
 
                     //var parts = pattern.Split("\\{previous\\}", 2); //Java original code
                     var parts = pattern.Split(new string[] { @"\\{previous\\}" }, StringSplitOptions.None);
@@ -432,7 +429,7 @@ namespace RiveScript
         /// </summary>
         /// <param name="previous">The pattern in the %Previous.</param>
         /// <returns></returns>
-        public bool PreviousExists(string previous)
+        public bool previousExists(string previous)
         {
             return this.previous.ContainsKey(previous);
         }
@@ -442,7 +439,7 @@ namespace RiveScript
         /// </summary>
         /// <param name="previous">The pattern in the %Previous.</param>
         /// <returns></returns>
-        public string[] ListPrevious(string previous)
+        public string[] listPrevious(string previous)
         {
             if (this.previous.ContainsKey(previous))
             {
@@ -456,7 +453,7 @@ namespace RiveScript
         /// Add a topic that this one includes.
         /// </summary>
         /// <param name="topic"> The included topic's name.</param>
-        public void AddIncludes(string topic)
+        public void addIncludes(string topic)
         {
             includes.Add(topic);
         }
@@ -465,7 +462,7 @@ namespace RiveScript
         ///  Add a topic that this one inherits.
         /// </summary>
         /// <param name="topic">The inherited topic's name.</param>
-        public void AddInherits(string topic)
+        public void addInherits(string topic)
         {
             inherits.Add(topic);
         }
@@ -474,7 +471,7 @@ namespace RiveScript
         /// Retrieve a list of includes topics.
         /// </summary>
         /// <returns></returns>
-        public string[] ListIncludes()
+        public string[] listIncludes()
         {
             return includes.ToArray();
         }
@@ -483,7 +480,7 @@ namespace RiveScript
         /// Retrieve a list of inherited topics.
         /// </summary>
         /// <returns></returns>
-        public string[] ListInherits()
+        public string[] listInherits()
         {
             return inherits.ToArray();
         }

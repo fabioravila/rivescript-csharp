@@ -41,7 +41,7 @@ namespace RiveScript
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
-        public void Set(string name, string value)
+        public void set(string name, string value)
         {
             data.Add(name, value);
         }
@@ -51,7 +51,7 @@ namespace RiveScript
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public string Get(string name)
+        public string get(string name)
         {
             if (data.ContainsKey(name))
                 return data[name];
@@ -63,7 +63,7 @@ namespace RiveScript
         /// Delete a variable on the client
         /// </summary>
         /// <param name="name"></param>
-        public void Delete(string name)
+        public void delete(string name)
         {
             if (data.ContainsKey(name))
                 data.Remove(name);
@@ -72,7 +72,7 @@ namespace RiveScript
         /// <summary>
         /// Retrieve a dictionary of all user´s data
         /// </summary>
-        public IDictionary<string, string> Data
+        public IDictionary<string, string> getData
         {
             get
             {
@@ -85,7 +85,7 @@ namespace RiveScript
         /// </summary>
         /// <param name="newData"></param>
         /// <returns></returns>
-        public bool ReplaceData(IDictionary<string, string> newData)
+        public bool replaceData(IDictionary<string, string> newData)
         {
             this.data = newData;
             return true;
@@ -95,7 +95,7 @@ namespace RiveScript
         /// Add a line to the user´s input history
         /// </summary>
         /// <param name="text"></param>
-        public void AddInput(string text)
+        public void addInput(string text)
         {
             input = Util.Unshift(input, text);
         }
@@ -104,7 +104,7 @@ namespace RiveScript
         /// Add a line to the user´s reply history
         /// </summary>
         /// <param name="text"></param>
-        public void AddReply(string text)
+        public void addReply(string text)
         {
             reply = Util.Unshift(reply, text);
         }
@@ -115,7 +115,7 @@ namespace RiveScript
         /// <param name="index">The index of the input value to get (1-9)</param>
         /// <exception cref="IndexOutOfRangeException"></exception>
         /// <returns></returns>
-        public string GetInput(int index)
+        public string getInput(int index)
         {
             if (index >= 1 && index <= input.Length - 1)
             {
@@ -131,7 +131,7 @@ namespace RiveScript
         /// <param name="index">The index of the reply value to get (1-9)</param>
         /// <exception cref="IndexOutOfRangeException"></exception>
         /// <returns></returns>
-        public string GetReply(int index)
+        public string getReply(int index)
         {
             if (index >= 1 && index <= reply.Length - 1)
             {

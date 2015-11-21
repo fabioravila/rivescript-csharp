@@ -62,7 +62,7 @@ namespace RiveScript
         {
             this.debug = debug;
             // Set static debug modes.
-            Topic.SetDebug(debug);
+            Topic.setDebug(debug);
         }
 
         /// <summary>
@@ -391,11 +391,11 @@ namespace RiveScript
         {
             if (value == null || value == "<undef>")
             {
-                clients.Client(user).Delete(name);
+                clients.Client(user).delete(name);
             }
             else
             {
-                clients.Client(user).Set(name, value);
+                clients.Client(user).set(name, value);
             }
 
             return true;
@@ -413,7 +413,7 @@ namespace RiveScript
         public bool SetUservars(string user, IDictionary<string, string> data)
         {
             // TODO: this should be handled more sanely. ;)
-            clients.Client(user).ReplaceData(data);
+            clients.Client(user).replaceData(data);
             return true;
         }
 
@@ -425,7 +425,7 @@ namespace RiveScript
             get
             {
                 // Get the user list from the clients object.
-                return clients.Clients;
+                return clients.listClients();
             }
         }
 
@@ -437,9 +437,9 @@ namespace RiveScript
         /// <returns></returns>
         public IDictionary<string, string> GetUserVars(string user)
         {
-            if (clients.Exists(user))
+            if (clients.clientExists(user))
             {
-                return clients.Client(user).Data;
+                return clients.Client(user).getData;
             }
             else
             {
@@ -458,9 +458,9 @@ namespace RiveScript
         /// <returns></returns>
         public string GetUserVar(string user, string name)
         {
-            if (clients.Exists(user))
+            if (clients.clientExists(user))
             {
-                return clients.Client(user).Get(name);
+                return clients.Client(user).get(name);
             }
             else
             {
@@ -489,11 +489,11 @@ namespace RiveScript
         public void SortReplies()
         {
             // We need to make sort buffers under each topic.
-            var topics = this.topics.Topics;
+            var topics = this.topics.listTopics();
             say("There are " + topics.Length + " topics to sort replies for.");
 
             // Tell the topic manager to sort its topics' replies.
-            this.topics.SortReplies();
+            this.topics.sortReplies();
 
             // Sort the substitutions.
             subs_s = Util.SortByLengthDesc(subs.Keys.ToArray());
@@ -515,11 +515,11 @@ namespace RiveScript
         /// </summary>
         public void dumpSorted()
         {
-            var topics = this.topics.Topics;
+            var topics = this.topics.listTopics();
             for (int t = 0; t < topics.Length; t++)
             {
                 var topic = topics[t];
-                var triggers = this.topics.Topic(topic).ListTriggers();
+                var triggers = this.topics.topic(topic).listTriggers();
 
                 // Dump.
                 println("Topic: " + topic);
@@ -537,15 +537,15 @@ namespace RiveScript
         {
             // Dump the topic list.
             println("{");
-            var topicList = topics.Topics;
+            var topicList = topics.listTopics();
             for (int t = 0; t < topicList.Length; t++)
             {
                 var topic = topicList[t];
                 var extra = "";
 
                 // Includes? Inherits?
-                var includes = topics.Topic(topic).ListIncludes();
-                var inherits = topics.Topic(topic).ListInherits();
+                var includes = topics.topic(topic).listIncludes();
+                var inherits = topics.topic(topic).listInherits();
                 if (includes.Length > 0)
                 {
                     extra = "includes ";
@@ -565,14 +565,14 @@ namespace RiveScript
                 println("  '" + topic + "' " + extra + " => {");
 
                 // Dump the trigger list.
-                var trigList = topics.Topic(topic).ListTriggers();
+                var trigList = topics.topic(topic).listTriggers();
                 for (int i = 0; i < trigList.Length; i++)
                 {
                     var trig = trigList[i];
                     println("    '" + trig + "' => {");
 
                     // Dump the replies.
-                    var reply = topics.Topic(topic).Trigger(trig).Replies;
+                    var reply = topics.topic(topic).trigger(trig).Replies;
                     if (reply.Length > 0)
                     {
                         println("      'reply' => [");
@@ -584,7 +584,7 @@ namespace RiveScript
                     }
 
                     // Dump the conditions.
-                    String[] cond = topics.Topic(topic).Trigger(trig).Conditions;
+                    String[] cond = topics.topic(topic).trigger(trig).listConditions();
                     if (cond.Length > 0)
                     {
                         println("      'condition' => [");
@@ -596,7 +596,7 @@ namespace RiveScript
                     }
 
                     // Dump the redirects.
-                    var red = topics.Topic(topic).Trigger(trig).Redirects;
+                    var red = topics.topic(topic).trigger(trig).listRedirects();
                     if (red.Length > 0)
                     {
                         println("      'redirect' => [");

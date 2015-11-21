@@ -15,12 +15,9 @@ namespace RiveScript
 
         public ClientManager() { }
 
-        public string[] Clients
+        public string[] listClients()
         {
-            get
-            {
-                return clients.Keys.ToArray();
-            }
+            return clients.Keys.ToArray();
         }
 
         public Client Client(string username)
@@ -33,7 +30,7 @@ namespace RiveScript
             return clients[username];
         }
 
-        public bool Exists(string username)
+        public bool clientExists(string username)
         {
             return clients.ContainsKey(username);
         }
