@@ -12,7 +12,7 @@ namespace RiveScript
         // Private class variables.
         private bool debug = false;                 // Debug mode
         private int depth = 50;                     // Recursion depth limit
-        private string error = "";                  // Last error text
+        private string _error = "";                  // Last error text
         private static Random rand = new Random();  // A random number generator
 
 
@@ -73,12 +73,9 @@ namespace RiveScript
         /// <summary>
         /// Return the text of the last error message given.
         /// </summary>
-        public string Error
+        public string error()
         {
-            get
-            {
-                return this.error;
-            }
+            return this._error;
         }
 
         /// <summary>
@@ -86,9 +83,9 @@ namespace RiveScript
         /// </summary>
         /// <param name="message">The new error message to set.</param>
         /// <returns></returns>
-        protected bool SetError(string message)
+        protected bool error(string message)
         {
-            error = message;
+            _error = message;
             return false;
         }
 
@@ -101,13 +98,13 @@ namespace RiveScript
         /// <param name="path">The path to the directory containing RiveScript documents.</param>
         /// <param name="exts">A string array containing file extensions to look for.</param>
         /// <returns></returns>
-        public bool LoadDirectory(string path, string[] exts)
+        public bool loadDirectory(string path, string[] exts)
         {
             say("Load directory: " + path);
 
             // Verify Directory
             if (false == Directory.Exists(path))
-                return SetError("Directory not found");
+                return error("Directory not found");
 
             //Adjust exts for all have .
             for (int i = 0; i < exts.Length; i++)
@@ -134,13 +131,13 @@ namespace RiveScript
             // No results?
             if (files.Count == 0)
             {
-                return SetError("Couldn't read any files from directory " + path);
+                return error("Couldn't read any files from directory " + path);
             }
 
             // Parse each file.
             foreach (var file in files)
             {
-                LoadFile(path + "/" + file);
+                loadFile(path + "/" + file);
             }
 
             return true;
@@ -151,25 +148,25 @@ namespace RiveScript
         /// </summary>
         /// <param name="path">The path to the directory containing RiveScript documents.</param>
         /// <returns></returns>
-        public bool LoadDirectory(string path)
+        public bool loadDirectory(string path)
         {
-            return LoadDirectory(path, new[] { ".rive", ".rs" });
+            return loadDirectory(path, new[] { ".rive", ".rs" });
         }
 
         /// <summary>
         /// Load a single RiveScript document.
         /// </summary>
         /// <param name="file">file Path to a RiveScript document.</param>
-        private bool LoadFile(string file)
+        private bool loadFile(string file)
         {
             say("Load file: " + file);
 
             // Run some sanity checks on the file handle.
             if (false == File.Exists(file)) //Verify is is a file and is exists
-                return SetError(file + ": file not found.");
+                return error(file + ": file not found.");
 
             if (false == FileHelper.CanRead(file))
-                return SetError(file + ": can't read from file.");
+                return error(file + ": can't read from file.");
 
 
             // Slurp the file's contents.
@@ -184,17 +181,17 @@ namespace RiveScript
             catch (FileNotFoundException e)
             {
                 // How did this happen? We checked it earlier.
-                return SetError(file + ": file not found exception.");
+                return error(file + ": file not found exception.");
             }
             catch (IOException e)
             {
                 trace(e);
-                return SetError(file + ": IOException while reading.");
+                return error(file + ": IOException while reading.");
             }
 
 
             // Send the code to the parser.
-            return Parse(file, lines);
+            return parse(file, lines);
         }
 
         /// <summary>
@@ -203,13 +200,13 @@ namespace RiveScript
         /// </summary>
         /// <param name="code"></param>
         /// <returns></returns>
-        public bool Stream(string code)
+        public bool stream(string code)
         {
             // Split the given code up into lines.
             var lines = code.Split(new[] { "\n" }, StringSplitOptions.None);
 
             // Send the lines to the parser.
-            return Parse("(streamed)", lines);
+            return parse("(streamed)", lines);
         }
 
         /// <summary>
@@ -218,10 +215,10 @@ namespace RiveScript
         /// </summary>
         /// <param name="code"></param>
         /// <returns></returns>
-        public bool Stream(string[] code)
+        public bool stream(string[] code)
         {
             // The coder has already broken the lines for us!
-            return Parse("(streamed)", code);
+            return parse("(streamed)", code);
         }
 
         #endregion
@@ -233,7 +230,7 @@ namespace RiveScript
         /// </summary>
         /// <param name="name">The name of the programming language.</param>
         /// <param name="handler">An instance of a class that implements an ObjectHandler.</param>
-        public void SetHandler(string name, IObjectHandler handler)
+        public void setHandler(string name, IObjectHandler handler)
         {
             handlers.Add(name, handler);
         }
@@ -254,7 +251,7 @@ namespace RiveScript
         /// <param name="name">The variable name.</param>
         /// <param name="value">The variable's value.</param>
         /// <returns></returns>
-        public bool SetGlobal(string name, string value)
+        public bool setGlobal(string name, string value)
         {
             var delete = false;
             if (value == null || value == "<undef>")
@@ -276,7 +273,7 @@ namespace RiveScript
                 }
                 else
                 {
-                    return SetError("Global variable \"debug\" needs a boolean value");
+                    return error("Global variable \"debug\" needs a boolean value");
                 }
             }
             else if (name == "depth")
@@ -288,11 +285,11 @@ namespace RiveScript
                 }
                 catch (FormatException)
                 {
-                    return SetError("Global variable \"depth\" needs an integer value");
+                    return error("Global variable \"depth\" needs an integer value");
                 }
                 catch (OverflowException)
                 {
-                    return SetError("Global variable \"depth\" is to long");
+                    return error("Global variable \"depth\" is to long");
                 }
             }
 
@@ -318,7 +315,7 @@ namespace RiveScript
         /// <param name="name">The variable name.</param>
         /// <param name="value">The variable's value.</param>
         /// <returns></returns>
-        public bool SetVariable(string name, string value)
+        public bool setVariable(string name, string value)
         {
             if (value == null || value == "<undef>")
             {
@@ -341,7 +338,7 @@ namespace RiveScript
         /// <param name="pattern">The pattern to match in the message.</param>
         /// <param name="output">The text to replace it with (must be lowercase, no special characters)</param>
         /// <returns></returns>
-        public bool SetSubstitution(string pattern, string output)
+        public bool setSubstitution(string pattern, string output)
         {
             if (output == null || output == "<undef>")
             {
@@ -365,7 +362,7 @@ namespace RiveScript
         /// <param name="pattern">The pattern to match in the message.</param>
         /// <param name="output">The text to replace it with (must be lowercase, no special characters).</param>
         /// <returns></returns>
-        public bool SetPersonSubstitution(string pattern, string output)
+        public bool setPersonSubstitution(string pattern, string output)
         {
             if (output == null || output == "<undef>")
             {
@@ -387,7 +384,7 @@ namespace RiveScript
         /// <param name="name">The name of the variable to set.</param>
         /// <param name="value">The value to set.</param>
         /// <returns></returns>
-        public bool SetUservar(string user, string name, string value)
+        public bool setUservar(string user, string name, string value)
         {
             if (value == null || value == "<undef>")
             {
@@ -410,7 +407,7 @@ namespace RiveScript
         /// <param name="user">The user's ID.</param>
         /// <param name="data">The full hash of the user's data.</param>
         /// <returns></returns>
-        public bool SetUservars(string user, IDictionary<string, string> data)
+        public bool setUservars(string user, IDictionary<string, string> data)
         {
             // TODO: this should be handled more sanely. ;)
             clients.Client(user).replaceData(data);
@@ -420,13 +417,10 @@ namespace RiveScript
         /// <summary>
         /// Get a list of all the user IDs the bot knows about.
         /// </summary>
-        public string[] Users
+        public string[] getUsers()
         {
-            get
-            {
-                // Get the user list from the clients object.
-                return clients.listClients();
-            }
+            // Get the user list from the clients object.
+            return clients.listClients();
         }
 
         /// <summary>
@@ -435,7 +429,7 @@ namespace RiveScript
         /// </summary>
         /// <param name="user">The user ID to get the vars for.</param>
         /// <returns></returns>
-        public IDictionary<string, string> GetUserVars(string user)
+        public IDictionary<string, string> getUserVars(string user)
         {
             if (clients.clientExists(user))
             {
@@ -456,7 +450,7 @@ namespace RiveScript
         /// <param name="user">The user ID to get data from.</param>
         /// <param name="name">The name of the variable to get.</param>
         /// <returns></returns>
-        public string GetUserVar(string user, string name)
+        public string getUserVar(string user, string name)
         {
             if (clients.clientExists(user))
             {
@@ -472,7 +466,7 @@ namespace RiveScript
 
         #region  Parsing Methods
 
-        private bool Parse(string filename, string[] code)
+        private bool parse(string filename, string[] code)
         {
             //TODO
             throw new NotImplementedException();
@@ -486,7 +480,7 @@ namespace RiveScript
         /// After loading replies into memory, call this method to (re)initialize
         /// internal sort buffers. This is necessary for accurate trigger matching.
         /// </summary>
-        public void SortReplies()
+        public void sortReplies()
         {
             // We need to make sort buffers under each topic.
             var topics = this.topics.listTopics();
