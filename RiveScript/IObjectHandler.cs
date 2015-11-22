@@ -15,7 +15,7 @@ namespace RiveScript
         /// <param name="name">The name of the object</param>
         /// <param name="code">The source code inside the object</param>
         /// <returns></returns>
-        bool onLoad(string name, string code);
+        bool onLoad(string name, string[] code);
 
         /// <summary>
         /// Handler for when a user invokes the object. Should return the text

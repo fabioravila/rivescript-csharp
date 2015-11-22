@@ -16,8 +16,8 @@ namespace RiveScript
         private Dictionary<string, Trigger> triggers = new Dictionary<string, Trigger>(); // Topics contain triggers
         private bool _hasPrevious = false; // Has at least one %Previous
         private Dictionary<string, ICollection<string>> previous = new Dictionary<string, ICollection<string>>();// Mapping of %Previous's to their triggers
-        private ICollection<string> includes = new List<string>();// Included topics
-        private ICollection<string> inherits = new List<string>();// Inherited topics
+        private ICollection<string> _includes = new List<string>();// Included topics
+        private ICollection<string> _inherits = new List<string>();// Inherited topics
         private string[] sorted = null; // Sorted trigger list
 
         //Currently selected topic
@@ -453,18 +453,18 @@ namespace RiveScript
         /// Add a topic that this one includes.
         /// </summary>
         /// <param name="topic"> The included topic's name.</param>
-        public void addIncludes(string topic)
+        public void includes(string topic)
         {
-            includes.Add(topic);
+            _includes.Add(topic);
         }
 
         /// <summary>
         ///  Add a topic that this one inherits.
         /// </summary>
         /// <param name="topic">The inherited topic's name.</param>
-        public void addInherits(string topic)
+        public void inherits(string topic)
         {
-            inherits.Add(topic);
+            _inherits.Add(topic);
         }
 
         /// <summary>
@@ -473,7 +473,7 @@ namespace RiveScript
         /// <returns></returns>
         public string[] listIncludes()
         {
-            return includes.ToArray();
+            return _includes.ToArray();
         }
 
         /// <summary>
@@ -482,7 +482,7 @@ namespace RiveScript
         /// <returns></returns>
         public string[] listInherits()
         {
-            return inherits.ToArray();
+            return _inherits.ToArray();
         }
 
         /// <summary>

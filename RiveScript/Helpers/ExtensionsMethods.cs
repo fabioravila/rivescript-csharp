@@ -19,5 +19,17 @@ namespace RiveScript
                 collection.Add(item);
             }
         }
+
+
+        public static string[] Split(this string @this, string pattern)
+        {
+            return @this.Split(new[] { pattern }, StringSplitOptions.None);
+        }
+
+        //public static char ToLower(this char c)
+        //{
+        //    return c.
+
+        //}
     }
 }

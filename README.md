@@ -11,14 +11,11 @@ rivescript-java - https://github.com/aichaos/rivescript-java
 
 ## MILESTONES
 
-1. **Make a port of actual rivescript-java** - Create the code in C # based on the current code in Java, without fully understanding how the software works
-2. Create some tests
-4. Push to github for public repositaory
-5. Perform refactories and language
-6. Develop a native objects for csharp
-7. Make a project able to 'Visual Studio Code'  
-
-[..]
+1. **Make a port of actual rivescript-java** - Create the code in C# based on the current code in Java, 'shame on me =]'
+2. Create some baisc tests based on RiveScript 'official' demos
+4. Push to github on public repository
+5. Develop a native objects for csharp
+6. [..]
 
 
 ## DOCUMENTATION

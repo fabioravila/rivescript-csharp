@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace RiveScript
@@ -178,7 +179,7 @@ namespace RiveScript
                 //lines = File.ReadAllLines(file);
                 lines = File.ReadAllLines(file, Encoding.UTF8);
             }
-            catch (FileNotFoundException e)
+            catch (FileNotFoundException)
             {
                 // How did this happen? We checked it earlier.
                 return error(file + ": file not found exception.");
@@ -241,7 +242,7 @@ namespace RiveScript
         ///
         /// There are two special globals that require certain data types:<p>
         ///
-        /// debug is boolean-like and its value must be a string value containing
+        /// debug is bool-like and its value must be a string value containing
         /// "true", "yes", "1", "false", "no" or "0".<p>
         ///
         /// depth is integer-like and its value must be a quoted integer like "50".
@@ -262,7 +263,7 @@ namespace RiveScript
             // Special globals
             if (name == "debug")
             {
-                // Debug is a boolean.
+                // Debug is a bool.
                 if (Util.IsTrue(value))
                 {
                     this.debug = true;
@@ -273,7 +274,7 @@ namespace RiveScript
                 }
                 else
                 {
-                    return error("Global variable \"debug\" needs a boolean value");
+                    return error("Global variable \"debug\" needs a bool value");
                 }
             }
             else if (name == "depth")
@@ -468,8 +469,536 @@ namespace RiveScript
 
         private bool parse(string filename, string[] code)
         {
-            //TODO
-            throw new NotImplementedException();
+            // Track some state variables for this parsing round.
+            string topic = "random"; // Default topic = random
+            int lineno = 0;
+            bool comment = false; // In a multi-line comment
+            bool inobj = false; // In an object
+            string objName = "";    // Name of the current object
+            string objLang = "";    // Programming language of the object
+            ICollection<string> objBuff = null;  // Buffer for the current object
+            string onTrig = "";    // Trigger we're on
+            //string lastcmd = "";    // Last command code //Never Used
+            string isThat = "";    // Is a %Previous trigger
+
+            // File scoped parser options.
+            IDictionary<string, string> local_options = new Dictionary<string, string>();
+            local_options.Add("concat", "none");
+
+            // The given "code" is an array of lines, so jump right in.
+            for (int i = 0; i < code.Length; i++)
+            {
+                lineno++; // Increment the line counter.
+                string line = code[i];
+                say("Line: " + line);
+
+                // Trim the line of whitespaces.
+                line = line.Trim();
+
+                // Are we inside an object?
+                if (inobj)
+                {
+                    if (line.StartsWith("<object") || line.StartsWith("< object"))
+                    { // TODO regexp
+                      // End of the object. Did we have a handler?
+                        if (handlers.ContainsKey(objLang))
+                        {
+                            // Yes, call the handler's onLoad function.
+                            handlers[objLang].onLoad(objName, objBuff.ToArray());
+
+                            // Map the name to the language.
+                            objects.Add(objName, objLang);
+                        }
+
+                        objName = "";
+                        objLang = "";
+                        objBuff = null;
+                        inobj = false;
+                        continue;
+                    }
+
+                    // Collect the code.
+                    objBuff.Add(line);
+                    continue;
+                }
+
+                // Look for comments.
+                if (line.StartsWith("/*"))
+                {
+                    // Beginning a multi-line comment.
+                    if (line.IndexOf("*/") > -1)
+                    {
+                        // It ends on the same line.
+                        continue;
+                    }
+                    comment = true;
+                }
+                else if (line.StartsWith("/"))
+                {
+                    // A single line comment.
+                    continue;
+                }
+                else if (line.IndexOf("*/") > -1)
+                {
+                    // End a multi-line comment.
+                    comment = false;
+                    continue;
+                }
+                if (comment)
+                {
+                    continue;
+                }
+
+                // Skip any blank lines.
+                if (line.Length < 2)
+                {
+                    continue;
+                }
+
+                // Separate the command from the rest of the line.
+                string cmd = line.Substring(0, 1);
+                line = line.Substring(1).Trim();
+                say("\tCmd: " + cmd);
+
+                // Ignore inline comments.
+                if (line.IndexOf(" // ") > -1)
+                {
+
+                    string[] split = line.Split(new[] { " // " }, StringSplitOptions.None);
+                    line = split[0];
+                }
+
+                // Reset the %Previous if this is a new +Trigger.
+                if (cmd.Equals(CMD_TRIGGER))
+                {
+                    isThat = "";
+                }
+
+                // Do a look-ahead to see ^Continue and %Previous.
+                for (int j = (i + 1); j < code.Length; j++)
+                {
+                    // Peek ahead.
+                    string peek = code[j].Trim();
+
+                    // Skip blank.
+                    if (peek.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    // Get the command.
+                    string peekCmd = peek.Substring(0, 1);
+                    peek = peek.Substring(1).Trim();
+
+                    // Only continue if the lookahead line has any data.
+                    if (peek.Length > 0)
+                    {
+                        // The lookahead command has to be a % or a ^
+                        if (peekCmd.Equals(CMD_CONTINUE) == false && peekCmd.Equals(CMD_PREVIOUS) == false)
+                        {
+                            break;
+                        }
+
+                        // If the current command is a +, see if the following is a %.
+                        if (cmd.Equals(CMD_TRIGGER))
+                        {
+                            if (peekCmd.Equals(CMD_PREVIOUS))
+                            {
+                                // It has a %Previous!
+                                isThat = peek;
+                                break;
+                            }
+                            else
+                            {
+                                isThat = "";
+                            }
+                        }
+
+                        // If the current command is a ! and the next command(s) are
+                        // ^, we'll tack each extension on as a "line break".
+                        if (cmd.Equals(CMD_DEFINE))
+                        {
+                            if (peekCmd.Equals(CMD_CONTINUE))
+                            {
+                                line += "<crlf>" + peek;
+                            }
+                        }
+
+                        // If the current command is not a ^ and the line after is
+                        // not a %, but the line after IS a ^, then tack it onto the
+                        // end of the current line.
+                        if (cmd.Equals(CMD_CONTINUE) == false && cmd.Equals(CMD_PREVIOUS) == false && cmd.Equals(CMD_DEFINE) == false)
+                        {
+                            if (peekCmd.Equals(CMD_CONTINUE))
+                            {
+                                // Concatenation character?
+                                string concat = "";
+                                if (local_options["concat"].Equals("space"))
+                                {
+                                    concat = " ";
+                                }
+                                else if (local_options["concat"].Equals("newline"))
+                                {
+                                    concat = "\n";
+                                }
+                                line += concat + peek;
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Start handling command types.
+                if (cmd.Equals(CMD_DEFINE))
+                {
+                    say("\t! DEFINE");
+                    //string[] whatis = line.split("\\s*=\\s*", 2);
+                    string[] whatis = new Regex("\\s*=\\s*").Split(line, 2);
+                    //string[] left = whatis[0].split("\\s+", 2);
+                    string[] left = new Regex("\\s+").Split(whatis[0], 2);
+                    string type = left[0];
+                    string var = "";
+                    string value = "";
+                    bool delete = false;
+                    if (left.Length == 2)
+                    {
+                        var = left[1].Trim().ToLower();
+                    }
+                    if (whatis.Length == 2)
+                    {
+                        value = whatis[1].Trim();
+                    }
+
+                    // Remove line breaks unless this is an array.
+                    if (!type.Equals("array"))
+                    {
+                        value = value.Replace("<crlf>", "");
+                    }
+
+                    // Version is the only type that doesn't have a var.
+                    if (type.Equals("version"))
+                    {
+                        say("\tUsing RiveScript version " + value);
+
+                        // Convert the value into a double, catch exceptions.
+                        double version = 0;
+                        try
+                        {
+                            version = double.Parse(value);
+                        }
+                        catch (FormatException)
+                        {
+                            cry("RiveScript version \"" + value + "\" not a valid floating number", filename, lineno);
+                            continue;
+                        }
+
+                        if (version > RS_VERSION)
+                        {
+                            cry("We can't parse RiveScript v" + value + " documents", filename, lineno);
+                            return false;
+                        }
+
+                        continue;
+                    }
+                    else
+                    {
+                        // All the other types require a variable and value.
+                        if (var.Equals(""))
+                        {
+                            cry("Missing a " + type + " variable name", filename, lineno);
+                            continue;
+                        }
+                        if (value.Equals(""))
+                        {
+                            cry("Missing a " + type + " value", filename, lineno);
+                            continue;
+                        }
+                        if (value.Equals("<undef>"))
+                        {
+                            // Deleting its value.
+                            delete = true;
+                        }
+                    }
+
+                    // Handle the variable set types.
+                    if (type.Equals("local"))
+                    {
+                        // Local file scoped parser options
+                        say("\tSet local parser option " + var + " = " + value);
+                        local_options.Add(var, value);
+                    }
+                    else if (type.Equals("global"))
+                    {
+                        // Is it a special global? (debug or depth or etc).
+                        say("\tSet global " + var + " = " + value);
+                        this.setGlobal(var, value);
+                    }
+                    else if (type.Equals("var"))
+                    {
+                        // Set a bot variable.
+                        say("\tSet bot variable " + var + " = " + value);
+                        this.setVariable(var, value);
+                    }
+                    else if (type.Equals("array"))
+                    {
+                        // Set an array.
+                        say("\tSet array " + var);
+
+                        // Deleting it?
+                        if (delete)
+                        {
+                            arrays.Remove(var);
+                            continue;
+                        }
+
+                        // Did the array have multiple lines?
+                        //string[] parts = value.split("<crlf>");
+                        //WARN:
+                        string[] parts = value.Split("<crlf>");
+                        ICollection<string> items = new List<string>();
+                        for (int a = 0; a < parts.Length; a++)
+                        {
+                            // Split at pipes or spaces?
+                            string[] pieces;
+                            if (parts[a].IndexOf("|") > -1)
+                            {
+                                //pieces = parts[a].split("\\|");
+                                pieces = new Regex("\\|").Split(parts[a]);
+                            }
+                            else
+                            {
+                                pieces = new Regex("\\s+").Split(parts[a]);
+                            }
+
+                            // Add the pieces to the final array.
+                            for (int b = 0; b < pieces.Length; b++)
+                            {
+                                items.Add(pieces[b]);
+                            }
+                        }
+
+                        // Store this array.
+                        arrays.Add(var, items);
+                    }
+                    else if (type.Equals("sub"))
+                    {
+                        // Set a substitution.
+                        say("\tSubstitution " + var + " => " + value);
+                        this.setSubstitution(var, value);
+                    }
+                    else if (type.Equals("person"))
+                    {
+                        // Set a person substitution.
+                        say("\tPerson substitution " + var + " => " + value);
+                        this.setPersonSubstitution(var, value);
+                    }
+                    else
+                    {
+                        cry("Unknown definition type \"" + type + "\"", filename, lineno);
+                        continue;
+                    }
+                }
+                else if (cmd.Equals(CMD_LABEL))
+                {
+                    // > LABEL
+                    say("\t> LABEL");
+                    //string[] label =  line.split("\\s+");
+                    string[] label = new Regex("\\s+").Split(line);
+                    string type = "";
+                    string name = "";
+                    if (label.Length >= 1)
+                    {
+                        type = label[0].Trim().ToLower();
+                    }
+                    if (label.Length >= 2)
+                    {
+                        name = label[1].Trim();
+                    }
+
+                    // Handle the label types.
+                    if (type.Equals("begin"))
+                    {
+                        // The BEGIN statement.
+                        say("\tFound the BEGIN Statement.");
+
+                        // A BEGIN is just a special topic.
+                        type = "topic";
+                        name = "__begin__";
+                    }
+                    if (type.Equals("topic"))
+                    {
+                        // Starting a new topic.
+                        say("\tSet topic to " + name);
+                        onTrig = "";
+                        topic = name;
+
+                        // Does this topic include or inherit another one?
+                        if (label.Length >= 3)
+                        {
+                            int mode_includes = 1;
+                            int mode_inherits = 2;
+                            int mode = 0;
+                            for (int a = 2; a < label.Length; a++)
+                            {
+                                if (label[a].ToLowerInvariant().Equals("includes"))
+                                {
+                                    mode = mode_includes;
+                                }
+                                else if (label[a].ToLowerInvariant().Equals("inherits"))
+                                {
+                                    mode = mode_inherits;
+                                }
+                                else if (mode > 0)
+                                {
+                                    // This topic is either inherited or included.
+                                    if (mode == mode_includes)
+                                    {
+                                        topics.topic(topic).includes(label[a]);
+                                    }
+                                    else if (mode == mode_inherits)
+                                    {
+                                        topics.topic(topic).inherits(label[a]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (type.Equals("object"))
+                    {
+                        // If a field was provided, it should be the programming language.
+                        string lang = "";
+                        if (label.Length >= 3)
+                        {
+                            lang = label[2].ToLower();
+                        }
+
+                        // Only try to parse a language we support.
+                        onTrig = "";
+                        if (lang.Length == 0)
+                        {
+                            cry("Trying to parse unknown programming language (assuming it's JavaScript)", filename, lineno);
+                            lang = "javascript"; // Assume it's JavaScript
+                        }
+                        if (!handlers.ContainsKey(lang))
+                        {
+                            // We don't have a handler for this language.
+                            say("We can't handle " + lang + " object code!");
+                            continue;
+                        }
+
+                        // Start collecting its code!
+                        objName = name;
+                        objLang = lang;
+                        objBuff = new List<string>();
+                        inobj = true;
+                    }
+                }
+                else if (cmd.Equals(CMD_ENDLABEL))
+                {
+                    // < ENDLABEL
+                    say("\t< ENDLABEL");
+                    string type = line.Trim().ToLower();
+
+                    if (type.Equals("begin") || type.Equals("topic"))
+                    {
+                        say("\t\tEnd topic label.");
+                        topic = "random";
+                    }
+                    else if (type.Equals("object"))
+                    {
+                        say("\t\tEnd object label.");
+                        inobj = false;
+                    }
+                    else
+                    {
+                        cry("Unknown end topic type \"" + type + "\"", filename, lineno);
+                    }
+                }
+                else if (cmd.Equals(CMD_TRIGGER))
+                {
+                    // + TRIGGER
+                    say("\t+ TRIGGER: " + line);
+
+                    if (isThat.Length > 0)
+                    {
+                        // This trigger had a %Previous. To prevent conflict, tag the
+                        // trigger with the "that" text.
+                        onTrig = line + "{previous}" + isThat;
+                        topics.topic(topic).trigger(line).hasPrevious(true);
+                        topics.topic(topic).addPrevious(line, isThat);
+                    }
+                    else
+                    {
+                        // Set the current trigger to this.
+                        onTrig = line;
+                    }
+                }
+                else if (cmd.Equals(CMD_REPLY))
+                {
+                    // - REPLY
+                    say("\t- REPLY: " + line);
+
+                    // This can't come before a trigger!
+                    if (onTrig.Length == 0)
+                    {
+                        cry("Reply found before trigger", filename, lineno);
+                        continue;
+                    }
+
+                    // Add the reply to the trigger.
+                    topics.topic(topic).trigger(onTrig).addReply(line);
+                }
+                else if (cmd.Equals(CMD_PREVIOUS))
+                {
+                    // % PREVIOUS
+                    // This was handled above.
+                }
+                else if (cmd.Equals(CMD_CONTINUE))
+                {
+                    // ^ CONTINUE
+                    // This was handled above.
+                }
+                else if (cmd.Equals(CMD_REDIRECT))
+                {
+                    // @ REDIRECT
+                    say("\t@ REDIRECT: " + line);
+
+                    // This can't come before a trigger!
+                    if (onTrig.Length == 0)
+                    {
+                        cry("Redirect found before trigger", filename, lineno);
+                        continue;
+                    }
+
+                    // Add the redirect to the trigger.
+                    // TODO: this extends RiveScript, not compat w/ Perl yet
+                    topics.topic(topic).trigger(onTrig).addRedirect(line);
+                }
+                else if (cmd.Equals(CMD_CONDITION))
+                {
+                    // * CONDITION
+                    say("\t* CONDITION: " + line);
+
+                    // This can't come before a trigger!
+                    if (onTrig.Length == 0)
+                    {
+                        cry("Redirect found before trigger", filename, lineno);
+                        continue;
+                    }
+
+                    // Add the condition to the trigger.
+                    topics.topic(topic).trigger(onTrig).addCondition(line);
+                }
+                else
+                {
+                    cry("Unrecognized command \"" + cmd + "\"", filename, lineno);
+                }
+            }
+
+            return true;
         }
 
         #endregion
@@ -578,7 +1107,7 @@ namespace RiveScript
                     }
 
                     // Dump the conditions.
-                    String[] cond = topics.topic(topic).trigger(trig).listConditions();
+                    string[] cond = topics.topic(topic).trigger(trig).listConditions();
                     if (cond.Length > 0)
                     {
                         println("      'condition' => [");
@@ -621,7 +1150,7 @@ namespace RiveScript
         /// Print a line of debug text to the terminal.
         /// </summary>
         /// <param name="line"></param>
-        protected void say(String line)
+        protected void say(string line)
         {
             if (debug)
             {
@@ -633,7 +1162,7 @@ namespace RiveScript
         /// Print a line of warning text to the terminal.
         /// </summary>
         /// <param name="line"></param>
-        protected void cry(String line)
+        protected void cry(string line)
         {
             Console.WriteLine("<RS> " + line);
         }
