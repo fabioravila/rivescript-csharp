@@ -20,7 +20,7 @@ namespace RiveScript
             return clients.Keys.ToArray();
         }
 
-        public Client Client(string username)
+        public Client client(string username)
         {
             if (false == clients.ContainsKey(username))
             {

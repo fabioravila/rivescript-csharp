@@ -389,11 +389,11 @@ namespace RiveScript
         {
             if (value == null || value == "<undef>")
             {
-                clients.Client(user).delete(name);
+                clients.client(user).delete(name);
             }
             else
             {
-                clients.Client(user).set(name, value);
+                clients.client(user).set(name, value);
             }
 
             return true;
@@ -411,7 +411,7 @@ namespace RiveScript
         public bool setUservars(string user, IDictionary<string, string> data)
         {
             // TODO: this should be handled more sanely. ;)
-            clients.Client(user).replaceData(data);
+            clients.client(user).replaceData(data);
             return true;
         }
 
@@ -434,7 +434,7 @@ namespace RiveScript
         {
             if (clients.clientExists(user))
             {
-                return clients.Client(user).getData;
+                return clients.client(user).getData;
             }
             else
             {
@@ -455,7 +455,7 @@ namespace RiveScript
         {
             if (clients.clientExists(user))
             {
-                return clients.Client(user).get(name);
+                return clients.client(user).get(name);
             }
             else
             {
@@ -1027,7 +1027,1124 @@ namespace RiveScript
 
         #region Reply Methods
 
-        //TODO
+        /// <summary>
+        ///  Internal method for getting a reply.
+        /// </summary>
+        /// <param name="user">The username of the calling user.</param>
+        /// <param name="message">The (formatted!) message sent by the user.</param>
+        /// <param name="begin">Whether the context is that we're in the BEGIN statement or not.</param>
+        /// <param name="step">The recursion depth that we're at so far.</param>
+        /// <returns></returns>
+        private string reply(string user, string message, bool begin, int step)
+        {
+            /*-----------------------*/
+            /*-- Collect User Info --*/
+            /*-----------------------*/
+
+            var topic = "random";             // Default topic = random
+            var stars = new List<string>(); // Wildcard matches
+            var botstars = new List<string>(); // Wildcards in %Previous
+            var _reply = "";                   // The eventual reply
+            Client profile = null;                  // The user's profile object
+
+            // Get the user's profile.
+            profile = clients.client(user);
+
+            // Update their topic.
+            topic = profile.get("topic");
+
+            // Avoid letting the user fall into a missing topic.
+            if (topics.exists(topic) == false)
+            {
+                cry("User " + user + " was in a missing topic named \"" + topic + "\"!");
+                topic = "random";
+                profile.set("topic", "random");
+            }
+
+            // Avoid deep recursion.
+            if (step > depth)
+            {
+                _reply = "ERR: Deep Recursion Detected!";
+                cry(_reply);
+                return _reply;
+            }
+
+            // Are we in the BEGIN statement?
+            if (begin)
+            {
+                // This implies the begin topic.
+                topic = "__begin__";
+            }
+
+            /*------------------*/
+            /*-- Find a Reply --*/
+            /*------------------*/
+
+            // Create a pointer for the matched data.
+            Trigger matched = null;
+            bool foundMatch = false;
+            string matchedTrigger = "";
+
+            // See if there are any %previous's in this topic, or any topic related to it. This
+            // should only be done the first time -- not during a recursive redirection.
+            if (step == 0)
+            {
+                say("Looking for a %Previous");
+                string[] allTopics = { topic };
+                //		if (this.topics.topic(topic).includes() || this.topics.topic(topic).inherits()) {
+                // We need to walk the topic tree.
+                allTopics = this.topics.getTopicTree(topic, 0);
+                //		}
+                for (int i = 0; i < allTopics.Length; i++)
+                {
+                    // Does this topic have a %Previous anywhere?
+                    say("Seeing if " + allTopics[i] + " has a %Previous");
+                    if (this.topics.topic(allTopics[i]).hasPrevious())
+                    {
+                        say("Topic " + allTopics[i] + " has at least one %Previous");
+
+                        // Get them.
+                        string[] previous = this.topics.topic(allTopics[i]).listPrevious();
+                        for (int j = 0; j < previous.Length; j++)
+                        {
+                            say("Candidate: " + previous[j]);
+
+                            // Try to match the bot's last reply against this.
+                            string lastReply = formatMessage(profile.getReply(1));
+                            string regexp = triggerRegexp(user, profile, previous[j]);
+                            say("Compare " + lastReply + " <=> " + previous[j] + " (" + regexp + ")");
+
+                            // Does it match?
+                            Regex re = new Regex("^" + regexp + "$");
+                            foreach (Match m in re.Matches(lastReply))
+                            {
+                                say("OMFG the lastReply matches!");
+
+                                // Harvest the botstars.
+                                for (int s = 1; s <= m.Groups.Count; s++)
+                                {
+                                    say("Add botstar: " + m.Groups[s].Value);
+                                    botstars.Add(m.Groups[s].Value);
+                                }
+
+                                // Now see if the user matched this trigger too!
+                                string[] candidates = this.topics.topic(allTopics[i]).listPreviousTriggers(previous[j]);
+                                for (int k = 0; k < candidates.Length; k++)
+                                {
+                                    say("Does the user's message match " + candidates[k] + "?");
+                                    string humanside = triggerRegexp(user, profile, candidates[k]);
+                                    say("Compare " + message + " <=> " + candidates[k] + " (" + humanside + ")");
+
+                                    Regex reH = new Regex("^" + humanside + "$");
+                                    foreach (Match mH in reH.Matches(message))
+                                    {
+                                        say("It's a match!!!");
+
+                                        // Make sure it's all valid.
+                                        string realTrigger = candidates[k] + "{previous}" + previous[j];
+                                        if (this.topics.topic(allTopics[i]).triggerExists(realTrigger))
+                                        {
+                                            // Seems to be! Collect the stars.
+                                            for (int s = 1; s <= mH.Groups.Count; s++)
+                                            {
+                                                say("Add star: " + mH.Groups[s].Value);
+                                                stars.Add(mH.Groups[s].Value);
+                                            }
+
+                                            foundMatch = true;
+                                            matchedTrigger = candidates[k];
+                                            matched = this.topics.topic(allTopics[i]).trigger(realTrigger);
+                                        }
+
+                                        break;
+                                    }
+
+                                    if (foundMatch)
+                                    {
+                                        break;
+                                    }
+                                }
+                                if (foundMatch)
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Search their topic for a match to their trigger.
+            if (foundMatch == false)
+            {
+                // Go through the sort buffer for their topic.
+                string[] triggers = topics.topic(topic).listTriggers();
+                for (int a = 0; a < triggers.Length; a++)
+                {
+                    string trigger = triggers[a];
+
+                    // Prepare the trigger for the regular expression engine.
+                    string regexp = triggerRegexp(user, profile, trigger);
+                    say("Try to match \"" + message + "\" against \"" + trigger + "\" (" + regexp + ")");
+
+                    // Is it a match?
+                    Regex re = new Regex("^" + regexp + "$");
+                    foreach (Match m in re.Matches(message))
+                    {
+                        say("The trigger matches! Star count: " + m.Groups.Count);
+
+                        // Harvest the stars.
+                        int starcount = m.Groups.Count;
+                        for (int s = 1; s <= starcount; s++)
+                        {
+                            say("Add star: " + m.Groups[s].Value);
+                            stars.Add(m.Groups[s].Value);
+                        }
+
+                        // We found a match, but what if the trigger we matched belongs to
+                        // an inherited topic? Check for that.
+                        if (this.topics.topic(topic).triggerExists(trigger))
+                        {
+                            // No, the trigger does belong to us.
+                            matched = this.topics.topic(topic).trigger(trigger);
+                        }
+                        else
+                        {
+                            say("Trigger doesn't exist under this topic, trying to find it!");
+                            matched = this.topics.findTriggerByInheritance(topic, trigger, 0);
+                        }
+
+                        foundMatch = true;
+                        matchedTrigger = trigger;
+                        break;
+                    }
+                }
+            }
+
+            // Store what trigger they matched on (matchedTrigger can be blank if they didn't match).
+            profile.set("__lastmatch__", matchedTrigger);
+
+            // Did they match anything?
+            if (foundMatch)
+            {
+                say("They were successfully matched to a trigger!");
+
+                /*---------------------------------*/
+                /*-- Process Their Matched Reply --*/
+                /*---------------------------------*/
+
+                // Make a dummy once loop so we can break out anytime.
+                for (int n = 0; n < 1; n++)
+                {
+                    // Exists?
+                    if (matched == null)
+                    {
+                        cry("Unknown error: they matched trigger " + matchedTrigger + ", but it doesn't exist?");
+                        foundMatch = false;
+                        break;
+                    }
+
+                    // Get the trigger object.
+                    Trigger trigger = matched;
+                    say("The trigger matched belongs to topic " + trigger.topic());
+
+                    // Check for conditions.
+                    string[] conditions = trigger.listConditions();
+                    if (conditions.Length > 0)
+                    {
+                        say("This trigger has some conditions!");
+
+                        // See if any conditions are true.
+                        bool truth = false;
+                        for (int c = 0; c < conditions.Length; c++)
+                        {
+                            // Separate the condition from the potential reply.
+                            string[] halves = conditions[c].SplitRegex("\\s*=>\\s*");
+                            string condition = halves[0].Trim();
+                            string potreply = halves[1].Trim();
+
+                            // Split up the condition.
+                            Regex reCond = new Regex("^(.+?)\\s+(==|eq|\\!=|ne|<>|<|<=|>|>=)\\s+(.+?)$");
+                            foreach (Match mCond in reCond.Matches(condition))
+                            {
+                                string left = mCond.Groups[1].Value.Trim();
+                                string eq = mCond.Groups[2].Value.Trim();
+                                string right = mCond.Groups[3].Value.Trim();
+
+                                // Process tags on both halves.
+                                left = processTags(user, profile, message, left, stars, botstars, step + 1);
+                                right = processTags(user, profile, message, right, stars, botstars, step + 1);
+                                say("Compare: " + left + " " + eq + " " + right);
+
+                                // Defaults
+                                if (left.Length == 0)
+                                {
+                                    left = "undefined";
+                                }
+                                if (right.Length == 0)
+                                {
+                                    right = "undefined";
+                                }
+
+                                // Validate the expression.
+                                if (eq.Equals("eq") || eq.Equals("ne") || eq.Equals("==") || eq.Equals("!=") || eq.Equals("<>"))
+                                {
+                                    // string equality comparing.
+                                    if ((eq.Equals("eq") || eq.Equals("==")) && left.Equals(right))
+                                    {
+                                        truth = true;
+                                        break;
+                                    }
+                                    else if ((eq.Equals("ne") || eq.Equals("!=") || eq.Equals("<>")) && !left.Equals(right))
+                                    {
+                                        truth = true;
+                                        break;
+                                    }
+                                }
+
+                                // Numeric comparing.
+                                int lt = 0;
+                                int rt = 0;
+
+                                // Turn the two sides into numbers.
+                                try
+                                {
+                                    lt = int.Parse(left);
+                                    rt = int.Parse(right);
+                                }
+                                catch (FormatException)
+                                {
+                                    // Oh well!
+                                    break;
+                                }
+
+                                // Run the remaining equality checks.
+                                if (eq.Equals("==") || eq.Equals("!=") || eq.Equals("<>"))
+                                {
+                                    // Equality checks.
+                                    if (eq.Equals("==") && lt == rt)
+                                    {
+                                        truth = true;
+                                        break;
+                                    }
+                                    else if ((eq.Equals("!=") || eq.Equals("<>")) && lt != rt)
+                                    {
+                                        truth = true;
+                                        break;
+                                    }
+                                }
+                                else if (eq.Equals("<") && lt < rt)
+                                {
+                                    truth = true;
+                                    break;
+                                }
+                                else if (eq.Equals("<=") && lt <= rt)
+                                {
+                                    truth = true;
+                                    break;
+                                }
+                                else if (eq.Equals(">") && lt > rt)
+                                {
+                                    truth = true;
+                                    break;
+                                }
+                                else if (eq.Equals(">=") && lt >= rt)
+                                {
+                                    truth = true;
+                                    break;
+                                }
+                            }
+
+                            // True condition?
+                            if (truth)
+                            {
+                                _reply = potreply;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Break if we got a reply from the conditions.
+                    if (_reply.Length > 0)
+                    {
+                        break;
+                    }
+
+                    // Return one of the replies at random. We lump any redirects in as well.
+                    string[] redirects = trigger.listRedirects();
+                    string[] replies = trigger.listReplies();
+
+                    // Take into account their weights.
+                    List<int> bucket = new List<int>();
+                    Regex reWeight = new Regex("\\{weight=(\\d+?)\\}");
+
+                    // Look at weights on redirects.
+                    for (int i = 0; i < redirects.Length; i++)
+                    {
+                        if (redirects[i].IndexOf("{weight=") > -1)
+                        {
+                            foreach (Match mWeight in reWeight.Matches(redirects[i]))
+                            {
+                                int weight = int.Parse(mWeight.Groups[1].Value);
+
+                                // Add to the bucket this many times.
+                                if (weight > 1)
+                                {
+                                    for (int j = 0; j < weight; j++)
+                                    {
+                                        say("Trigger has a redirect (weight " + weight + "): " + redirects[i]);
+                                        bucket.Add(i);
+                                    }
+                                }
+                                else
+                                {
+                                    say("Trigger has a redirect (weight " + weight + "): " + redirects[i]);
+                                    bucket.Add(i);
+                                }
+
+                                // Only one weight is supported.
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            say("Trigger has a redirect: " + redirects[i]);
+                            bucket.Add(i);
+                        }
+                    }
+
+                    // Look at weights on replies.
+                    for (int i = 0; i < replies.Length; i++)
+                    {
+                        if (replies[i].IndexOf("{weight=") > -1)
+                        {
+                            foreach (Match mWeight in reWeight.Matches(replies[i]))
+                            {
+                                int weight = int.Parse(mWeight.Groups[1].Value);
+
+                                // Add to the bucket this many times.
+                                if (weight > 1)
+                                {
+                                    for (int j = 0; j < weight; j++)
+                                    {
+                                        say("Trigger has a reply (weight " + weight + "): " + replies[i]);
+                                        bucket.Add(redirects.Length + i);
+                                    }
+                                }
+                                else
+                                {
+                                    say("Trigger has a reply (weight " + weight + "): " + replies[i]);
+                                    bucket.Add(redirects.Length + i);
+                                }
+
+                                // Only one weight is supported.
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            say("Trigger has a reply: " + replies[i]);
+                            bucket.Add(redirects.Length + i);
+                        }
+                    }
+
+                    // Pull a random value out.
+                    int[] choices = bucket.ToArray();
+                    if (choices.Length > 0)
+                    {
+                        int choice = choices[rand.Next(choices.Length)];
+                        say("Possible choices: " + choices.Length + "; chosen: " + choice);
+                        if (choice < redirects.Length)
+                        {
+                            // The choice was a redirect!
+                            string redirect = redirects[choice].ReplaceRegex("\\{weight=\\d+\\}", "");
+                            say("Chosen a redirect to " + redirect + "!");
+                            _reply = reply(user, redirect, begin, step + 1);
+                        }
+                        else
+                        {
+                            // The choice was a reply!
+                            choice -= redirects.Length;
+                            if (choice < replies.Length)
+                            {
+                                say("Chosen a reply: " + replies[choice]);
+                                _reply = replies[choice];
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Still no reply?
+            if (!foundMatch)
+            {
+                _reply = "ERR: No Reply Matched";
+            }
+            else if (_reply.Length == 0)
+            {
+                _reply = "ERR: No Reply Found";
+            }
+
+            say("Final reply: " + _reply);
+
+            // Special tag processing for the BEGIN statement.
+            if (begin)
+            {
+                // The BEGIN block may have {topic} or <set> tags and that's all.
+                // <set> tag
+                if (_reply.IndexOf("<set") > -1)
+                {
+                    Regex reSet = new Regex("<set (.+?)=(.+?)>");
+                    foreach (Match mSet in reSet.Matches(_reply))
+                    {
+                        string tag = mSet.Groups[0].Value;
+                        string var = mSet.Groups[1].Value;
+                        string value = mSet.Groups[2].Value;
+
+                        // Set the uservar.
+                        profile.set(var, value);
+                        _reply = _reply.Replace(tag, "");
+                    }
+                }
+
+                // {topic} tag
+                if (_reply.IndexOf("{topic=") > -1)
+                {
+                    Regex reTopic = new Regex("\\{topic=(.+?)\\}");
+                    foreach (Match mTopic in reTopic.Matches(_reply))
+                    {
+                        string tag = mTopic.Groups[0].Value;
+                        topic = mTopic.Groups[1].Value;
+                        say("Set user's topic to: " + topic);
+                        profile.set("topic", topic);
+                        _reply = _reply.Replace(tag, "");
+                    }
+                }
+            }
+            else
+            {
+                // Process tags.
+                _reply = processTags(user, profile, message, _reply, stars, botstars, step);
+            }
+
+            return _reply;
+        }
+
+        /// <summary>
+        /// Formats a trigger for the regular expression engine.
+        /// </summary>
+        /// <param name="user">The user ID of the caller.</param>
+        /// <param name="profile">Client profile</param>
+        /// <param name="trigger">The raw trigger text.</param>
+        /// <returns></returns>
+        private string triggerRegexp(string user, Client profile, string trigger)
+        {
+            // If the trigger is simply '*', it needs to become (.*?) so it catches the empty string.
+            var regexp = trigger.ReplaceRegex("^\\*$", "<zerowidthstar>");
+
+            // Simple regexps are simple.
+            regexp = regexp.ReplaceRegex("\\*", "(.+?)");             // *  ->  (.+?)
+            regexp = regexp.ReplaceRegex("#", "(\\\\d+?)");         // #  ->  (\d+?)
+            regexp = regexp.ReplaceRegex("_", "(\\\\w+?)");     // _  ->  ([A-Za-z ]+?)
+            regexp = regexp.ReplaceRegex("\\{weight=\\d+\\}", "");    // Remove {weight} tags
+            regexp = regexp.ReplaceRegex("<zerowidthstar>", "(.*?)"); // *  ->  (.*?)
+
+            // Handle optionals.
+            if (regexp.IndexOf("[") > -1)
+            {
+                Regex reOpts = new Regex("\\s*\\[(.+?)\\]\\s*");
+
+                foreach (Match mOpts in reOpts.Matches(regexp))
+                {
+                    var optional = mOpts.Groups[0].Value;
+                    var contents = mOpts.Groups[1].Value;
+
+                    // Split them at the pipes.
+                    string[] parts = contents.SplitRegex("\\|");
+
+                    // Construct a regexp part.
+                    StringBuilder re = new StringBuilder();
+                    for (int i = 0; i < parts.Length; i++)
+                    {
+                        // We want: \s*part\s*
+                        re.Append("\\s*" + parts[i] + "\\s*");
+                        if (i < parts.Length - 1)
+                        {
+                            re.Append("|");
+                        }
+                    }
+                    string pipes = re.ToString();
+
+                    // If this optional had a star or anything in it, e.g. [*],
+                    // make it non-matching.
+                    pipes = pipes.ReplaceRegex("\\(.+?\\)", "(?:.+?)");
+                    pipes = pipes.ReplaceRegex("\\(\\d+?\\)", "(?:\\\\d+?");
+                    pipes = pipes.ReplaceRegex("\\(\\w+?\\)", "(?:\\\\w+?)");
+
+                    // Put the new text in.
+                    pipes = "(?:" + pipes + "|\\s*)";
+                    regexp = regexp.Replace(optional, pipes);
+
+                }
+            }
+
+            // Make \w more accurate for our purposes.
+            regexp = regexp.ReplaceRegex("\\\\w", "[a-z ]");
+
+            // Filter in arrays.
+            if (regexp.IndexOf("@") > -1)
+            {
+                // Match the array's name.
+                Regex reArray = new Regex("\\@(.+?)\\b");
+
+                foreach (Match mArray in reArray.Matches(regexp))
+                {
+                    string array = mArray.Groups[0].Value;
+                    string name = mArray.Groups[1].Value;
+
+                    // Do we have an array by this name?
+                    if (arrays.ContainsKey(name))
+                    {
+                        string[] values = arrays[name].ToArray();
+                        StringBuilder joined = new StringBuilder();
+
+                        // Join the array.
+                        for (int i = 0; i < values.Length; i++)
+                        {
+                            joined.Append(values[i]);
+                            if (i < values.Length - 1)
+                            {
+                                joined.Append("|");
+                            }
+                        }
+
+                        // Final contents...
+                        string rep = "(?:" + joined.ToString() + ")";
+                        regexp = regexp.Replace(array, rep);
+                    }
+                    else
+                    {
+                        // No array by this name.
+                        regexp = regexp.Replace(array, "");
+                    }
+                }
+            }
+
+            // Filter in bot variables.
+            if (regexp.IndexOf("<bot") > -1)
+            {
+                Regex reBot = new Regex("<bot (.+?)>");
+
+                foreach (Match mBot in reBot.Matches(regexp))
+                {
+                    string tag = mBot.Groups[0].Value;
+                    string var = mBot.Groups[1].Value;
+                    string value = vars[var].ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
+
+                    // Have this?
+                    if (vars.ContainsKey(var))
+                    {
+                        regexp = regexp.Replace(tag, value);
+                    }
+                    else
+                    {
+                        regexp = regexp.Replace(tag, "undefined");
+                    }
+                }
+            }
+
+            // Filter in user variables.
+            if (regexp.IndexOf("<get") > -1)
+            {
+                Regex reGet = new Regex("<get (.+?)>");
+
+                foreach (Match mGet in reGet.Matches(regexp))
+                {
+                    string tag = mGet.Groups[0].Value;
+                    string var = mGet.Groups[1].Value;
+                    string value = profile.get(var).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
+
+                    // Have this?
+                    regexp = regexp.Replace(tag, value);
+                }
+            }
+
+            // Input and reply tags.
+            regexp = regexp.ReplaceRegex("<input>", "<input1>");
+            regexp = regexp.ReplaceRegex("<reply>", "<reply1>");
+
+            if (regexp.IndexOf("<input") > -1)
+            {
+                Regex reInput = new Regex("<input([0-9])>");
+
+                foreach (Match mInput in reInput.Matches(regexp))
+                {
+                    string tag = mInput.Groups[0].Value;
+                    int index = int.Parse(mInput.Groups[1].Value);
+                    string text = profile.getInput(index).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
+                    regexp = regexp.Replace(tag, text);
+                }
+            }
+
+            if (regexp.IndexOf("<reply") > -1)
+            {
+                Regex reReply = new Regex("<reply([0-9])>");
+                foreach (Match mReply in reReply.Matches(regexp))
+                {
+                    string tag = mReply.Groups[0].Value;
+                    int index = int.Parse(mReply.Groups[1].Value);
+                    string text = profile.getReply(index).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
+                    regexp = regexp.Replace(tag, text);
+                }
+            }
+
+            return regexp;
+        }
+
+
+
+        /// <summary>
+        /// Process reply tags.
+        /// </summary>
+        /// <param name="user">The name of the end user.</param>
+        /// <param name="profile">The RiveScript client object holding the user's profile</param>
+        /// <param name="message">The message sent by the user.</param>
+        /// <param name="reply">The bot's original reply including tags.</param>
+        /// <param name="vstars"> The vector of wildcards the user's message matched.</param>
+        /// <param name="vbotstars">The vector of wildcards in any %Previous.</param>
+        /// <param name="step">The current recursion depth limit.</param>
+        /// <returns></returns>
+        private string processTags(string user, Client profile, string message, string reply,
+                                   List<string> vstars, List<string> vbotstars, int step)
+        {
+            // Pad the stars.
+            vstars.Insert(0, "");
+            vbotstars.Insert(0, "");
+
+            // Set a default first star.
+            if (vstars.Count == 1)
+            {
+                vstars.Add("undefined");
+            }
+            if (vbotstars.Count == 1)
+            {
+                vbotstars.Add("undefined");
+            }
+
+            // Convert the stars into simple arrays.
+            string[] stars = vstars.ToArray();
+            string[] botstars = vbotstars.ToArray();
+
+            // Shortcut tags.
+            reply = reply.ReplaceRegex("<person>", "{person}<star>{/person}");
+            reply = reply.ReplaceRegex("<@>", "{@<star>}");
+            reply = reply.ReplaceRegex("<formal>", "{formal}<star>{/formal}");
+            reply = reply.ReplaceRegex("<sentence>", "{sentence}<star>{/sentence}");
+            reply = reply.ReplaceRegex("<uppercase>", "{uppercase}<star>{/uppercase}");
+            reply = reply.ReplaceRegex("<lowercase>", "{lowercase}<star>{/lowercase}");
+
+            // Quick tags.
+            reply = reply.ReplaceRegex("\\{weight=\\d+\\}", ""); // Remove {weight}s
+            reply = reply.ReplaceRegex("<input>", "<input1>");
+            reply = reply.ReplaceRegex("<reply>", "<reply1>");
+            reply = reply.ReplaceRegex("<id>", user);
+            reply = reply.ReplaceRegex("\\\\s", " ");
+            reply = reply.ReplaceRegex("\\\\n", "\n");
+            reply = reply.ReplaceRegex("\\\\", "\\");
+            reply = reply.ReplaceRegex("\\#", "#");
+
+            // Stars
+            reply = reply.ReplaceRegex("<star>", stars[1]);
+            reply = reply.ReplaceRegex("<botstar>", botstars[1]);
+            for (int i = 1; i < stars.Length; i++)
+            {
+                reply = reply.ReplaceRegex("<star" + i + ">", stars[i]);
+            }
+            for (int i = 1; i < botstars.Length; i++)
+            {
+                reply = reply.ReplaceRegex("<botstar" + i + ">", botstars[i]);
+            }
+            reply = reply.ReplaceRegex("<(star|botstar)\\d+>", "");
+
+            // Input and reply tags.
+            if (reply.IndexOf("<input") > -1)
+            {
+                Regex reInput = new Regex("<input([0-9])>");
+                foreach (Match mInput in reInput.Matches(reply))
+                {
+                    string tag = mInput.Groups[0].Value;
+                    int index = int.Parse(mInput.Groups[1].Value);
+                    string text = profile.getInput(index).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
+                    reply = reply.Replace(tag, text);
+                }
+            }
+            if (reply.IndexOf("<reply") > -1)
+            {
+                Regex reReply = new Regex("<reply([0-9])>");
+                foreach (Match mReply in reReply.Matches(reply))
+                {
+                    string tag = mReply.Groups[0].Value;
+                    int index = int.Parse(mReply.Groups[1].Value);
+                    string text = profile.getReply(index).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
+                    reply = reply.Replace(tag, text);
+                }
+            }
+
+            // {random} tag
+            if (reply.IndexOf("{random}") > -1)
+            {
+                Regex reRandom = new Regex("\\{random\\}(.+?)\\{\\/random\\}");
+                foreach (Match mRandom in reRandom.Matches(reply))
+                {
+                    string tag = mRandom.Groups[0].Value;
+                    string[] candidates = mRandom.Groups[1].Value.SplitRegex("\\|");
+                    string chosen = candidates[rand.Next(candidates.Length)];
+                    reply = reply.Replace(tag, chosen);
+                }
+            }
+
+            // <bot> tag
+            if (reply.IndexOf("<bot") > -1)
+            {
+                Regex reBot = new Regex("<bot (.+?)>");
+                foreach (Match mBot in reBot.Matches(reply))
+                {
+                    string tag = mBot.Groups[0].Value;
+                    string var = mBot.Groups[1].Value;
+
+                    // Have this?
+                    if (vars.ContainsKey(var))
+                    {
+                        reply = reply.Replace(tag, vars[var]);
+                    }
+                    else
+                    {
+                        reply = reply.Replace(tag, "undefined");
+                    }
+                }
+            }
+
+            // <env> tag
+            if (reply.IndexOf("<env") > -1)
+            {
+                Regex reEnv = new Regex("<env (.+?)>");
+                foreach (Match mEnv in reEnv.Matches(reply))
+                {
+                    string tag = mEnv.Groups[0].Value;
+                    string var = mEnv.Groups[1].Value;
+
+                    // Have this?
+                    if (globals.ContainsKey(var))
+                    {
+                        reply = reply.Replace(tag, globals[var]);
+                    }
+                    else
+                    {
+                        reply = reply.Replace(tag, "undefined");
+                    }
+                }
+            }
+
+            // {!stream} tag
+            if (reply.IndexOf("{!") > -1)
+            {
+                Regex reStream = new Regex("\\{\\!(.+?)\\}");
+                foreach (Match mStream in reStream.Matches(reply))
+                {
+                    string tag = mStream.Groups[0].Value;
+                    string code = mStream.Groups[1].Value;
+                    say("Stream new code in: " + code);
+
+                    // Stream it.
+                    this.stream(code);
+                    reply = reply.Replace(tag, "");
+                }
+            }
+
+            // {person}
+            if (reply.IndexOf("{person}") > -1)
+            {
+                Regex rePerson = new Regex("\\{person\\}(.+?)\\{\\/person\\}");
+                foreach (Match mPerson in rePerson.Matches(reply))
+                {
+                    string tag = mPerson.Groups[0].Value;
+                    string text = mPerson.Groups[1].Value;
+
+                    // Run person substitutions.
+                    say("Run person substitutions: before: " + text);
+                    text = Util.Substitute(person_s, person, text);
+                    say("After: " + text);
+                    reply = reply.Replace(tag, text);
+                }
+            }
+
+            // {formal,uppercase,lowercase,sentence} tags
+            if (reply.IndexOf("{formal}") > -1 || reply.IndexOf("{sentence}") > -1 ||
+            reply.IndexOf("{uppercase}") > -1 || reply.IndexOf("{lowercase}") > -1)
+            {
+                string[] tags = { "formal", "sentence", "uppercase", "lowercase" };
+                for (int i = 0; i < tags.Length; i++)
+                {
+                    Regex reTag = new Regex("\\{" + tags[i] + "\\}(.+?)\\{\\/" + tags[i] + "\\}");
+                    foreach (Match mTag in reTag.Matches(reply))
+                    {
+                        string tag = mTag.Groups[0].Value;
+                        string text = mTag.Groups[1].Value;
+
+                        // string transform.
+                        text = stringTransform(tags[i], text);
+                        reply = reply.Replace(tag, text);
+                    }
+                }
+            }
+
+            // <set> tag
+            if (reply.IndexOf("<set") > -1)
+            {
+                Regex reSet = new Regex("<set (.+?)=(.+?)>");
+                foreach (Match mSet in reSet.Matches(reply))
+                {
+                    string tag = mSet.Groups[0].Value;
+                    string var = mSet.Groups[1].Value;
+                    string value = mSet.Groups[2].Value;
+
+                    // Set the uservar.
+                    profile.set(var, value);
+                    reply = reply.Replace(tag, "");
+                    say("Set user var " + var + "=" + value);
+                }
+            }
+
+            // <add, sub, mult, div> tags
+            if (reply.IndexOf("<add") > -1 || reply.IndexOf("<sub") > -1 ||
+            reply.IndexOf("<mult") > -1 || reply.IndexOf("<div") > -1)
+            {
+                string[] tags = { "add", "sub", "mult", "div" };
+                for (int i = 0; i < tags.Length; i++)
+                {
+                    Regex reTag = new Regex("<" + tags[i] + " (.+?)=(.+?)>");
+                    foreach (Match mTag in reTag.Matches(reply))
+                    {
+                        string tag = mTag.Groups[0].Value;
+                        string var = mTag.Groups[1].Value;
+                        string value = mTag.Groups[2].Value;
+
+                        // Get the user var.
+                        string curvalue = profile.get(var);
+                        int current = 0;
+                        if (!curvalue.Equals("undefined"))
+                        {
+                            // Convert it to a int.
+                            try
+                            {
+                                current = int.Parse(curvalue);
+                            }
+                            catch (FormatException)
+                            {
+                                // Current value isn't a number!
+                                reply = reply.Replace(tag, "[ERR: Can't \"" + tags[i] + "\" non-numeric variable " + var + "]");
+                                continue;
+                            }
+                        }
+
+                        // Value must be a number too.
+                        int modifier = 0;
+                        try
+                        {
+                            modifier = int.Parse(value);
+                        }
+                        catch (FormatException)
+                        {
+                            reply = reply.Replace(tag, "[ERR: Can't \"" + tags[i] + "\" non-numeric value " + value + "]");
+                            continue;
+                        }
+
+                        // Run the operation.
+                        if (tags[i].Equals("add"))
+                        {
+                            current += modifier;
+                        }
+                        else if (tags[i].Equals("sub"))
+                        {
+                            current -= modifier;
+                        }
+                        else if (tags[i].Equals("mult"))
+                        {
+                            current *= modifier;
+                        }
+                        else
+                        {
+                            // Don't divide by zero.
+                            if (modifier == 0)
+                            {
+                                reply = reply.Replace(tag, "[ERR: Can't divide by zero!]");
+                                continue;
+                            }
+                            current /= modifier;
+                        }
+
+                        // Store the new value.
+                        profile.set(var, current.ToString());
+                        reply = reply.Replace(tag, "");
+                    }
+                }
+            }
+
+            // <get> tag
+            if (reply.IndexOf("<get") > -1)
+            {
+                Regex reGet = new Regex("<get (.+?)>");
+                foreach (Match mGet in reGet.Matches(reply))
+                {
+                    string tag = mGet.Groups[0].Value;
+                    string var = mGet.Groups[1].Value;
+
+                    // Get the user var.
+                    reply = reply.Replace(tag, profile.get(var));
+                }
+            }
+
+            // {topic} tag
+            if (reply.IndexOf("{topic=") > -1)
+            {
+                Regex reTopic = new Regex("\\{topic=(.+?)\\}");
+                foreach (Match mTopic in reTopic.Matches(reply))
+                {
+                    string tag = mTopic.Groups[0].Value;
+                    string topic = mTopic.Groups[1].Value;
+                    say("Set user's topic to: " + topic);
+                    profile.set("topic", topic);
+                    reply = reply.Replace(tag, "");
+                }
+            }
+
+            // {@redirect} tag
+            if (reply.IndexOf("{@") > -1)
+            {
+                Regex reRed = new Regex("\\{@(.+?)\\}");
+                foreach (Match mRed in reRed.Matches(reply))
+                {
+                    string tag = mRed.Groups[0].Value;
+                    string target = mRed.Groups[1].Value.Trim();
+
+                    // Do the reply redirect.
+                    string subreply = this.reply(user, target, false, step + 1);
+                    reply = reply.Replace(tag, subreply);
+                }
+            }
+
+            // <call> tag
+            if (reply.IndexOf("<call>") > -1)
+            {
+                Regex reCall = new Regex("<call>(.+?)<\\/call>");
+                foreach (Match mCall in reCall.Matches(reply))
+                {
+                    string tag = mCall.Groups[0].Value;
+                    string data = mCall.Groups[1].Value;
+                    string[] parts = data.Split(" ");
+                    string name = parts[0];
+                    List<String> args = new List<String>();
+                    for (int i = 1; i < parts.Length; i++)
+                    {
+                        args.Add(parts[i]);
+                    }
+
+                    // See if we know of this object.
+                    if (objects.ContainsKey(name))
+                    {
+                        // What language handles it?
+                        string lang = objects[name];
+                        string result = handlers[lang].onCall(name, user, args.ToArray());
+                        reply = reply.Replace(tag, result);
+                    }
+                    else
+                    {
+                        reply = reply.Replace(tag, "[ERR: Object Not Found]");
+                    }
+                }
+            }
+
+            return reply;
+
+
+        }
+
+
+        /// <summary>
+        /// Reformats a string in a certain way: formal, uppercase, lowercase, sentence.
+        /// </summary>
+        /// <param name="format">The format you want the string in.</param>
+        /// <param name="text">  The text to format.</param>
+        /// <returns></returns>
+        private string stringTransform(string format, string text)
+        {
+            if (format.Equals("uppercase"))
+            {
+                return text.ToUpper();
+            }
+            else if (format.Equals("lowercase"))
+            {
+                return text.ToLower();
+            }
+            else if (format.Equals("formal"))
+            {
+                // Capitalize Each First Letter
+                string[] words = text.Split(" ");
+                say("wc: " + words.Length);
+                for (int i = 0; i < words.Length; i++)
+                {
+                    say("word: " + words[i]);
+                    //string[] letters = words[i].split("");
+                    string[] letters = words[i].SplitRegex("");
+                    say("cc: " + letters.Length);
+                    if (letters.Length > 1)
+                    {
+                        say("letter 1: " + letters[1]);
+                        letters[1] = letters[1].ToUpper();
+                        say("new letter 1: " + letters[1]);
+                        words[i] = String.Join("", letters);
+                        say("new word: " + words[i]);
+                    }
+                }
+                return String.Join(" ", words);
+            }
+            else if (format.Equals("sentence"))
+            {
+                // Uppercase the first letter of the first word.
+                string[] letters = text.SplitRegex("");
+                if (letters.Length > 1)
+                {
+                    letters[1] = letters[1].ToUpper();
+                }
+
+                return String.Join("", letters);
+            }
+            else
+            {
+                return "[ERR: Unknown string Transform " + format + "]";
+            }
+        }
+
+
+        /// <summary>
+        /// Format the user's message to begin reply matching. Lowercases it, runs substitutions,
+	    /// and neutralizes what's left.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        private string formatMessage(string message)
+        {
+            // Lowercase it first.
+            message = message.ToLower();
+
+            // Run substitutions.
+            message = Util.Substitute(subs_s, subs, message);
+
+            // Sanitize what's left.
+            message = message.ReplaceRegex("[^a-z0-9 ]", "");
+            return message;
+        }
+
 
         #endregion
 
@@ -1095,7 +2212,7 @@ namespace RiveScript
                     println("    '" + trig + "' => {");
 
                     // Dump the replies.
-                    var reply = topics.topic(topic).trigger(trig).Replies;
+                    var reply = topics.topic(topic).trigger(trig).listReplies();
                     if (reply.Length > 0)
                     {
                         println("      'reply' => [");

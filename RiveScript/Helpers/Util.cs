@@ -65,7 +65,6 @@ namespace RiveScript
             return text;
         }
 
-
         /// <summary>
         /// Sort the integer keys in a Dictionary from highest to lowest.
         /// </summary>
@@ -96,6 +95,10 @@ namespace RiveScript
             return list;
         }
 
+        public static MatchCollection GetRegexMatches(string pattern, string input)
+        {
+            return new Regex(pattern).Matches(input);
+        }
 
         public static bool IsTrue(string value)
         {

@@ -46,12 +46,9 @@ namespace RiveScript
             this.reply.Add(reply);
         }
 
-        public string[] Replies
+        public string[] listReplies()
         {
-            get
-            {
-                return reply.ToArray();
-            }
+            return reply.ToArray();
         }
 
         public void addRedirect(string meant)

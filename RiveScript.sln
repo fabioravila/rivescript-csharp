@@ -5,6 +5,8 @@ VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RiveScript", "RiveScript\RiveScript.csproj", "{64F4B1CD-CDD0-456C-8E7C-BC3AFE8F4672}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RiveScript.Tests", "RiveScript.Tests\RiveScript.Tests.csproj", "{F63F1AA9-97D9-468C-8D0C-8B6D3E3D7219}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{64F4B1CD-CDD0-456C-8E7C-BC3AFE8F4672}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{64F4B1CD-CDD0-456C-8E7C-BC3AFE8F4672}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{64F4B1CD-CDD0-456C-8E7C-BC3AFE8F4672}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F63F1AA9-97D9-468C-8D0C-8B6D3E3D7219}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F63F1AA9-97D9-468C-8D0C-8B6D3E3D7219}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F63F1AA9-97D9-468C-8D0C-8B6D3E3D7219}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F63F1AA9-97D9-468C-8D0C-8B6D3E3D7219}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
