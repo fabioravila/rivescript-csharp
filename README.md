@@ -8,19 +8,38 @@ at http://www.rivescript.com/wd/RiveScript.html
 This code was initially developed based on the official version of the Java interpreter
 rivescript-java - https://github.com/aichaos/rivescript-java
 
+## MOTIVATION
+
+As a C# developer sought a different mechanism of AIML + Program# for chatterbot due to
+discontinuity or implementation of complication.
+In seeking an alternative i came across the RiveScript that with its simplicity and syntax
+made me choose this as my new chatterbot script.
+As the C# interpreter announced the offical site is not functional, i have decided to make
+the C# interpreter, based on the official Java code.
+
+PS: This is my first public library, then I'm sorry for the lack of knowledge of some community standards.
 
 ## MILESTONES
 
-1. **Make a port of actual rivescript-java** - Create the code in C# based on the current code in Java, 'shame on me =]'
-2. Create some baisc tests based on RiveScript 'official' demos
+1. Make a port of actual rivescript-java - Make a port of current Java code, 'shame on me =]'
+2. **Create some basic tests** - based on RiveScript 'official' demos
+3. Complete the code documentation
 4. Push to github on public repository
 5. Develop a native objects for csharp
-6. [..]
+6. [...]
+
+
+## CODE STANDARDS
+1. I put the methods with same name as Java lib (pascalCasing) to all imterpreters have same mehtod name
+2. I like to use (false == condition) instead (!condition), becous i always miss the "!" out my vision
+3. Do not use Linq, to make this code compatible with olders frameworks versions
+4. [...]
 
 
 ## DOCUMENTATION
 
 :TODO
+
 
 ## LICENSE
 
