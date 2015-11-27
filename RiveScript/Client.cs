@@ -43,7 +43,10 @@ namespace RiveScript
         /// <param name="value"></param>
         public void set(string name, string value)
         {
-            data.Add(name, value);
+            if (data.ContainsKey(name))
+                data[name] = value;
+            else
+                data.Add(name, value);
         }
 
         /// <summary>

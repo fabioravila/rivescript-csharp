@@ -256,7 +256,8 @@ namespace RiveScript
                         var trigger = e.ToString(); //Copy the element
 
                         // Count the number of whole words it has.
-                        var words = Regex.Split(trigger, "[ |\\*|\\#|\\_]");
+                        //Javacode: String[] words = trigger.split("[ |\\*|\\#|\\_]");
+                        var words = Regex.Split(trigger, "[ |\\*|\\#|_]");
                         int wc = 0;
                         for (int w = 0; w < words.Length; w++)
                         {

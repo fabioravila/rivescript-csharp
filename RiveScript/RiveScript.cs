@@ -1027,6 +1027,56 @@ namespace RiveScript
 
         #region Reply Methods
 
+
+        /// <summary>
+        /// Get a reply from the RiveScript interpreter.
+        /// </summary>
+        /// <param name="username"> A unique user ID for the user chatting with the bot.</param>
+        /// <param name="message">The user's message to the bot.</param>
+        /// <returns></returns>
+        public string reply(string username, string message)
+        {
+            say("Get reply to [" + username + "] " + message);
+
+            // Format their message first.
+            message = formatMessage(message);
+
+            // This will hold the final reply.
+            string reply = "";
+
+            // If the BEGIN statement exists, consult it first.
+            if (topics.exists("__begin__"))
+            {
+                string begin = this.reply(username, "request", true, 0);
+
+                // OK to continue?
+                if (begin.IndexOf("{ok}") > -1)
+                {
+                    // Get a reply then.
+                    reply = this.reply(username, message, false, 0);
+                    begin = begin.ReplaceRegex("\\{ok\\}", reply);
+                    reply = begin;
+                }
+
+                // Run final substitutions.
+                reply = processTags(username, clients.client(username), message, reply,
+                    new List<string>(), new List<string>(),
+                    0);
+            }
+            else
+            {
+                // No BEGIN, just continue.
+                reply = this.reply(username, message, false, 0);
+            }
+
+            // Save their chat history.
+            clients.client(username).addInput(message);
+            clients.client(username).addReply(reply);
+
+            // Return their reply.
+            return reply;
+        }
+
         /// <summary>
         ///  Internal method for getting a reply.
         /// </summary>
@@ -1544,8 +1594,8 @@ namespace RiveScript
 
             // Simple regexps are simple.
             regexp = regexp.ReplaceRegex("\\*", "(.+?)");             // *  ->  (.+?)
-            regexp = regexp.ReplaceRegex("#", "(\\\\d+?)");         // #  ->  (\d+?)
-            regexp = regexp.ReplaceRegex("_", "(\\\\w+?)");     // _  ->  ([A-Za-z ]+?)
+            regexp = regexp.ReplaceRegex("#", "(\\d+?)");         // #  ->  (\d+?)
+            regexp = regexp.ReplaceRegex("_", "(\\w+?)");     // _  ->  ([A-Za-z ]+?)
             regexp = regexp.ReplaceRegex("\\{weight=\\d+\\}", "");    // Remove {weight} tags
             regexp = regexp.ReplaceRegex("<zerowidthstar>", "(.*?)"); // *  ->  (.*?)
 
@@ -1589,7 +1639,7 @@ namespace RiveScript
             }
 
             // Make \w more accurate for our purposes.
-            regexp = regexp.ReplaceRegex("\\\\w", "[a-z ]");
+            regexp = regexp.Replace("\\w", "[A-Za-z ]");
 
             // Filter in arrays.
             if (regexp.IndexOf("@") > -1)
@@ -2142,6 +2192,11 @@ namespace RiveScript
 
             // Sanitize what's left.
             message = message.ReplaceRegex("[^a-z0-9 ]", "");
+
+            //Trim start and end
+            message = message.TrimStart();
+            message = message.TrimEnd(); 
+
             return message;
         }
 
