@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace RiveScript
 {
@@ -31,8 +29,6 @@ namespace RiveScript
         private static readonly string CMD_CONDITION = "*";
         private static readonly string CMD_LABEL = ">";
         private static readonly string CMD_ENDLABEL = "<";
-
-
 
         // The topic data structure, and the "thats" data structure.
         private TopicManager topics = new TopicManager();

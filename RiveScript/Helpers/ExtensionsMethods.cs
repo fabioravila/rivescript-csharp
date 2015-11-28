@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+
 
 namespace RiveScript
 {
@@ -12,7 +10,6 @@ namespace RiveScript
     /// </summary>
     internal static class ExtensionsMethods
     {
-
         public static void AddRange<T>(this ICollection<T> collection, T[] itens)
         {
             foreach (var item in itens)
@@ -21,18 +18,15 @@ namespace RiveScript
             }
         }
 
-
         public static string[] Split(this string @this, string pattern)
         {
             return @this.Split(new[] { pattern }, StringSplitOptions.None);
         }
 
-
         public static string[] SplitRegex(this string @this, string pattern)
         {
             return new Regex(pattern).Split(@this);
         }
-
 
         public static string[] SplitRegex(this string @this, string pattern, int count)
         {
@@ -43,7 +37,6 @@ namespace RiveScript
         {
             return new Regex(pattern).Split(@this, count, startat);
         }
-
 
         public static string ReplaceRegex(this string @this, string pattern, string replacement)
         {
@@ -60,10 +53,12 @@ namespace RiveScript
             return new Regex(pattern).Replace(@this, replacement, count, startat);
         }
 
-        //public static char ToLower(this char c)
-        //{
-        //    return c.
-
-        //}
+        public static T[] ToArray<T>(this IEnumerable<T> collection)
+        {
+            //TODO: I can do better!
+            var list = new List<T>();
+            list.AddRange(collection);
+            return list.ToArray();
+        }
     }
 }

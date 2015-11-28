@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RiveScript
 {
@@ -24,16 +21,12 @@ namespace RiveScript
         {
             this.id = id;
 
-
-
-
             //Initial user´s hitory
             for (int i = 0; i < input.Length; i++)
             {
                 input[i] = Constants.Undefined;
                 reply[i] = Constants.Undefined;
             }
-
         }
 
         /// <summary>

@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+
 
 namespace RiveScript
 {
@@ -22,7 +20,6 @@ namespace RiveScript
 
         //Currently selected topic
         private string name = "";
-
 
         /// <summary>
         /// Create a topic manager. Only one per RiveScript interpreter needed.
@@ -96,14 +93,14 @@ namespace RiveScript
             // If raw, get the unsorted triggers directly from the hash.
             if (raw)
             {
-                // Turn the trigger keys into a list.
-
-                var trigs = triggers.Keys.ToList();
+                var trigs = triggers.Keys;
                 if (debug)
                 {
-                    trigs.ForEach(t => say("RAW TRIGGER: " + t));
+                    foreach (var t in trigs)
+                    {
+                        say("RAW TRIGGER: " + t);
+                    }
                 }
-
                 return trigs.ToArray();
             }
 
