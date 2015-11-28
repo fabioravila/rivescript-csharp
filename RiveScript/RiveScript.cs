@@ -490,6 +490,8 @@ namespace RiveScript
             // File scoped parser options.
             IDictionary<string, string> local_options = new Dictionary<string, string>();
             local_options.Add("concat", "none");
+            //local_options.Add("concat", "space");
+            //local_options.Add("concat", "newline");
 
             // The given "code" is an array of lines, so jump right in.
             for (int i = 0; i < code.Length; i++)
@@ -499,7 +501,8 @@ namespace RiveScript
                 say("Line: " + line);
 
                 // Trim the line of whitespaces.
-                line = line.Trim();
+                //Note: I can´t do line.Trim() becouse this remove on end \n to.
+                line = line.TrimStart().TrimEnd(' ');
 
                 // Are we inside an object?
                 if (inobj)
@@ -563,7 +566,8 @@ namespace RiveScript
 
                 // Separate the command from the rest of the line.
                 string cmd = line.Substring(0, 1);
-                line = line.Substring(1).Trim();
+                //Note: I can´t do line.Trim() becou this remove \n to.
+                line = line.Substring(1).TrimStart().TrimEnd(' ');
                 say("\tCmd: " + cmd);
 
                 // Ignore inline comments.
@@ -584,7 +588,7 @@ namespace RiveScript
                 for (int j = (i + 1); j < code.Length; j++)
                 {
                     // Peek ahead.
-                    string peek = code[j].Trim();
+                    string peek = code[j].TrimStart().TrimEnd(' ');
 
                     // Skip blank.
                     if (peek.Length == 0)
@@ -594,7 +598,7 @@ namespace RiveScript
 
                     // Get the command.
                     string peekCmd = peek.Substring(0, 1);
-                    peek = peek.Substring(1).Trim();
+                    peek = peek.Substring(1).TrimStart().TrimEnd(' ');
 
                     // Only continue if the lookahead line has any data.
                     if (peek.Length > 0)
@@ -639,14 +643,15 @@ namespace RiveScript
                             {
                                 // Concatenation character?
                                 string concat = "";
-                                if (local_options["concat"].Equals("space"))
+                                if (local_options["concat"] == "space")
                                 {
                                     concat = " ";
                                 }
-                                else if (local_options["concat"].Equals("newline"))
+                                else if (local_options["concat"] == "newline")
                                 {
                                     concat = "\n";
                                 }
+
                                 line += concat + peek;
                             }
                             else
@@ -812,7 +817,7 @@ namespace RiveScript
                     // > LABEL
                     say("\t> LABEL");
                     //string[] label =  line.split("\\s+");
-                    string[] label = new Regex("\\s+").Split(line);
+                    string[] label = line.SplitRegex("\\s+");
                     string type = "";
                     string name = "";
                     if (label.Length >= 1)

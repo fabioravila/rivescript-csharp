@@ -1,5 +1,6 @@
 ﻿
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Linq;
 
 namespace RiveScript.Tests
 {
@@ -142,6 +143,12 @@ namespace RiveScript.Tests
         {
             Assert.AreEqual(expected, target);
         }
+
+        public static void AssertContains<T>(this T expected, T[] target)
+        {
+            Assert.IsTrue(target.Contains(expected));
+        }
+
     }
 }
 
