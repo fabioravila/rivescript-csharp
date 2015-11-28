@@ -67,6 +67,12 @@ namespace RiveScript
         /// </summary>
         public RiveScript() : this(false) { }
 
+        public void setDebug(bool debug)
+        {
+            this.debug = debug;
+            Topic.setDebug(debug);
+        }
+
         /// <summary>
         /// Return the text of the last error message given.
         /// </summary>
@@ -339,11 +345,15 @@ namespace RiveScript
         {
             if (output == null || output == "<undef>")
             {
-                subs.Remove(pattern);
+                if (subs.ContainsKey(pattern))
+                    subs.Remove(pattern);
             }
             else
             {
-                subs.Add(pattern, output);
+                if (subs.ContainsKey(pattern))
+                    subs[pattern] = output;
+                else
+                    subs.Add(pattern, output);
             }
 
             return true;
@@ -1262,6 +1272,11 @@ namespace RiveScript
 
                         foundMatch = true;
                         matchedTrigger = trigger;
+                        break;
+                    }
+
+                    if (foundMatch)
+                    {
                         break;
                     }
                 }
@@ -2191,7 +2206,7 @@ namespace RiveScript
 
             //Trim start and end
             message = message.TrimStart();
-            message = message.TrimEnd(); 
+            message = message.TrimEnd();
 
             return message;
         }

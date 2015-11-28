@@ -9,12 +9,8 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Capture_WildCard_Single_Word_End_Letters_Only()
         {
-            var rs = new RiveScript(true);
-
-            rs.stream(new[] { "+ my name is _",
-                              "- Hello, <star>."});
-
-            rs.sortReplies();
+            var rs = TestHelper.getStreamed(new[] { "+ my name is _",
+                                                    "- Hello, <star>."});
 
             var reply = rs.reply("default", " my name is Bob");
 
@@ -24,13 +20,8 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Capture_WildCard_Single_Words_Middle_Letters_Only()
         {
-            var rs = new RiveScript(true);
-
-            rs.stream(new[] { "+ my name is _ for you",
-                              "- Hello <star>"});
-
-            rs.sortReplies();
-
+            var rs = TestHelper.getStreamed(new[] { "+ my name is _ for you",
+                                                    "- Hello <star>"});
             var reply = rs.reply("default", " my name is Bob for you");
 
             Assert.AreEqual("Hello bob", reply);
@@ -39,12 +30,8 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Capture_WildCard_Single_Words_Start_Letters_Only()
         {
-            var rs = new RiveScript(true);
-
-            rs.stream(new[] { "+ _ is my name",
-                              "- Hello <star>"});
-
-            rs.sortReplies();
+            var rs = TestHelper.getStreamed(new[] { "+ _ is my name",
+                                                    "- Hello <star>"});
 
             var reply = rs.reply("default", " Bob is my name");
 
@@ -54,12 +41,8 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Capture_WildCard_Multiple_Words_End_Letters_Only()
         {
-            var rs = new RiveScript(true);
-
-            rs.stream(new[] { "+ my name is _",
-                              "- Hello, <star>."});
-
-            rs.sortReplies();
+            var rs = TestHelper.getStreamed(new[] { "+ my name is _",
+                                                    "- Hello, <star>."});
 
             var reply = rs.reply("default", " my name is Bob Lee");
 
@@ -69,12 +52,9 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Capture_WildCard_Multiple_Words_Middle_Letters_Only()
         {
-            var rs = new RiveScript(true);
+            var rs = TestHelper.getStreamed(new[] { "+ my name is _ for you",
+                                                    "- Hello <star>"});
 
-            rs.stream(new[] { "+ my name is _ for you",
-                              "- Hello <star>"});
-
-            rs.sortReplies();
 
             var reply = rs.reply("default", " my name is Bob Lee for you");
 
@@ -84,12 +64,9 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Capture_WildCard_Multiple_Words_Start_Letters_Only()
         {
-            var rs = new RiveScript(true);
+            var rs = TestHelper.getStreamed(new[] { "+ _ is my name",
+                                                    "- Hello <star>"});
 
-            rs.stream(new[] { "+ _ is my name",
-                              "- Hello <star>"});
-
-            rs.sortReplies();
 
             var reply = rs.reply("default", " Bob Lee is my name");
 
@@ -99,12 +76,8 @@ namespace RiveScript.Tests
         [TestMethod]
         public void WildCard_LetterOnly_Should_Ignore_Single_With_Numbers()
         {
-            var rs = new RiveScript(true);
-
-            rs.stream(new[] { "+ my name is _",
-                              "- Hello, <star>."});
-
-            rs.sortReplies();
+            var rs = TestHelper.getStreamed(new[] { "+ my name is _",
+                                                    "- Hello, <star>."});
 
             var reply = rs.reply("default", " my name is 123");
 
@@ -114,12 +87,8 @@ namespace RiveScript.Tests
         [TestMethod]
         public void WildCard_LetterOnly_Should_Ignore_Multiple_With_Numbers()
         {
-            var rs = new RiveScript(true);
-
-            rs.stream(new[] { "+ my name is _",
-                              "- Hello, <star>."});
-
-            rs.sortReplies();
+            var rs = TestHelper.getStreamed(new[] { "+ my name is _",
+                                                    "- Hello, <star>."});
 
             var reply = rs.reply("default", " my name is Bob 123");
 
@@ -129,12 +98,8 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Capture_WildCard_Start_Numbers_Only()
         {
-            var rs = new RiveScript(true);
-
-            rs.stream(new[] { "+ # is my age",
-                              "- Your old is <star>"});
-
-            rs.sortReplies();
+            var rs = TestHelper.getStreamed(new[] { "+ # is my age",
+                                                    "- Your old is <star>"});
 
             var reply = rs.reply("default", "  27 is my age");
 
@@ -144,12 +109,8 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Capture_WildCard_End_Numbers_Only()
         {
-            var rs = new RiveScript(true);
-
-            rs.stream(new[] { "+ my age is #",
-                              "- Your old is <star>"});
-
-            rs.sortReplies();
+            var rs = TestHelper.getStreamed(new[] { "+ my age is #",
+                                                    "- Your old is <star>"});
 
             var reply = rs.reply("default", "my age is 27");
 
@@ -159,12 +120,8 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Capture_WildCard_Middle_Numbers_Only()
         {
-            var rs = new RiveScript(true);
-
-            rs.stream(new[] { "+ is # my age",
-                              "- Your old is <star>"});
-
-            rs.sortReplies();
+            var rs = TestHelper.getStreamed(new[] { "+ is # my age",
+                                                    "- Your old is <star>"});
 
             var reply = rs.reply("default", "Is 27 my age");
 
@@ -174,12 +131,8 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Multiple_WildCard_Capture()
         {
-            var rs = new RiveScript(true);
-
-            rs.stream(new[] { "+ _ told me to say *",
-                              "- So did you say \"<star2>\" because \"<star1>\" told you to?"});
-
-            rs.sortReplies();
+            var rs = TestHelper.getStreamed(new[] { "+ _ told me to say *",
+                                                    "- So did you say \"<star2>\" because \"<star1>\" told you to?"});
 
             var reply = rs.reply("default", "Bob told me to say hello man");
 

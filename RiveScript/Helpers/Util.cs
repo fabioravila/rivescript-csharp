@@ -40,12 +40,14 @@ namespace RiveScript
                 var result = hash[sorted[i]];
                 var rot13 = Rot13.Transform(result);
 
-                var quotemeta = @pattern;
+                //Original JavaCode: var quotemeta = @pattern;
+                //Run escape make sure no conflict like * in substitution
+                var quotemeta = Regex.Escape(@pattern);
 
-                text = Regex.Replace(text, ("^" + quotemeta + "$"), ("<rot13sub>" + rot13 + "<bus31tor>"));
-                text = Regex.Replace(text, ("^" + quotemeta + "(\\W+)"), ("<rot13sub>" + rot13 + "<bus31tor>$1"));
-                text = Regex.Replace(text, ("(\\W+)" + quotemeta + "(\\W+)"), ("$1<rot13sub>" + rot13 + "<bus31tor>$2"));
-                text = Regex.Replace(text, ("(\\W+)" + quotemeta + "$"), ("$1<rot13sub>" + rot13 + "<bus31tor>"));
+                text = text.ReplaceRegex(("^" + quotemeta + "$"), ("<rot13sub>" + rot13 + "<bus31tor>"));
+                text = text.ReplaceRegex(("^" + quotemeta + "(\\W+)"), ("<rot13sub>" + rot13 + "<bus31tor>$1"));
+                text = text.ReplaceRegex(("(\\W+)" + quotemeta + "(\\W+)"), ("$1<rot13sub>" + rot13 + "<bus31tor>$2"));
+                text = text.ReplaceRegex(("(\\W+)" + quotemeta + "$"), ("$1<rot13sub>" + rot13 + "<bus31tor>"));
             }
 
             if (text.IndexOf("<rot13sub>") > -1)

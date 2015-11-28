@@ -13,12 +13,8 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Single_Reply_Correct_Trigger_Should_Response_Correct_Reply()
         {
-            var rs = new RiveScript(true);
-
-            rs.stream(new[] { "+ hello bot",
-                              "- Hello human!" });
-            rs.sortReplies();
-
+            var rs = TestHelper.getStreamed(new[] { "+ hello bot",
+                                                    "- Hello human!" });
 
             var reply = rs.reply("default", "hello bot");
 
@@ -28,14 +24,9 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Single_Reply_Correct_Trigger_Should_Response_Correct_Reply_Ignoring_Comments()
         {
-            var rs = new RiveScript(true);
-
-            rs.stream(new[] { "// This is the simple trigger again",
-                              "+ hello bot // What the human says" ,
-                              "- Hello human! // How the bot responds" });
-
-            rs.sortReplies();
-
+            var rs = TestHelper.getStreamed(new[] { "// This is the simple trigger again",
+                                                    "+ hello bot // What the human says" ,
+                                                    "- Hello human! // How the bot responds" });
 
             var reply = rs.reply("default", "hello bot");
 
@@ -45,17 +36,12 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Correct_Trigger_Should_Response_One_Of_Correct_Replies()
         {
-            var rs = new RiveScript(true);
-
-            rs.stream(new[] { "+ hello bot",
-                              "- Hello human!",
-                              "- Hello!",
-                              "- Hi there!",
-                              "- Hey!",
-                              "- Hi!" });
-
-            rs.sortReplies();
-
+            var rs = TestHelper.getStreamed(new[] { "+ hello bot",
+                                                    "- Hello human!",
+                                                    "- Hello!",
+                                                    "- Hi there!",
+                                                    "- Hey!",
+                                                    "- Hi!" });
 
             var reply = rs.reply("default", "hello bot");
 
@@ -69,14 +55,9 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Wheight_100_Shoud_Be_Only_Correct_Reply_Of_First()
         {
-            var rs = new RiveScript(true);
-
-            rs.stream(new[] { "+ hello bot",
-                              "- Hello human!{weight=100}",
-                              "- Hello!" });
-
-            rs.sortReplies();
-
+            var rs = TestHelper.getStreamed(new[] { "+ hello bot",
+                                                    "- Hello human!{weight=100}",
+                                                    "- Hello!" });
 
             var reply = rs.reply("default", "hello bot");
 
@@ -86,13 +67,9 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Wheight_100_Shoud_Be_Only_Correct_Reply_Of_Second()
         {
-            var rs = new RiveScript(true);
-
-            rs.stream(new[] { "+ hello bot",
-                              "- Hello human!",
-                              "- Hello!{weight=100}" });
-
-            rs.sortReplies();
+            var rs = TestHelper.getStreamed(new[] { "+ hello bot",
+                                                    "- Hello human!",
+                                                    "- Hello!{weight=100}" });
 
             var reply = rs.reply("default", "hello bot");
 

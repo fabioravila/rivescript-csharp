@@ -360,9 +360,9 @@ namespace RiveScript
         public string[] listPrevious()
         {
             var list = new List<string>();
-            foreach (ICollection<string> value in previous.Values)
+            foreach (string key in previous.Keys)
             {
-                list.AddRange(value);
+                list.Add(key);
             }
             return list.ToArray();
         }
@@ -406,7 +406,7 @@ namespace RiveScript
                     _hasPrevious = true;
 
                     //var parts = pattern.Split("\\{previous\\}", 2); //Java original code
-                    var parts = pattern.Split(new string[] { @"\\{previous\\}" }, StringSplitOptions.None);
+                    var parts = pattern.SplitRegex("\\{previous\\}", 2);
                     var previous = parts[1];
 
                     // Keep it under the %Previous.
