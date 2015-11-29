@@ -22,10 +22,10 @@ PS: This is my first public library, then I'm sorry for the lack of knowledge of
 ## MILESTONES
 
 1. Make a port of actual rivescript-java - Make a port of current Java code, 'shame on me =]'
-2. **Create some basic tests** - based on RiveScript 'official' demos
-3. Complete the code documentation
-4. Push to github on public repository
-5. Develop a native objects for csharp
+2. Create some basic tests - based on RiveScript 'official' demos and myself
+3. Push to github on public repository
+4. **Develop a native objects for csharp**
+5. Complete the code documentation
 6. [...]
 
 
