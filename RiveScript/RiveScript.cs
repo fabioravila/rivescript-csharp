@@ -501,8 +501,7 @@ namespace RiveScript
                 say("Line: " + line);
 
                 // Trim the line of whitespaces.
-                //Note: I can´t do line.Trim() becouse this remove on end \n to.
-                line = line.TrimStart().TrimEnd(' ');
+                line = line.TrimRS();
 
                 // Are we inside an object?
                 if (inobj)
@@ -566,8 +565,8 @@ namespace RiveScript
 
                 // Separate the command from the rest of the line.
                 string cmd = line.Substring(0, 1);
-                //Note: I can´t do line.Trim() becou this remove \n to.
-                line = line.Substring(1).TrimStart().TrimEnd(' ');
+                line = line.Substring(1).TrimRS();
+
                 say("\tCmd: " + cmd);
 
                 // Ignore inline comments.
@@ -588,7 +587,7 @@ namespace RiveScript
                 for (int j = (i + 1); j < code.Length; j++)
                 {
                     // Peek ahead.
-                    string peek = code[j].TrimStart().TrimEnd(' ');
+                    string peek = code[j].TrimRS();
 
                     // Skip blank.
                     if (peek.Length == 0)
@@ -598,7 +597,7 @@ namespace RiveScript
 
                     // Get the command.
                     string peekCmd = peek.Substring(0, 1);
-                    peek = peek.Substring(1).TrimStart().TrimEnd(' ');
+                    peek = peek.Substring(1).TrimRS();
 
                     // Only continue if the lookahead line has any data.
                     if (peek.Length > 0)

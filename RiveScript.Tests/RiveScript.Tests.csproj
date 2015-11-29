@@ -58,6 +58,7 @@
     <Compile Include="Helper\TestHelper.cs" />
     <Compile Include="OptionalTest.cs" />
     <Compile Include="RiveScript2TestSuite.cs" />
+    <Compile Include="InheritsIncludesTest.cs" />
     <Compile Include="WildCardTest.cs" />
   </ItemGroup>
   <ItemGroup>

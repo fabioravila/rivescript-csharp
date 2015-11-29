@@ -263,7 +263,7 @@ namespace RiveScript
             result.Add(topic);
 
             // Does this topic include others?
-            String[] includes = this.topic(topic).listIncludes();
+            var includes = this.topic(topic).listIncludes();
             for (int i = 0; i < includes.Length; i++)
             {
                 //Recurse.
@@ -275,11 +275,11 @@ namespace RiveScript
             }
 
             // Does it inherit?
-            String[] inherits = this.topic(topic).listInherits();
+            var inherits = this.topic(topic).listInherits();
             for (int i = 0; i < inherits.Length; i++)
             {
                 //Recurse
-                var children = this.getTopicTree(includes[i], (depth + 1));
+                var children = this.getTopicTree(inherits[i], (depth + 1));
                 for (int j = 0; j < children.Length; j++)
                 {
                     result.Add(children[j]);
