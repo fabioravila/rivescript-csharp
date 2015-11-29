@@ -124,10 +124,9 @@ namespace RiveScript
             var files = new List<string>();
             foreach (var f in Directory.GetFiles(path, "*.*", SearchOption.AllDirectories))
             {
-                var fi = new FileInfo(f);
-                if (Array.IndexOf(exts, fi.Extension) > -1)
+                if (Array.IndexOf(exts, Path.GetExtension(f)) > -1)
                 {
-                    files.Add(fi.FullName);
+                    files.Add(f);
                 }
             }
 
@@ -140,7 +139,7 @@ namespace RiveScript
             // Parse each file.
             foreach (var file in files)
             {
-                loadFile(path + "/" + file);
+                loadFile(file);
             }
 
             return true;
@@ -160,7 +159,7 @@ namespace RiveScript
         /// Load a single RiveScript document.
         /// </summary>
         /// <param name="file">file Path to a RiveScript document.</param>
-        private bool loadFile(string file)
+        public bool loadFile(string file)
         {
             say("Load file: " + file);
 
@@ -1643,7 +1642,7 @@ namespace RiveScript
                     // If this optional had a star or anything in it, e.g. [*],
                     // make it non-matching.
                     pipes = pipes.ReplaceRegex("\\(.+?\\)", "(?:.+?)");
-                    pipes = pipes.ReplaceRegex("\\(\\d+?\\)", "(?:\\\\d+?");
+                    pipes = pipes.ReplaceRegex("\\(\\d+?\\)", "(?:\\\\d+?)");
                     pipes = pipes.ReplaceRegex("\\(\\w+?\\)", "(?:\\\\w+?)");
 
                     // Put the new text in.
