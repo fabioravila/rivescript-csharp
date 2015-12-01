@@ -61,6 +61,7 @@
     <Compile Include="InheritsIncludesTest.cs" />
     <Compile Include="PublicIssuesTest.cs" />
     <Compile Include="LoadTests.cs" />
+    <Compile Include="CSharpObjectHandlerTest.cs" />
     <Compile Include="WildCardTest.cs" />
   </ItemGroup>
   <ItemGroup>
