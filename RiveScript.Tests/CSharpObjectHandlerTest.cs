@@ -10,37 +10,54 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Hello_World_Simple_Code()
         {
-            var or = new CSharp();
+            var rs = new RiveScript();
+            var oh = new CSharp();
 
-            or.onLoad("test", new string[] { "return \"Hello world\"; " });
+            oh.onLoad("test", new string[] { "return \"Hello world\"; " });
 
-            var result = or.onCall("test", "default", new string[] { "" });
+            var result = oh.onCall("test", rs, new string[] { "" });
 
             Assert.AreEqual("Hello world", result);
         }
 
         [TestMethod]
-        public void Hello_World_Reply_User_Id()
+        public void Hello_World_Reply_RS_Instance()
         {
-            var or = new CSharp();
+            var rs = new RiveScript();
+            var oh = new CSharp();
 
-            or.onLoad("test", new string[] { "return user; " });
+            oh.onLoad("test", new string[] { "return rs.GetHashCode().ToString(); " });
 
-            var result = or.onCall("test", "default", new string[] { "" });
+            var result = oh.onCall("test", rs, new string[] { "" });
 
-            Assert.AreEqual("default", result);
+            Assert.AreEqual(rs.GetHashCode().ToString(), result);
         }
 
         [TestMethod]
         public void Hello_World_Reply_Concatenet_Args_Id()
         {
-            var or = new CSharp();
+            var rs = new RiveScript();
+            var oh = new CSharp();
 
-            or.onLoad("test", new string[] { "return String.Join(\",\", args); " });
+            oh.onLoad("test", new string[] { "return String.Join(\",\", args); " });
 
-            var result = or.onCall("test", "default", new string[] { "1", "2", "3" });
+            var result = oh.onCall("test", rs, new string[] { "1", "2", "3" });
 
             Assert.AreEqual("1,2,3", result);
+        }
+
+
+        [TestMethod]
+        public void Hello_World_Reply_CurrentUser_Not_Initialized()
+        {
+            var rs = new RiveScript();
+            var oh = new CSharp();
+
+            oh.onLoad("test", new string[] { "return rs.currentUser();" });
+
+            var result = oh.onCall("test", rs, new string[] { "" });
+
+            Assert.AreEqual(Constants.Undefined, result);
         }
     }
 }

@@ -20,6 +20,6 @@ namespace RiveScript
         /// <param name="user">The user's ID</param>
         /// <param name="args">The argument list from the call tag</param>
         /// <returns></returns>
-        string onCall(string name, string user, string[] args);
+        string onCall(string name, RiveScript rs, string[] args);
     }
 }
