@@ -10,21 +10,19 @@ namespace RiveScript.lang
 {
     public class CSharp : IObjectHandler
     {
-        //THINK: Shoud i have cache assemblies, objects or func delegates
+        //THINK: Shoud i have cache assemblies and func delegates or just delegates?
         private IDictionary<string, Assembly> assemblies = new Dictionary<string, Assembly>();
+        private IDictionary<string, Func<RiveScript, string[], string>> methods = new Dictionary<string, Func<RiveScript, string[], string>>();
         private string ns = "RiveScript.Objects";
 
 
         public string onCall(string name, RiveScript rs, string[] args)
         {
-            if (false == assemblies.ContainsKey(name))
+            if (false == assemblies.ContainsKey(name) ||
+                false == methods.ContainsKey(name))
                 return "ERR: Could not find a object code for " + name + ".";
 
-            var ass = assemblies[name];
-
-            var method = ass.GetType(ns + "." + name).GetMethod("method");
-
-            var del = (Func<RiveScript, string[], string>)Delegate.CreateDelegate(typeof(Func<RiveScript, string[], string>), method);
+            var del = methods[name];
 
             return del(rs, args);
         }
@@ -32,7 +30,10 @@ namespace RiveScript.lang
         public bool onLoad(string name, string[] code)
         {
             ValidateCode(name, code);
+
             var ass = CreateAssembly(name, code);
+            var method = ass.GetType(ns + "." + name).GetMethod("method");
+            var del = (Func<RiveScript, string[], string>)Delegate.CreateDelegate(typeof(Func<RiveScript, string[], string>), method);
 
             if (false == assemblies.ContainsKey(name))
             {
@@ -41,6 +42,15 @@ namespace RiveScript.lang
             else
             {
                 assemblies[name] = ass;
+            }
+
+            if (false == methods.ContainsKey(name))
+            {
+                methods.Add(name, del);
+            }
+            else
+            {
+                methods[name] = del;
             }
 
             return true;
@@ -84,19 +94,21 @@ namespace RiveScript.lang
                 line = line.Trim();
                 if (line.StartsWith("reference"))
                 {
-                    var ra = Extract(line);
+                    var ra = line.Replace("reference", "")
+                                 .Replace(" ", "")
+                                 .Replace(";", "");
+
                     ra = ra.EndsWith(".dll") ? ra : (ra + ".dll");
                     parameters.ReferencedAssemblies.Add(ra);
                     code[i] = "";
                 }
-                else if (line.StartsWith("using"))
+                else if (line.StartsWith("using") && false == line.StartsWith("using (")
+                                                  && false == line.StartsWith("using("))
                 {
-                    var ra = Extract(line);
-                    final.Add(ra); //Early add usings
+                    final.Add(line); //Early add usings
                     code[i] = "";
                 }
             }
-
 
             final.Add("namespace " + ns);
             final.Add("{");
@@ -128,12 +140,6 @@ namespace RiveScript.lang
             }
         }
 
-        public string Extract(string line)
-        {
-            return line.Replace("referente", "")
-                       .Replace(" ", "")
-                       .Replace(";", "");
-        }
 
         public void ValidateCode(string name, string[] code)
         {
