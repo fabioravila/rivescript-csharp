@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RiveScript", "RiveScript\Ri
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RiveScript.Tests", "RiveScript.Tests\RiveScript.Tests.csproj", "{F63F1AA9-97D9-468C-8D0C-8B6D3E3D7219}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Playground", "Playground\Playground.csproj", "{C5CEB150-75C4-4F16-B343-6BB3FCAB6D27}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{F63F1AA9-97D9-468C-8D0C-8B6D3E3D7219}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F63F1AA9-97D9-468C-8D0C-8B6D3E3D7219}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F63F1AA9-97D9-468C-8D0C-8B6D3E3D7219}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C5CEB150-75C4-4F16-B343-6BB3FCAB6D27}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5CEB150-75C4-4F16-B343-6BB3FCAB6D27}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5CEB150-75C4-4F16-B343-6BB3FCAB6D27}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5CEB150-75C4-4F16-B343-6BB3FCAB6D27}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
