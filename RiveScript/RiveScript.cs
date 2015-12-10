@@ -48,7 +48,8 @@ namespace RiveScript
         private IDictionary<string, string> subs = new Dictionary<string, string>();                                // ! sub
         private string[] subs_s = null;                                                                             // sorted subs
         private IDictionary<string, string> person = new Dictionary<string, string>();                              // ! person
-        private string[] person_s = null;                                                                           // sorted persons
+        private string[] person_s = null; // sorted persons
+        private string _currentUser = Constants.Undefined;
 
 
         /// <summary>
@@ -466,6 +467,11 @@ namespace RiveScript
             {
                 return null;
             }
+        }
+
+        public string currentUser()
+        {
+            return _currentUser;
         }
 
         #endregion
@@ -1047,6 +1053,8 @@ namespace RiveScript
         {
             say("Get reply to [" + username + "] " + message);
 
+            _currentUser = username;
+
             // Format their message first.
             message = formatMessage(message);
 
@@ -1081,6 +1089,8 @@ namespace RiveScript
             // Save their chat history.
             clients.client(username).addInput(message);
             clients.client(username).addReply(reply);
+
+            _currentUser = Constants.Undefined;
 
             // Return their reply.
             return reply;
@@ -2118,7 +2128,7 @@ namespace RiveScript
                     {
                         // What language handles it?
                         string lang = objects[name];
-                        string result = handlers[lang].onCall(name, user, args.ToArray());
+                        string result = handlers[lang].onCall(name, this, args.ToArray());
                         reply = reply.Replace(tag, result);
                     }
                     else

@@ -70,5 +70,26 @@ namespace RiveScript
             list.AddRange(collection);
             return list.ToArray();
         }
+
+        public static T[] SubArray<T>(this T[] data, int index, int length)
+        {
+            T[] result = new T[length];
+            Array.Copy(data, index, result, 0, length);
+            return result;
+        }
+
+        public static T[] SubArray<T>(this T[] data, int index)
+        {
+            return data.SubArray(index, data.Length - index);
+        }
+
+        public static bool Contains(this string @this, string value)
+        {
+            if (string.IsNullOrWhiteSpace(@this))
+                return false;
+
+            return (@this.IndexOf(value) > -1);
+        }
+
     }
 }

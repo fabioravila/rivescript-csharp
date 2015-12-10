@@ -21,6 +21,7 @@ namespace RiveScript.Tests
 
             rs.sortReplies();
 
+            rs.reply("aa bogus").AssertAreEqual("reply");
             rs.reply("aabogus").AssertAreNotEqual("reply");
         }
     }
