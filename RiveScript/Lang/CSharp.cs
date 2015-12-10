@@ -14,7 +14,22 @@ namespace RiveScript.lang
         private IDictionary<string, Assembly> assemblies = new Dictionary<string, Assembly>();
         private IDictionary<string, Func<RiveScript, string[], string>> methods = new Dictionary<string, Func<RiveScript, string[], string>>();
         private string ns = "RiveScript.Objects";
+        private readonly string currentAssembly = null;
+        private readonly string riveAssembly;
 
+        public CSharp() : this(true) { }
+
+
+        public CSharp(bool tryAddEntryAssembly)
+        {
+            //Get entry assembly name
+            if (tryAddEntryAssembly && Assembly.GetEntryAssembly() != null)
+            {
+                currentAssembly = System.IO.Path.GetFileName(Assembly.GetEntryAssembly().Location);
+            }
+
+            riveAssembly = System.IO.Path.GetFileName(typeof(IObjectHandler).Assembly.Location);
+        }
 
         public string onCall(string name, RiveScript rs, string[] args)
         {
@@ -56,8 +71,7 @@ namespace RiveScript.lang
             return true;
         }
 
-
-        private Assembly CreateAssembly(string name, string[] code)
+        protected Assembly CreateAssembly(string name, string[] code)
         {
             /*
             * The For now we will create one assembly for onLoad code call
@@ -81,7 +95,12 @@ namespace RiveScript.lang
 
             parameters.ReferencedAssemblies.Add("System.dll");//Add basic assemblies
             parameters.ReferencedAssemblies.Add("System.Core.dll");
-            parameters.ReferencedAssemblies.Add("RiveScript.dll");
+
+            //Add refernce to RiveScript assembly
+            parameters.ReferencedAssemblies.Add(riveAssembly);
+            //Add reference to current execution assemblie
+            if (false == string.IsNullOrWhiteSpace(currentAssembly))
+                parameters.ReferencedAssemblies.Add(currentAssembly);
 
 
             //Find all references and usings
@@ -140,8 +159,7 @@ namespace RiveScript.lang
             }
         }
 
-
-        public void ValidateCode(string name, string[] code)
+        protected void ValidateCode(string name, string[] code)
         {
             if (code == null || code.Length == 0)
                 throw new InvalidOperationException("ERR: object " + name + " - No source code found");

@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RiveScript.lang;
+using RiveScript.Tests.Helper;
 
 namespace RiveScript.Tests
 {
@@ -103,7 +104,6 @@ namespace RiveScript.Tests
             Assert.AreEqual("result is: 25", result);
         }
 
-
         [TestMethod]
         public void Execute_Full_Object_Call_Custom_References()
         {
@@ -130,5 +130,36 @@ namespace RiveScript.Tests
             Assert.AreEqual("enum is: Added", result);
         }
 
+
+        [TestMethod]
+        public void Execute_Object_Call_Entry_Assembly_Without_Explicit_Reference()
+        {
+            //Mock entry assembly for test envirioment
+            ContextHelper.SetEntryAssembly(typeof(CSharpObjectHandlerTest).Assembly);
+
+
+            var rs = new RiveScript();
+            rs.setHandler("csharp", new CSharp());
+            rs.stream(new[] { "",
+                              "",
+                              "",
+                              "+ show context data",
+                              "- data is: <call>context</call>",
+                              "",
+                              "> object context csharp",
+                              "",
+                              "    using RiveScript.Tests.Helper;",
+                              "",
+                              "    return ContextHelper.Property;",
+                              "< object",
+                              ""
+            });
+
+            rs.sortReplies();
+
+
+            rs.reply("show context data")
+              .AssertAreEqual("data is: Context_Property");
+        }
     }
 }
