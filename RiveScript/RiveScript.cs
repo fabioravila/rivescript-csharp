@@ -11,6 +11,9 @@ namespace RiveScript
         // Private class variables.
         private bool debug = false;                 // Debug mode
         private int depth = 50;                     // Recursion depth limit
+        private bool utf8 = false;                  // uft8 mode flag
+        private bool strict = false;                // strict mode flag
+
         private string _error = "";                  // Last error text
         private static Random rand = new Random();  // A random number generator
 
@@ -52,21 +55,23 @@ namespace RiveScript
         private string _currentUser = Constants.Undefined;
 
 
+
         /// <summary>
         /// Create a new RiveScript interpreter object, specifying the debug mode.
         /// </summary>
         /// <param name="debug">Is true Enable debug mode (a *lot* of stuff is printed to the terminal)</param>
-        public RiveScript(bool debug)
+        public RiveScript(bool debug = false, bool utf8 = false, bool strict = false)
         {
             this.debug = debug;
-            // Set static debug modes.
-            Topic.setDebug(debug);
+            Topic.setDebug(debug);// Set static debug modes.
+            this.utf8 = utf8;
+            this.strict = strict;
         }
 
         /// <summary>
         /// Create a new RiveScript interpreter object with debug disabled.
         /// </summary>
-        public RiveScript() : this(false) { }
+        public RiveScript() : this(false, false, false) { }
 
         public void setDebug(bool debug)
         {
@@ -326,7 +331,10 @@ namespace RiveScript
             }
             else
             {
-                vars.Add(name, value);
+                if (vars.ContainsKey(name))
+                    vars[name] = value;
+                else
+                    vars.Add(name, value);
             }
 
             return true;
@@ -377,7 +385,10 @@ namespace RiveScript
             }
             else
             {
-                person.Add(pattern, output);
+                if (person.ContainsKey(pattern))
+                    person[pattern] = output;
+                else
+                    person.Add(pattern, output);
             }
 
             return true;
@@ -503,10 +514,16 @@ namespace RiveScript
             {
                 lineno++; // Increment the line counter.
                 string line = code[i];
-                say("Line: " + line);
+                say("Otiginal Line: " + line);
+
+
 
                 // Trim the line of whitespaces.
-                line = line.TrimRS();
+                line = Util.Strip(line);
+
+
+
+
 
                 // Are we inside an object?
                 if (inobj)
@@ -570,7 +587,8 @@ namespace RiveScript
 
                 // Separate the command from the rest of the line.
                 string cmd = line.Substring(0, 1);
-                line = line.Substring(1).TrimRS();
+                line = Util.Strip(line.Substring(1));
+
 
                 say("\tCmd: " + cmd);
 
@@ -582,6 +600,19 @@ namespace RiveScript
                     line = split[0];
                 }
 
+                //Run a syntax check on this line
+                var syntaxError = checkSyntax(cmd, line);
+                if (syntaxError != "")
+                {
+                    var err = "Syntax error: " + syntaxError + " at " + filename + " line " + lineno + "near " + cmd + " " + line;
+
+                    if (strict)
+                        error(err);
+                    else
+                        cry(err);
+                }
+
+
                 // Reset the %Previous if this is a new +Trigger.
                 if (cmd.Equals(CMD_TRIGGER))
                 {
@@ -592,7 +623,7 @@ namespace RiveScript
                 for (int j = (i + 1); j < code.Length; j++)
                 {
                     // Peek ahead.
-                    string peek = code[j].TrimRS();
+                    string peek = Util.Strip(code[j]);
 
                     // Skip blank.
                     if (peek.Length == 0)
@@ -602,7 +633,7 @@ namespace RiveScript
 
                     // Get the command.
                     string peekCmd = peek.Substring(0, 1);
-                    peek = peek.Substring(1).TrimRS();
+                    peek = Util.Strip(peek.Substring(1));
 
                     // Only continue if the lookahead line has any data.
                     if (peek.Length > 0)
@@ -702,7 +733,7 @@ namespace RiveScript
                         double version = 0;
                         try
                         {
-                            version = double.Parse(value);
+                            version = double.Parse((value ?? "").Replace(".", ","));
                         }
                         catch (FormatException)
                         {
@@ -1016,6 +1047,122 @@ namespace RiveScript
             return true;
         }
 
+        private string checkSyntax(string cmd, string line)
+        {
+            //Run syntax tests based on the command used.
+
+            if (cmd == "!")
+            {
+                // ! Definition
+                // - Must be formatted like this:
+                //   ! type name = value
+                //   OR
+                //   ! type = value
+                if (false == line.MatchRegex(@"^.+ (?:\s +.+|)\s *=\s *.+?$"))
+                {
+                    return "Invalid format for !Definition line: must be '! type name = value' OR '! type = value'";
+                }
+            }
+            else if (cmd == ">")
+            {
+                // > Label
+                // - The "begin" label must have only one argument ("begin")
+                // - The "topic" label must be lowercased but can inherit other topics
+                // - The "object" label must follow the same rules as "topic", but don't
+                //   need to be lowercased.
+                var parts = line.SplitRegex(@"\s +");
+
+                if (parts[0] == "begin" && parts.Length > 1)
+                {
+                    return "The 'begin' label takes no additional arguments";
+                }
+                else if (parts[0] == "topic")
+                {
+                    if (line.MatchRegex(@"[^a-z0-9_\-\s]"))
+                    {
+                        return "Topics should be lowercased and contain only letters and numbers";
+                    }
+                }
+                else if (parts[0] == "object")
+                {
+                    if (line.MatchRegex(@"[^A-Za-z0-9_\-\s]"))
+                    {
+                        return "Objects can only contain numbers and letters";
+                    }
+                }
+            }
+            else if (cmd == "+" || cmd == "%" || cmd == "@")
+            {
+                // + Trigger, % Previous, @ Redirect
+                // This one is strict. The triggers are to be run through the regexp
+                // engine, therefore it should be acceptable for the regexp engine.
+                // - Entirely lowercase
+                // - No symbols except: ( | ) [ ] * _ // { } < > =
+                // - All brackets should be matched.
+                var parens = 0;
+                var square = 0;
+                var curly = 0;
+                var angle = 0; // Count the brackets
+
+                // Look for obvious errors first.
+                if (utf8)
+                {
+                    // In UTF-8 mode, most symbols are allowed.
+                    if (line.MatchRegex("[A - Z\\.]"))
+                    {
+                        return "Triggers can't contain uppercase letters, backslashes or dots in UTF - 8 mode";
+                    }
+                }
+                else if (line.MatchRegex(@"[^a-z0-9(|)\[\]*_//@{}<>=\s]"))
+                {
+                    return "Triggers may only contain lowercase letters, numbers, and these symbols: ( | )[ ] * _ // { } < > =";
+                }
+
+                // Count the brackets.
+                foreach (char c in line.ToCharArray())
+                {
+
+                    switch (c)
+                    {
+                        case '(': parens++; break;
+                        case ')': parens--; break;
+                        case '[': square++; break;
+                        case ']': square--; break;
+                        case '{': curly++; break;
+                        case '}': curly--; break;
+                        case '<': angle++; break;
+                        case '>': angle--; break;
+                        default: break;
+                    }
+
+                }
+
+
+                // Any mismatches?
+                if (parens != 0)
+                    return "Unmatched parenthesis brackets";
+                if (square != 0)
+                    return "Unmatched square brackets";
+                if (curly != 0)
+                    return "Unmatched curly brackets";
+                if (angle != 0)
+                    return "Unmatched angle brackets";
+            }
+            else if (cmd == "*")
+            {
+                // * Condition
+                // Syntax for a conditional is as follows:
+                // * value symbol value => response
+                if (false == line.MatchRegex(@"^.+?\s * (?:==| eq |!=| ne |<>|<|<=|>|>=)\s *.+?=>.+?$"))
+                {
+                    return "Invalid format for !Condition: should be like '* value symbol value => response'";
+                }
+            }
+
+            // No problems!
+            return "";
+        }
+
         #endregion
 
         #region Sorting Methods
@@ -1051,7 +1198,7 @@ namespace RiveScript
         /// <returns></returns>
         public string reply(string username, string message)
         {
-            say("Get reply to [" + username + "] " + message);
+            say("Asked reply to [" + username + "] " + message);
 
             _currentUser = username;
 
@@ -1156,11 +1303,13 @@ namespace RiveScript
 
             // See if there are any %previous's in this topic, or any topic related to it. This
             // should only be done the first time -- not during a recursive redirection.
+            // This is because in a redirection, "lastreply" is still gonna
+            // be the same as it was the first time, resulting in an infinite loop!
             if (step == 0)
             {
                 say("Looking for a %Previous");
                 string[] allTopics = { topic };
-                //		if (this.topics.topic(topic).includes() || this.topics.topic(topic).inherits()) {
+                //if (this.topics.topic(topic).includes() || this.topics.topic(topic).inherits()) {
                 // We need to walk the topic tree.
                 allTopics = this.topics.getTopicTree(topic, 0);
                 //		}
@@ -1179,7 +1328,7 @@ namespace RiveScript
                             say("Candidate: " + previous[j]);
 
                             // Try to match the bot's last reply against this.
-                            string lastReply = formatMessage(profile.getReply(1));
+                            string lastReply = formatMessage(profile.getReply(1), true);
                             string regexp = triggerRegexp(user, profile, previous[j]);
                             say("Compare " + lastReply + " <=> " + previous[j] + " (" + regexp + ")");
 
@@ -2206,20 +2355,39 @@ namespace RiveScript
         /// </summary>
         /// <param name="message"></param>
         /// <returns></returns>
-        private string formatMessage(string message)
+        private string formatMessage(string message, bool botReply = false)
         {
             // Lowercase it first.
             message = message.ToLower();
 
-            // Run substitutions.
+            // Run substitutions sanitize.
             message = Util.Substitute(subs_s, subs, message);
-
-            // Sanitize what's left.
-            message = message.ReplaceRegex("[^a-z0-9 ]", "");
 
             //Trim start and end
             message = message.TrimStart();
             message = message.TrimEnd();
+
+
+            // In UTF-8 mode, only strip metacharcters and HTML brackets (to protect against obvious XSS attacks).
+            if (utf8)
+            {
+                message = message.ReplaceRegex("[\\<>]+", "");
+                //if@master.unicodePunctuation)
+                //{
+                //  message = message.replace(@master.unicodePunctuation, "");
+                //}
+
+                // For the bot's reply, also strip common punctuation.
+                if (botReply)
+                {
+                    message = message.ReplaceRegex("[.?,!;:@#$%^&*()]", "");
+                }
+            }
+            else
+            {
+                // For everything else, strip all non-alphanumerics
+                message = Util.StripNasties(message, utf8);
+            }
 
             return message;
         }

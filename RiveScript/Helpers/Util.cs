@@ -110,5 +110,33 @@ namespace RiveScript
             return value == "false" || value == "0" || value == "no";
         }
 
+
+        public static string Strip(string line)
+        {
+            if (line == null)
+                return null;
+
+            //Note: This will keep the \s \n \t on end of string, but on start this will be trimmed.
+            //Keep that in mind when do continuations
+
+            line = line.ReplaceRegex(@"\s+\r\n\t", " ");
+            line = line.TrimStart().TrimEnd(' ');
+
+            return line;
+        }
+
+        public static string StripNasties(string line, bool utf8)
+        {
+            if (utf8)//Allow most things in UTF8 mode.
+            {
+                return line.ReplaceRegex("[\\<>]+", "");
+            }
+            else
+            {
+                return line.ReplaceRegex("[^A-Za-z0-9 ]", "");
+            }
+        }
+
+
     }
 }

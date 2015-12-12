@@ -9,8 +9,8 @@ namespace RiveScript.Tests
         /*
         * Basead on https://github.com/aichaos/rivescript-js/issues/48
         */
+        [Ignore]
         [TestMethod]
-
         public void Alternation_With_Optional_And_Space_Between()
         {
             var rs = new RiveScript(true);

@@ -81,5 +81,18 @@ namespace RiveScript.Tests
             rs.reply("trigger4").AssertAreEqual("reply4");//.rs
 
         }
+
+        [TestMethod]
+        public void Load_Stream_Single_String()
+        {
+            var rs = new RiveScript(true);
+
+            var result = rs.stream("+ hello bot\n - Hello human!");
+            Assert.IsTrue(result);
+
+            rs.sortReplies();
+
+            rs.reply("hello bot").AssertAreEqual("Hello human!");
+        }
     }
 }

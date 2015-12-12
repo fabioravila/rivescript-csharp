@@ -53,15 +53,11 @@ namespace RiveScript
             return new Regex(pattern).Replace(@this, replacement, count, startat);
         }
 
-        public static string TrimRS(this string message)
+        public static bool MatchRegex(this string @this, string pattern)
         {
-            if (message == null)
-                return null;
-
-            //Note: This will keep the \s \n \t on end of string, but on start this will be trimmed.
-            //Keep that in mind when do continuations
-            return message.TrimStart().TrimEnd(' ');
+            return Regex.IsMatch(@this, pattern);
         }
+
 
         public static T[] ToArray<T>(this IEnumerable<T> collection)
         {
