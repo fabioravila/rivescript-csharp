@@ -184,7 +184,8 @@ namespace RiveScript
             {
                 //QUESTION: With ou without UTF8??
                 //lines = File.ReadAllLines(file);
-                lines = File.ReadAllLines(file, Encoding.UTF8);
+                var encode = FileHelper.GetEncoding(file);
+                lines = File.ReadAllLines(file, encode);
             }
             catch (FileNotFoundException)
             {
@@ -604,7 +605,7 @@ namespace RiveScript
                 var syntaxError = checkSyntax(cmd, line);
                 if (syntaxError != "")
                 {
-                    var err = "Syntax error: " + syntaxError + " at " + filename + " line " + lineno + "near " + cmd + " " + line;
+                    var err = "Syntax error: " + syntaxError + " at " + filename + " line " + lineno + " near " + cmd + " " + line;
 
                     if (strict)
                         error(err);
@@ -1058,7 +1059,7 @@ namespace RiveScript
                 //   ! type name = value
                 //   OR
                 //   ! type = value
-                if (false == line.MatchRegex(@"^.+ (?:\s +.+|)\s *=\s *.+?$"))
+                if (false == line.MatchRegex(@"^.+(?:\s +.+|)\s*=\s*.+?$"))
                 {
                     return "Invalid format for !Definition line: must be '! type name = value' OR '! type = value'";
                 }
@@ -1070,7 +1071,7 @@ namespace RiveScript
                 // - The "topic" label must be lowercased but can inherit other topics
                 // - The "object" label must follow the same rules as "topic", but don't
                 //   need to be lowercased.
-                var parts = line.SplitRegex(@"\s +");
+                var parts = line.SplitRegex(@"\s+");
 
                 if (parts[0] == "begin" && parts.Length > 1)
                 {
@@ -1108,7 +1109,7 @@ namespace RiveScript
                 if (utf8)
                 {
                     // In UTF-8 mode, most symbols are allowed.
-                    if (line.MatchRegex("[A - Z\\.]"))
+                    if (line.MatchRegex("[A-Z\\.]"))
                     {
                         return "Triggers can't contain uppercase letters, backslashes or dots in UTF - 8 mode";
                     }
@@ -1153,7 +1154,7 @@ namespace RiveScript
                 // * Condition
                 // Syntax for a conditional is as follows:
                 // * value symbol value => response
-                if (false == line.MatchRegex(@"^.+?\s * (?:==| eq |!=| ne |<>|<|<=|>|>=)\s *.+?=>.+?$"))
+                if (false == line.MatchRegex(@"^.+?\s*(?:==|eq|!=|ne|<>|<|<=|>|>=)\s*.+?=>.+?$"))
                 {
                     return "Invalid format for !Condition: should be like '* value symbol value => response'";
                 }
@@ -1862,8 +1863,9 @@ namespace RiveScript
                 {
                     string tag = mBot.Groups[0].Value;
                     string var = mBot.Groups[1].Value;
-                    string value = vars[var].ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
-
+                    //string value = vars[var].ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
+                    string value = Util.StripNasties(vars[var].ToLower(), utf8);
+                    
                     // Have this?
                     if (vars.ContainsKey(var))
                     {
@@ -1885,7 +1887,8 @@ namespace RiveScript
                 {
                     string tag = mGet.Groups[0].Value;
                     string var = mGet.Groups[1].Value;
-                    string value = profile.get(var).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
+                    //string value = profile.get(var).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
+                    string value = Util.StripNasties(profile.get(var).ToLower(), utf8);
 
                     // Have this?
                     regexp = regexp.Replace(tag, value);
@@ -1904,7 +1907,8 @@ namespace RiveScript
                 {
                     string tag = mInput.Groups[0].Value;
                     int index = int.Parse(mInput.Groups[1].Value);
-                    string text = profile.getInput(index).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
+                    //string text = profile.getInput(index).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
+                    string text = Util.StripNasties(profile.getInput(index).ToLower(), utf8);
                     regexp = regexp.Replace(tag, text);
                 }
             }
@@ -1916,7 +1920,8 @@ namespace RiveScript
                 {
                     string tag = mReply.Groups[0].Value;
                     int index = int.Parse(mReply.Groups[1].Value);
-                    string text = profile.getReply(index).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
+                    //string text = profile.getReply(index).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
+                    string text = Util.StripNasties(profile.getReply(index).ToLower(), utf8);
                     regexp = regexp.Replace(tag, text);
                 }
             }
@@ -1997,7 +2002,8 @@ namespace RiveScript
                 {
                     string tag = mInput.Groups[0].Value;
                     int index = int.Parse(mInput.Groups[1].Value);
-                    string text = profile.getInput(index).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
+                    //string text = profile.getInput(index).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
+                    string text = Util.StripNasties(profile.getInput(index).ToLower(), utf8);
                     reply = reply.Replace(tag, text);
                 }
             }
@@ -2008,7 +2014,8 @@ namespace RiveScript
                 {
                     string tag = mReply.Groups[0].Value;
                     int index = int.Parse(mReply.Groups[1].Value);
-                    string text = profile.getReply(index).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
+                    //string text = profile.getReply(index).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
+                    string text = Util.StripNasties(profile.getReply(index).ToLower(), utf8);
                     reply = reply.Replace(tag, text);
                 }
             }
@@ -2507,7 +2514,10 @@ namespace RiveScript
 
         protected void println(string line)
         {
-            Console.WriteLine(line);
+            if (debug)
+                Console.WriteLine(line);
+            else
+                System.Diagnostics.Debug.WriteLine(line);
         }
 
         /// <summary>
@@ -2528,7 +2538,10 @@ namespace RiveScript
         /// <param name="line"></param>
         protected void cry(string line)
         {
-            Console.WriteLine("<RS> " + line);
+            if (debug)
+                Console.WriteLine("<RS> " + line);
+            else
+                System.Diagnostics.Debug.WriteLine("<RS> " + line);
         }
 
         /// <summary>
@@ -2539,7 +2552,10 @@ namespace RiveScript
         /// <param name="line"></param>
         protected void cry(string text, string file, int line)
         {
-            Console.WriteLine("<RS> " + text + " at " + file + " line " + line + ".");
+            if (debug)
+                Console.WriteLine("<RS> " + text + " at " + file + " line " + line + ".");
+            else
+                System.Diagnostics.Debug.WriteLine("<RS> " + text + " at " + file + " line " + line + ".");
         }
 
         /// <summary>
@@ -2550,7 +2566,7 @@ namespace RiveScript
         {
             if (this.debug)
             {
-                Console.WriteLine(e.StackTrace);
+                System.Diagnostics.Debug.WriteLine(e.StackTrace);
             }
         }
 

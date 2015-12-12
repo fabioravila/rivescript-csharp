@@ -129,6 +129,7 @@ namespace RiveScript.Tests
 
         public static void streamForTest(this RiveScript rs, string[] code)
         {
+            rs.setDebug(true);
             rs.stream(code);
             rs.sortReplies();
         }

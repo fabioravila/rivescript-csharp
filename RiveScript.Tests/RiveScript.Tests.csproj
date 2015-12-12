@@ -66,6 +66,7 @@
     <Compile Include="PublicIssuesTest.cs" />
     <Compile Include="LoadTests.cs" />
     <Compile Include="CSharpObjectHandlerTest.cs" />
+    <Compile Include="RepetitionTest.cs" />
     <Compile Include="UTF8Test.cs" />
     <Compile Include="WildCardTest.cs" />
   </ItemGroup>
