@@ -53,10 +53,10 @@ namespace RiveScript.Tests
         }
 
         [TestMethod]
-        public void Wheight_100_Shoud_Be_Only_Correct_Reply_Of_First()
+        public void Wheight_1000_Shoud_Be_Only_Correct_Reply_Of_First()
         {
             var rs = TestHelper.getStreamed(new[] { "+ hello bot",
-                                                    "- Hello human!{weight=100}",
+                                                    "- Hello human!{weight=1000}",
                                                     "- Hello!" });
 
             var reply = rs.reply("default", "hello bot");
@@ -65,11 +65,11 @@ namespace RiveScript.Tests
         }
 
         [TestMethod]
-        public void Wheight_100_Shoud_Be_Only_Correct_Reply_Of_Second()
+        public void Wheight_1000_Shoud_Be_Only_Correct_Reply_Of_Second()
         {
             var rs = TestHelper.getStreamed(new[] { "+ hello bot",
                                                     "- Hello human!",
-                                                    "- Hello!{weight=100}" });
+                                                    "- Hello!{weight=1000}" });
 
             var reply = rs.reply("default", "hello bot");
 

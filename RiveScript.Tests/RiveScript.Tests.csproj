@@ -57,6 +57,7 @@
     <Compile Include="DocumentVersionTest.cs" />
     <Compile Include="Helper\ContextHelper.cs" />
     <Compile Include="OptionalsWithAlternationsTest.cs" />
+    <Compile Include="RandomReplyTest.cs" />
     <Compile Include="SimpleReplyTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Helper\TestHelper.cs" />
@@ -67,6 +68,7 @@
     <Compile Include="LoadTests.cs" />
     <Compile Include="CSharpObjectHandlerTest.cs" />
     <Compile Include="RepetitionTest.cs" />
+    <Compile Include="ConditionalTest.cs" />
     <Compile Include="UTF8Test.cs" />
     <Compile Include="WildCardTest.cs" />
   </ItemGroup>

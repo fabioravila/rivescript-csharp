@@ -150,9 +150,14 @@ namespace RiveScript.Tests
             Assert.AreNotEqual(expected, target);
         }
 
-        public static void AssertContains<T>(this T expected, T[] target)
+        public static void AssertContains<T>(this T expected, params T[] target)
         {
             Assert.IsTrue(target.Contains(expected));
+        }
+
+        public static void AssertNotContains<T>(this T expected, params T[] target)
+        {
+            Assert.IsFalse(target.Contains(expected));
         }
 
     }
