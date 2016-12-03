@@ -1,0 +1,13 @@
+﻿<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Rivescript.CSharp</id>
+    <version>$version$</version>
+    <authors>fabioravila,andreminelli</authors>
+    <licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
+    <projectUrl>https://github.com/andreminelli/rivescript-csharp</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A RiveScript interpreter for C# .Net. RiveScript is a scripting language for chatterbot.</description>
+    <tags>chatbot rivescript</tags>
+  </metadata>
+</package>
