@@ -1,6 +1,9 @@
 ﻿
+using System;
+
 namespace RiveScript
 {
+    [Obsolete("No need to use this", true)]
     internal static class Rot13
     {
         /// <summary>

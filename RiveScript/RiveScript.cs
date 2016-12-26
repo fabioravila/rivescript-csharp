@@ -8,6 +8,11 @@ namespace RiveScript
 {
     public class RiveScript
     {
+        private const string ERR_NO_REPLY_MATCHED = "ERR: No Reply Matched";
+        private const string ERR_NO_REPLY_FOUND = "ERR: No Reply Found";
+        private const string ERR_DEEP_RECURSION = "ERR: Deep Recursion Detected!";
+
+
         // Private class variables.
         private bool debug = false;                 // Debug mode
         private int depth = 50;                     // Recursion depth limit
@@ -54,6 +59,15 @@ namespace RiveScript
         private string[] person_s = null; // sorted persons
         private string _currentUser = Constants.Undefined;
 
+
+        public static bool IsErrReply(string reply)
+        {
+            var test = (reply ?? "").Trim();
+
+            return test == ERR_NO_REPLY_MATCHED ||
+                   test == ERR_NO_REPLY_FOUND ||
+                   test == ERR_DEEP_RECURSION;
+        }
 
 
         /// <summary>
@@ -1281,7 +1295,7 @@ namespace RiveScript
             // Avoid deep recursion.
             if (step > depth)
             {
-                _reply = "ERR: Deep Recursion Detected!";
+                _reply = ERR_DEEP_RECURSION;
                 cry(_reply);
                 return _reply;
             }
@@ -1702,11 +1716,11 @@ namespace RiveScript
             // Still no reply?
             if (!foundMatch)
             {
-                _reply = "ERR: No Reply Matched";
+                _reply = ERR_NO_REPLY_MATCHED;
             }
             else if (_reply.Length == 0)
             {
-                _reply = "ERR: No Reply Found";
+                _reply = ERR_NO_REPLY_FOUND;
             }
 
             say("Final reply: " + _reply);
