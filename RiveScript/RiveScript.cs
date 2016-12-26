@@ -1863,12 +1863,12 @@ namespace RiveScript
                 {
                     string tag = mBot.Groups[0].Value;
                     string var = mBot.Groups[1].Value;
-                    //string value = vars[var].ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
-                    string value = Util.StripNasties(vars[var].ToLower(), utf8);
-                    
+
                     // Have this?
                     if (vars.ContainsKey(var))
                     {
+                        //string value = vars[var].ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
+                        string value = Util.StripNasties(vars[var].ToLower(), utf8);
                         regexp = regexp.Replace(tag, value);
                     }
                     else
