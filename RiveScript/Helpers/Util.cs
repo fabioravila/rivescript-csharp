@@ -34,31 +34,45 @@ namespace RiveScript
         /// <returns></returns>
         public static string Substitute(string[] sorted, IDictionary<string, string> hash, string text)
         {
+            var ph = new List<string>();
+            var pi = 0;
+
             for (int i = 0; i < sorted.Length; i++)
             {
                 var pattern = sorted[i];
                 var result = hash[sorted[i]];
-                var rot13 = Rot13.Transform(result);
+                //var rot13 = Rot13.Transform(result);
+                ph.Add(result);
+                var placeholder = "<rot13sub>" + pi + "<bus31tor>";
+                pi++;
 
                 //Original JavaCode: var quotemeta = @pattern;
                 //Run escape make sure no conflict like * in substitution
                 var quotemeta = Regex.Escape(@pattern);
 
-                text = text.ReplaceRegex(("^" + quotemeta + "$"), ("<rot13sub>" + rot13 + "<bus31tor>"));
-                text = text.ReplaceRegex(("^" + quotemeta + "(\\W+)"), ("<rot13sub>" + rot13 + "<bus31tor>$1"));
-                text = text.ReplaceRegex(("(\\W+)" + quotemeta + "(\\W+)"), ("$1<rot13sub>" + rot13 + "<bus31tor>$2"));
-                text = text.ReplaceRegex(("(\\W+)" + quotemeta + "$"), ("$1<rot13sub>" + rot13 + "<bus31tor>"));
+                text = text.ReplaceRegex(("^" + quotemeta + "$"), placeholder);
+                text = text.ReplaceRegex(("^" + quotemeta + "(\\W+)"), ("" + placeholder + "$1"));
+                text = text.ReplaceRegex(("(\\W+)" + quotemeta + "(\\W+)"), ("$1" + placeholder + "$2"));
+                text = text.ReplaceRegex(("(\\W+)" + quotemeta + "$"), ("$1" + placeholder + ""));
             }
 
-            if (text.IndexOf("<rot13sub>") > -1)
+            var tries = 0;
+            while (text.IndexOf("<rot13sub>") > -1)
             {
+                tries++;
+                if (tries > 50)
+                {
+                    Console.WriteLine("[RS] Too many loops in substitution placeholders!");
+                    break;
+                }
+
                 var re = new Regex("<rot13sub>(.+?)<bus31tor>");
                 var mc = re.Matches(text);
                 foreach (Match m in mc)
                 {
                     var block = m.Groups[0].Value;
-                    var data = Rot13.Transform(m.Groups[1].Value);
-                    text = text.Replace(block, data);
+                    var idx = int.Parse(m.Groups[1].Value);
+                    text = text.Replace(block, ph[idx]);
                 }
             }
 

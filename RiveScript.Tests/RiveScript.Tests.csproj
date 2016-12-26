@@ -69,6 +69,7 @@
     <Compile Include="CSharpObjectHandlerTest.cs" />
     <Compile Include="RepetitionTest.cs" />
     <Compile Include="ConditionalTest.cs" />
+    <Compile Include="Issue4Test.cs" />
     <Compile Include="UTF8Test.cs" />
     <Compile Include="WildCardTest.cs" />
   </ItemGroup>
@@ -82,6 +83,12 @@
     <Content Include="TestData\basic_reply_3.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <None Include="TestData\issue-4-rot13\begin.rive">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="TestData\issue-4-rot13\main.rive">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Content Include="TestData\basic_reply_1.rs">
