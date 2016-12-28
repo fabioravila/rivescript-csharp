@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -748,7 +749,7 @@ namespace RiveScript
                         double version = 0;
                         try
                         {
-                            version = double.Parse((value ?? "").Replace(".", ","));
+                            version = double.Parse(value ?? "", new NumberFormatInfo { CurrencyDecimalSeparator = "." });
                         }
                         catch (FormatException)
                         {
