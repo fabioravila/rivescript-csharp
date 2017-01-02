@@ -5,6 +5,8 @@
 This is a C# implementation of a RiveScript interpreter, per the Working Draft
 at http://www.rivescript.com/wd/RiveScript.html
 
+[![Build status](https://ci.appveyor.com/api/projects/status/crwboe7fa6aseqvc/branch/master?svg=true)](https://ci.appveyor.com/project/fabioravila/rivescript-csharp/branch/master)
+
 This code was initially developed based on the official version of the Java interpreter
 rivescript-java - https://github.com/aichaos/rivescript-java
 
