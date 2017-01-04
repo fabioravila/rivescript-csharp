@@ -21,14 +21,15 @@ the C# interpreter, based on the official Java code.
 
 PS: This is my first public library, then I'm sorry for the lack of knowledge of some community standards.
 
-## MILESTONES
+## TASK LIST
 
-1. Make a port of actual rivescript-java - Make a port of current Java code, 'shame on me =]'
-2. Create some basic tests - based on RiveScript 'official' demos and myself
-3. Push to github on public repository
-4. **Develop a native objects for csharp**
-5. Complete the code documentation
-6. [...]
+- [x] Make a port of actual rivescript-java - Make a port of current Java code, 'shame on me =]'
+- [x] Create some basic tests - based on RiveScript 'official' demos and myself
+- [x] Push to github on public repository
+- [x] Develop a native objects for csharp
+- [ ] **Migrate last fixes and changes from rivescript-java since jan-2016 (some push a lot)**
+- [ ] Complete the code documentation
+- [ ] [...]
 
 
 ## CODE STANDARDS
