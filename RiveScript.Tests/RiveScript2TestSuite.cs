@@ -276,7 +276,7 @@ namespace RiveScript.Tests
                                                     "",
                                                     "+ *",
                                                     "% who is there",
-                                                    "- <set joke=<sentence>><sentence> who?",
+                                                    "- <set joke=<star>><sentence> who?",
                                                     "",
                                                     "+ <get joke> *",
                                                     "- Haha! \"{sentence}<get joke> <star>{/sentence}\"! :D",

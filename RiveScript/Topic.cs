@@ -469,7 +469,7 @@ namespace RiveScript
         /// Retrieve a list of includes topics.
         /// </summary>
         /// <returns></returns>
-        public string[] listIncludes()
+        public string[] includes()
         {
             return _includes.ToArray();
         }
@@ -478,7 +478,7 @@ namespace RiveScript
         /// Retrieve a list of inherited topics.
         /// </summary>
         /// <returns></returns>
-        public string[] listInherits()
+        public string[] inherits()
         {
             return _inherits.ToArray();
         }

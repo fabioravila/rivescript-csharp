@@ -1237,6 +1237,11 @@ namespace RiveScript
                     begin = begin.ReplaceRegex("\\{ok\\}", reply);
                     reply = begin;
                 }
+                else
+                {
+                    reply = begin;
+                }
+
 
                 // Run final substitutions.
                 reply = processTags(username, clients.client(username), message, reply,
@@ -1325,10 +1330,14 @@ namespace RiveScript
             {
                 say("Looking for a %Previous");
                 string[] allTopics = { topic };
-                //if (this.topics.topic(topic).includes() || this.topics.topic(topic).inherits()) {
-                // We need to walk the topic tree.
-                allTopics = this.topics.getTopicTree(topic, 0);
-                //		}
+
+                if (this.topics.topic(topic).includes().Length > 0 || this.topics.topic(topic).inherits().Length > 0)
+                {
+                    // We need to walk the topic tree.
+                    allTopics = this.topics.getTopicTree(topic, 0);
+                }
+
+
                 for (int i = 0; i < allTopics.Length; i++)
                 {
                     // Does this topic have a %Previous anywhere?
@@ -1697,6 +1706,8 @@ namespace RiveScript
                         {
                             // The choice was a redirect!
                             string redirect = redirects[choice].ReplaceRegex("\\{weight=\\d+\\}", "");
+                            redirect = processTags(user, profile, message, redirect, stars, botstars, step);
+
                             say("Chosen a redirect to " + redirect + "!");
                             _reply = reply(user, redirect, begin, step + 1);
                         }
@@ -1724,7 +1735,7 @@ namespace RiveScript
                 _reply = ERR_NO_REPLY_FOUND;
             }
 
-            say("Final reply: " + _reply);
+            say("Final reply: " + _reply + "(begin: " + begin + ")");
 
             // Special tag processing for the BEGIN statement.
             if (begin)
@@ -1805,8 +1816,13 @@ namespace RiveScript
                     StringBuilder re = new StringBuilder();
                     for (int i = 0; i < parts.Length; i++)
                     {
-                        // We want: \s*part\s*
-                        re.Append("\\s*" + parts[i] + "\\s*");
+                        //// We want: \s*part\s*
+                        //re.Append("\\s*" + parts[i] + "\\s*");
+
+                        // See: https://github.com/aichaos/rivescript-js/commit/02f236e78c5d237cb046d2347fe704f5f70231c9
+                        re.Append("(?:\\s|\\b)+" + parts[i] + "(?:\\s|\\b)+");
+
+
                         if (i < parts.Length - 1)
                         {
                             re.Append("|");
@@ -1816,12 +1832,19 @@ namespace RiveScript
 
                     // If this optional had a star or anything in it, e.g. [*],
                     // make it non-matching.
-                    pipes = pipes.ReplaceRegex("\\(.+?\\)", "(?:.+?)");
-                    pipes = pipes.ReplaceRegex("\\(\\d+?\\)", "(?:\\\\d+?)");
-                    pipes = pipes.ReplaceRegex("\\(\\w+?\\)", "(?:\\\\w+?)");
+                    //pipes = pipes.ReplaceRegex("\\(.+?\\)", "(?:.+?)");
+                    //pipes = pipes.ReplaceRegex("\\(\\d+?\\)", "(?:\\\\d+?)");
+                    //pipes = pipes.ReplaceRegex("\\(\\w+?\\)", "(?:\\\\w+?)");
+
+
+                    pipes = pipes.ReplaceRegex("\\(\\.\\+\\?\\)", "(?:.+?)");
+                    pipes = pipes.ReplaceRegex("\\(\\d\\+\\?\\)", "(?:\\\\d+?)");
+                    pipes = pipes.ReplaceRegex("\\(\\w\\+\\?\\)", "(?:\\\\w+?)");
 
                     // Put the new text in.
-                    pipes = "(?:" + pipes + "|\\s*)";
+                    //pipes = "(?:" + pipes + "|\\s*)";
+                    pipes = "(?:" + pipes + "|(?:\\b|\\s)+)";
+
                     regexp = regexp.Replace(optional, pipes);
 
                 }
@@ -1878,6 +1901,9 @@ namespace RiveScript
                 {
                     string tag = mBot.Groups[0].Value;
                     string var = mBot.Groups[1].Value;
+
+
+
 
                     // Have this?
                     if (vars.ContainsKey(var))
@@ -2057,6 +2083,19 @@ namespace RiveScript
                     string tag = mBot.Groups[0].Value;
                     string var = mBot.Groups[1].Value;
 
+
+                    // Setting the variable?
+                    if (var.IndexOf("=") > -1)
+                    {
+                        string[] parts = var.SplitRegex("\\s*=\\s*", 2);
+                        var = parts[0];
+                        string val = parts[1];
+                        this.setVariable(var, val);
+                        reply = reply.Replace(tag, "");
+                        continue;
+                    }
+
+
                     // Have this?
                     if (vars.ContainsKey(var))
                     {
@@ -2077,6 +2116,20 @@ namespace RiveScript
                 {
                     string tag = mEnv.Groups[0].Value;
                     string var = mEnv.Groups[1].Value;
+
+
+                    // Setting the variable?
+                    if (var.IndexOf("=") > -1)
+                    {
+                        string[] parts = var.SplitRegex("\\s*=\\s*", 2);
+                        var = parts[0];
+                        string val = parts[1];
+                        this.setGlobal(var, val);
+                        reply = reply.Replace(tag, "");
+                        continue;
+                    }
+
+
 
                     // Have this?
                     if (globals.ContainsKey(var))
@@ -2266,7 +2319,9 @@ namespace RiveScript
             // {@redirect} tag
             if (reply.IndexOf("{@") > -1)
             {
-                Regex reRed = new Regex("\\{@(.+?)\\}");
+                //Regex reRed = new Regex("\\{@(.+?)\\}");
+                Regex reRed = new Regex("\\{@([^\\}]*?)\\}");
+
                 foreach (Match mRed in reRed.Matches(reply))
                 {
                     string tag = mRed.Groups[0].Value;
@@ -2344,9 +2399,8 @@ namespace RiveScript
                     say("cc: " + letters.Length);
                     if (letters.Length > 1)
                     {
-                        say("letter 1: " + letters[1]);
+                        //Note : On splitregex, first and last are blank spaces, so use 1 index
                         letters[1] = letters[1].ToUpper();
-                        say("new letter 1: " + letters[1]);
                         words[i] = String.Join("", letters);
                         say("new word: " + words[i]);
                     }
@@ -2356,6 +2410,7 @@ namespace RiveScript
             else if (format.Equals("sentence"))
             {
                 // Uppercase the first letter of the first word.
+                //Note : On splitregex, first and last are blank spaces, so use 1 index
                 string[] letters = text.SplitRegex("");
                 if (letters.Length > 1)
                 {
@@ -2453,8 +2508,8 @@ namespace RiveScript
                 var extra = "";
 
                 // Includes? Inherits?
-                var includes = topics.topic(topic).listIncludes();
-                var inherits = topics.topic(topic).listInherits();
+                var includes = topics.topic(topic).includes();
+                var inherits = topics.topic(topic).inherits();
                 if (includes.Length > 0)
                 {
                     extra = "includes ";
