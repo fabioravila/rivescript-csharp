@@ -1440,8 +1440,9 @@ namespace RiveScript
                         int starcount = m.Groups.Count;
                         for (int s = 1; s <= starcount; s++)
                         {
-                            say("Add star: " + m.Groups[s].Value);
-                            stars.Add(m.Groups[s].Value);
+                            string star = (m.Groups[s].Value ?? "");
+                            say("Add star: " + star);
+                            stars.Add(star);
                         }
 
                         // We found a match, but what if the trigger we matched belongs to
@@ -1796,7 +1797,7 @@ namespace RiveScript
             regexp = regexp.ReplaceRegex("\\*", "(.+?)");             // *  ->  (.+?)
             regexp = regexp.ReplaceRegex("#", "(\\d+?)");         // #  ->  (\d+?)
             regexp = regexp.ReplaceRegex("_", "(\\w+?)");     // _  ->  ([A-Za-z ]+?)
-            regexp = regexp.ReplaceRegex("\\{weight=\\d+\\}", "");    // Remove {weight} tags
+            regexp = regexp.ReplaceRegex("\\s*\\{weight=\\d+\\}\\s*", ""); // Remove {weight} tags
             regexp = regexp.ReplaceRegex("<zerowidthstar>", "(.*?)"); // *  ->  (.*?)
 
             // Handle optionals.
@@ -2004,6 +2005,40 @@ namespace RiveScript
             string[] stars = vstars.ToArray();
             string[] botstars = vbotstars.ToArray();
 
+
+            //See: https://github.com/aichaos/rivescript-java/commit/0a923d6c62baeb0b47b15cb21bba8bedd30a2061
+            // Turn arrays into randomized sets.
+            if (reply.IndexOf("(@") > -1)
+            {
+                Regex reArray = new Regex("\\(@([A-Za-z0-9_]+)\\)");
+
+                foreach (Match mReply in reArray.Matches(reply))
+                {
+                    string tag = mReply.Groups[0].Value;
+                    string name = mReply.Groups[1].Value;
+                    string result;
+
+                    if (arrays.ContainsKey(name))
+                    {
+                        string[] values = arrays[name].ToArray();
+                        StringBuilder joined = new StringBuilder();
+                        // Join the array.
+                        for (int i = 0; i < values.Length; i++)
+                        {
+                            joined.Append(values[i]);
+                            if (i < values.Length - 1)
+                            {
+                                joined.Append("|");
+                            }
+                        }
+                        result = "{random}" + joined.ToString() + "{/random}";
+                        reply = reply.Replace(tag, result);
+                    }
+                }
+            }
+
+
+
             // Shortcut tags.
             reply = reply.ReplaceRegex("<person>", "{person}<star>{/person}");
             reply = reply.ReplaceRegex("<@>", "{@<star>}");
@@ -2012,17 +2047,9 @@ namespace RiveScript
             reply = reply.ReplaceRegex("<uppercase>", "{uppercase}<star>{/uppercase}");
             reply = reply.ReplaceRegex("<lowercase>", "{lowercase}<star>{/lowercase}");
 
-            // Quick tags.
-            reply = reply.ReplaceRegex("\\{weight=\\d+\\}", ""); // Remove {weight}s
-            reply = reply.ReplaceRegex("<input>", "<input1>");
-            reply = reply.ReplaceRegex("<reply>", "<reply1>");
-            reply = reply.ReplaceRegex("<id>", user);
-            reply = reply.ReplaceRegex("\\\\s", " ");
-            reply = reply.ReplaceRegex("\\\\n", "\n");
-            reply = reply.ReplaceRegex("\\\\", "\\");
-            reply = reply.ReplaceRegex("\\#", "#");
 
-            // Stars
+            // Weight and star tags.
+            reply = reply.ReplaceRegex("\\{weight=\\d+\\}", ""); // Remove {weight}s
             reply = reply.ReplaceRegex("<star>", stars[1]);
             reply = reply.ReplaceRegex("<botstar>", botstars[1]);
             for (int i = 1; i < stars.Length; i++)
@@ -2035,7 +2062,10 @@ namespace RiveScript
             }
             reply = reply.ReplaceRegex("<(star|botstar)\\d+>", "");
 
+
             // Input and reply tags.
+            reply = reply.ReplaceRegex("<input>", "<input1>");
+            reply = reply.ReplaceRegex("<reply>", "<reply1>");
             if (reply.IndexOf("<input") > -1)
             {
                 Regex reInput = new Regex("<input([0-9])>");
@@ -2060,6 +2090,12 @@ namespace RiveScript
                     reply = reply.Replace(tag, text);
                 }
             }
+
+            reply = reply.ReplaceRegex("<id>", user);
+            reply = reply.ReplaceRegex("\\\\s", " ");
+            reply = reply.ReplaceRegex("\\\\n", "\n");
+            reply = reply.ReplaceRegex("\\\\", "\\");
+            reply = reply.ReplaceRegex("\\#", "#");
 
             // {random} tag
             if (reply.IndexOf("{random}") > -1)
