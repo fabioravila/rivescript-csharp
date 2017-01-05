@@ -296,7 +296,7 @@ namespace RiveScript.Tests
             rs.reply("Orange.")
               .AssertAreEqual("Orange who?");
             rs.reply("Orange you glad i didn't say banana?")
-              .AssertAreEqual("Haha! \"Orange you glad i did not say banana\"! :D");
+              .AssertAreEqual("Haha! \"orange you glad i did not say banana\"! :D");
         }
 
         [TestMethod]

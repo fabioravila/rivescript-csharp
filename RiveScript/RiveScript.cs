@@ -2196,6 +2196,8 @@ namespace RiveScript
                 }
             }
 
+
+
             // <set> tag
             if (reply.IndexOf("<set") > -1)
             {
