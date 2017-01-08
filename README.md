@@ -27,8 +27,9 @@ PS: This is my first public library, then I'm sorry for the lack of knowledge of
 - [x] Create some basic tests - based on RiveScript 'official' demos and myself
 - [x] Push to github on public repository
 - [x] Develop a native objects for csharp
-- [ ] **Migrate last fixes and changes from rivescript-java since jan-2016 (some push a lot)**
-- [ ] Complete the code documentation
+- [x] Migrate last fixes and changes from rivescript-java since jan-2016 (some push a lot)
+- [ ] Create a RSBot Demo Script
+- [ ] Complete the code documentation and adjust appveyor to build and release on tag
 - [ ] [...]
 
 
