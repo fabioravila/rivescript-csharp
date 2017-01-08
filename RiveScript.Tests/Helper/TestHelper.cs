@@ -1,5 +1,6 @@
 ﻿
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Linq;
 
 namespace RiveScript.Tests
@@ -127,6 +128,16 @@ namespace RiveScript.Tests
             return rs;
         }
 
+        public static RiveScript getEmptyStreamed(string[] code)
+        {
+            var rs = new RiveScript(debug: false);
+
+            rs.setDebug(true);
+            rs.stream(code);
+            rs.sortReplies();
+            return rs;
+        }
+
         public static void streamForTest(this RiveScript rs, string[] code)
         {
             rs.setDebug(true);
@@ -160,6 +171,13 @@ namespace RiveScript.Tests
             Assert.IsFalse(target.Contains(expected));
         }
 
+        public static void Loop(int times, Action action)
+        {
+            for (int i = 0; i < times; i++)
+            {
+                action();
+            }
+        }
     }
 }
 

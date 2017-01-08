@@ -41,8 +41,10 @@ PS: This is my first public library, then I'm sorry for the lack of knowledge of
 
 ## DOCUMENTATION
 
-:TODO
+:TODO - C# API documentation
 
+Also check out the [**RiveScript Community Wiki**](https://github.com/aichaos/rivescript/wiki) 
+for common design patterns and tips & tricks for RiveScript.
 
 ## LICENSE
 

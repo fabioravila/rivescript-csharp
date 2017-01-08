@@ -162,9 +162,13 @@ namespace RiveScript
                 heritage[inherits].Add(alltrigs[i]);
             }
 
+            // Move the no-{inherits} triggers to the bottom of the stack.
+            heritage.Add(highest + 1, heritage[-1]);
+            heritage.Remove(-1);
+
+
             // Go on and sort each heritage level. We want to loop from level 0 up,
-            // and then do level -1 last.
-            for (int h = -1; h <= highest; h++)
+            for (int h = 0; h <= highest + 1; h++)
             {
                 if (false == heritage.ContainsKey(h))
                 {
@@ -469,7 +473,7 @@ namespace RiveScript
         /// Retrieve a list of includes topics.
         /// </summary>
         /// <returns></returns>
-        public string[] listIncludes()
+        public string[] includes()
         {
             return _includes.ToArray();
         }
@@ -478,7 +482,7 @@ namespace RiveScript
         /// Retrieve a list of inherited topics.
         /// </summary>
         /// <returns></returns>
-        public string[] listInherits()
+        public string[] inherits()
         {
             return _inherits.ToArray();
         }

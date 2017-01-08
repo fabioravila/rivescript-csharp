@@ -109,6 +109,21 @@ namespace RiveScript
             return list;
         }
 
+
+        public static string Join(string[] value, string separator)
+        {
+            return string.Join(separator, value);
+        }
+
+        public static string[] CopyOfRange(string[] source, int from, int to)
+        {
+            int len = to - from;
+            string[] dest = new string[len];
+            Array.Copy(source, from, dest, 0, len);
+            return dest;
+        }
+
+
         public static MatchCollection GetRegexMatches(string pattern, string input)
         {
             return new Regex(pattern).Matches(input);

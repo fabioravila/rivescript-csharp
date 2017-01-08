@@ -106,7 +106,7 @@ namespace RiveScript
             var triggers = new List<string>();
 
             // Does this topic include others?
-            var includes = this.topic(topic).listIncludes();
+            var includes = this.topic(topic).includes();
             if (includes.Length > 0)
             {
                 for (int i = 0; i < includes.Length; i++)
@@ -121,7 +121,7 @@ namespace RiveScript
             }
 
             // Does this topic inherit others?
-            var inherits = this.topic(topic).listInherits();
+            var inherits = this.topic(topic).inherits();
             if (inherits.Length > 0)
             {
                 for (int i = 0; i < inherits.Length; i++)
@@ -196,7 +196,7 @@ namespace RiveScript
             }
 
             // Inheritance is more important than inclusion.
-            var inherits = this.topic(topic).listInherits();
+            var inherits = this.topic(topic).inherits();
             for (int i = 0; i < inherits.Length; i++)
             {
                 // Does this topic have our trigger?
@@ -218,7 +218,7 @@ namespace RiveScript
             }
 
             // Now check for "includes".
-            var includes = this.topic(topic).listIncludes();
+            var includes = this.topic(topic).includes();
             for (int i = 0; i < includes.Length; i++)
             {
                 // Does this topic have our trigger?
@@ -263,7 +263,7 @@ namespace RiveScript
             result.Add(topic);
 
             // Does this topic include others?
-            var includes = this.topic(topic).listIncludes();
+            var includes = this.topic(topic).includes();
             for (int i = 0; i < includes.Length; i++)
             {
                 //Recurse.
@@ -275,7 +275,7 @@ namespace RiveScript
             }
 
             // Does it inherit?
-            var inherits = this.topic(topic).listInherits();
+            var inherits = this.topic(topic).inherits();
             for (int i = 0; i < inherits.Length; i++)
             {
                 //Recurse

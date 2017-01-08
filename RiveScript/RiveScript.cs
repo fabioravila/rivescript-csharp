@@ -1237,6 +1237,11 @@ namespace RiveScript
                     begin = begin.ReplaceRegex("\\{ok\\}", reply);
                     reply = begin;
                 }
+                else
+                {
+                    reply = begin;
+                }
+
 
                 // Run final substitutions.
                 reply = processTags(username, clients.client(username), message, reply,
@@ -1325,10 +1330,14 @@ namespace RiveScript
             {
                 say("Looking for a %Previous");
                 string[] allTopics = { topic };
-                //if (this.topics.topic(topic).includes() || this.topics.topic(topic).inherits()) {
-                // We need to walk the topic tree.
-                allTopics = this.topics.getTopicTree(topic, 0);
-                //		}
+
+                if (this.topics.topic(topic).includes().Length > 0 || this.topics.topic(topic).inherits().Length > 0)
+                {
+                    // We need to walk the topic tree.
+                    allTopics = this.topics.getTopicTree(topic, 0);
+                }
+
+
                 for (int i = 0; i < allTopics.Length; i++)
                 {
                     // Does this topic have a %Previous anywhere?
@@ -1431,8 +1440,9 @@ namespace RiveScript
                         int starcount = m.Groups.Count;
                         for (int s = 1; s <= starcount; s++)
                         {
-                            say("Add star: " + m.Groups[s].Value);
-                            stars.Add(m.Groups[s].Value);
+                            string star = (m.Groups[s].Value ?? "");
+                            say("Add star: " + star);
+                            stars.Add(star);
                         }
 
                         // We found a match, but what if the trigger we matched belongs to
@@ -1697,6 +1707,8 @@ namespace RiveScript
                         {
                             // The choice was a redirect!
                             string redirect = redirects[choice].ReplaceRegex("\\{weight=\\d+\\}", "");
+                            redirect = processTags(user, profile, message, redirect, stars, botstars, step);
+
                             say("Chosen a redirect to " + redirect + "!");
                             _reply = reply(user, redirect, begin, step + 1);
                         }
@@ -1724,7 +1736,7 @@ namespace RiveScript
                 _reply = ERR_NO_REPLY_FOUND;
             }
 
-            say("Final reply: " + _reply);
+            say("Final reply: " + _reply + "(begin: " + begin + ")");
 
             // Special tag processing for the BEGIN statement.
             if (begin)
@@ -1785,7 +1797,7 @@ namespace RiveScript
             regexp = regexp.ReplaceRegex("\\*", "(.+?)");             // *  ->  (.+?)
             regexp = regexp.ReplaceRegex("#", "(\\d+?)");         // #  ->  (\d+?)
             regexp = regexp.ReplaceRegex("_", "(\\w+?)");     // _  ->  ([A-Za-z ]+?)
-            regexp = regexp.ReplaceRegex("\\{weight=\\d+\\}", "");    // Remove {weight} tags
+            regexp = regexp.ReplaceRegex("\\s*\\{weight=\\d+\\}\\s*", ""); // Remove {weight} tags
             regexp = regexp.ReplaceRegex("<zerowidthstar>", "(.*?)"); // *  ->  (.*?)
 
             // Handle optionals.
@@ -1805,8 +1817,13 @@ namespace RiveScript
                     StringBuilder re = new StringBuilder();
                     for (int i = 0; i < parts.Length; i++)
                     {
-                        // We want: \s*part\s*
-                        re.Append("\\s*" + parts[i] + "\\s*");
+                        //// We want: \s*part\s*
+                        //re.Append("\\s*" + parts[i] + "\\s*");
+
+                        // See: https://github.com/aichaos/rivescript-js/commit/02f236e78c5d237cb046d2347fe704f5f70231c9
+                        re.Append("(?:\\s|\\b)+" + parts[i] + "(?:\\s|\\b)+");
+
+
                         if (i < parts.Length - 1)
                         {
                             re.Append("|");
@@ -1816,12 +1833,19 @@ namespace RiveScript
 
                     // If this optional had a star or anything in it, e.g. [*],
                     // make it non-matching.
-                    pipes = pipes.ReplaceRegex("\\(.+?\\)", "(?:.+?)");
-                    pipes = pipes.ReplaceRegex("\\(\\d+?\\)", "(?:\\\\d+?)");
-                    pipes = pipes.ReplaceRegex("\\(\\w+?\\)", "(?:\\\\w+?)");
+                    //pipes = pipes.ReplaceRegex("\\(.+?\\)", "(?:.+?)");
+                    //pipes = pipes.ReplaceRegex("\\(\\d+?\\)", "(?:\\\\d+?)");
+                    //pipes = pipes.ReplaceRegex("\\(\\w+?\\)", "(?:\\\\w+?)");
+
+
+                    pipes = pipes.ReplaceRegex("\\(\\.\\+\\?\\)", "(?:.+?)");
+                    pipes = pipes.ReplaceRegex("\\(\\d\\+\\?\\)", "(?:\\\\d+?)");
+                    pipes = pipes.ReplaceRegex("\\(\\w\\+\\?\\)", "(?:\\\\w+?)");
 
                     // Put the new text in.
-                    pipes = "(?:" + pipes + "|\\s*)";
+                    //pipes = "(?:" + pipes + "|\\s*)";
+                    pipes = "(?:" + pipes + "|(?:\\b|\\s)+)";
+
                     regexp = regexp.Replace(optional, pipes);
 
                 }
@@ -1878,6 +1902,9 @@ namespace RiveScript
                 {
                     string tag = mBot.Groups[0].Value;
                     string var = mBot.Groups[1].Value;
+
+
+
 
                     // Have this?
                     if (vars.ContainsKey(var))
@@ -1953,16 +1980,21 @@ namespace RiveScript
         /// <param name="profile">The RiveScript client object holding the user's profile</param>
         /// <param name="message">The message sent by the user.</param>
         /// <param name="reply">The bot's original reply including tags.</param>
-        /// <param name="vstars"> The vector of wildcards the user's message matched.</param>
-        /// <param name="vbotstars">The vector of wildcards in any %Previous.</param>
+        /// <param name="vst"> The vector of wildcards the user's message matched.</param>
+        /// <param name="vbst">The vector of wildcards in any %Previous.</param>
         /// <param name="step">The current recursion depth limit.</param>
         /// <returns></returns>
         private string processTags(string user, Client profile, string message, string reply,
-                                   List<string> vstars, List<string> vbotstars, int step)
+                                   List<string> vst, List<string> vbst, int step)
         {
             // Pad the stars.
+            var vstars = new List<string>();
+            var vbotstars = new List<string>();
+
             vstars.Insert(0, "");
             vbotstars.Insert(0, "");
+            vstars.AddRange(vst);
+            vbotstars.AddRange(vbst);
 
             // Set a default first star.
             if (vstars.Count == 1)
@@ -1978,6 +2010,40 @@ namespace RiveScript
             string[] stars = vstars.ToArray();
             string[] botstars = vbotstars.ToArray();
 
+
+            //See: https://github.com/aichaos/rivescript-java/commit/0a923d6c62baeb0b47b15cb21bba8bedd30a2061
+            // Turn arrays into randomized sets.
+            if (reply.IndexOf("(@") > -1)
+            {
+                Regex reArray = new Regex("\\(@([A-Za-z0-9_]+)\\)");
+
+                foreach (Match mReply in reArray.Matches(reply))
+                {
+                    string tag = mReply.Groups[0].Value;
+                    string name = mReply.Groups[1].Value;
+                    string result;
+
+                    if (arrays.ContainsKey(name))
+                    {
+                        string[] values = arrays[name].ToArray();
+                        StringBuilder joined = new StringBuilder();
+                        // Join the array.
+                        for (int i = 0; i < values.Length; i++)
+                        {
+                            joined.Append(values[i]);
+                            if (i < values.Length - 1)
+                            {
+                                joined.Append("|");
+                            }
+                        }
+                        result = "{random}" + joined.ToString() + "{/random}";
+                        reply = reply.Replace(tag, result);
+                    }
+                }
+            }
+
+
+
             // Shortcut tags.
             reply = reply.ReplaceRegex("<person>", "{person}<star>{/person}");
             reply = reply.ReplaceRegex("<@>", "{@<star>}");
@@ -1986,17 +2052,9 @@ namespace RiveScript
             reply = reply.ReplaceRegex("<uppercase>", "{uppercase}<star>{/uppercase}");
             reply = reply.ReplaceRegex("<lowercase>", "{lowercase}<star>{/lowercase}");
 
-            // Quick tags.
-            reply = reply.ReplaceRegex("\\{weight=\\d+\\}", ""); // Remove {weight}s
-            reply = reply.ReplaceRegex("<input>", "<input1>");
-            reply = reply.ReplaceRegex("<reply>", "<reply1>");
-            reply = reply.ReplaceRegex("<id>", user);
-            reply = reply.ReplaceRegex("\\\\s", " ");
-            reply = reply.ReplaceRegex("\\\\n", "\n");
-            reply = reply.ReplaceRegex("\\\\", "\\");
-            reply = reply.ReplaceRegex("\\#", "#");
 
-            // Stars
+            // Weight and star tags.
+            reply = reply.ReplaceRegex("\\{weight=\\d+\\}", ""); // Remove {weight}s
             reply = reply.ReplaceRegex("<star>", stars[1]);
             reply = reply.ReplaceRegex("<botstar>", botstars[1]);
             for (int i = 1; i < stars.Length; i++)
@@ -2009,7 +2067,10 @@ namespace RiveScript
             }
             reply = reply.ReplaceRegex("<(star|botstar)\\d+>", "");
 
+
             // Input and reply tags.
+            reply = reply.ReplaceRegex("<input>", "<input1>");
+            reply = reply.ReplaceRegex("<reply>", "<reply1>");
             if (reply.IndexOf("<input") > -1)
             {
                 Regex reInput = new Regex("<input([0-9])>");
@@ -2035,6 +2096,12 @@ namespace RiveScript
                 }
             }
 
+            reply = reply.ReplaceRegex("<id>", user);
+            reply = reply.ReplaceRegex("\\\\s", " ");
+            reply = reply.ReplaceRegex("\\\\n", "\n");
+            reply = reply.ReplaceRegex("\\\\", "\\");
+            reply = reply.ReplaceRegex("\\#", "#");
+
             // {random} tag
             if (reply.IndexOf("{random}") > -1)
             {
@@ -2048,47 +2115,7 @@ namespace RiveScript
                 }
             }
 
-            // <bot> tag
-            if (reply.IndexOf("<bot") > -1)
-            {
-                Regex reBot = new Regex("<bot (.+?)>");
-                foreach (Match mBot in reBot.Matches(reply))
-                {
-                    string tag = mBot.Groups[0].Value;
-                    string var = mBot.Groups[1].Value;
 
-                    // Have this?
-                    if (vars.ContainsKey(var))
-                    {
-                        reply = reply.Replace(tag, vars[var]);
-                    }
-                    else
-                    {
-                        reply = reply.Replace(tag, "undefined");
-                    }
-                }
-            }
-
-            // <env> tag
-            if (reply.IndexOf("<env") > -1)
-            {
-                Regex reEnv = new Regex("<env (.+?)>");
-                foreach (Match mEnv in reEnv.Matches(reply))
-                {
-                    string tag = mEnv.Groups[0].Value;
-                    string var = mEnv.Groups[1].Value;
-
-                    // Have this?
-                    if (globals.ContainsKey(var))
-                    {
-                        reply = reply.Replace(tag, globals[var]);
-                    }
-                    else
-                    {
-                        reply = reply.Replace(tag, "undefined");
-                    }
-                }
-            }
 
             // {!stream} tag
             if (reply.IndexOf("{!") > -1)
@@ -2106,28 +2133,12 @@ namespace RiveScript
                 }
             }
 
-            // {person}
-            if (reply.IndexOf("{person}") > -1)
-            {
-                Regex rePerson = new Regex("\\{person\\}(.+?)\\{\\/person\\}");
-                foreach (Match mPerson in rePerson.Matches(reply))
-                {
-                    string tag = mPerson.Groups[0].Value;
-                    string text = mPerson.Groups[1].Value;
 
-                    // Run person substitutions.
-                    say("Run person substitutions: before: " + text);
-                    text = Util.Substitute(person_s, person, text);
-                    say("After: " + text);
-                    reply = reply.Replace(tag, text);
-                }
-            }
-
-            // {formal,uppercase,lowercase,sentence} tags
-            if (reply.IndexOf("{formal}") > -1 || reply.IndexOf("{sentence}") > -1 ||
+            // Person substitutions & string formatting
+            if (reply.IndexOf("{person}") > -1 || reply.IndexOf("{formal}") > -1 || reply.IndexOf("{sentence}") > -1 ||
             reply.IndexOf("{uppercase}") > -1 || reply.IndexOf("{lowercase}") > -1)
             {
-                string[] tags = { "formal", "sentence", "uppercase", "lowercase" };
+                string[] tags = { "person", "formal", "sentence", "uppercase", "lowercase" };
                 for (int i = 0; i < tags.Length; i++)
                 {
                     Regex reTag = new Regex("\\{" + tags[i] + "\\}(.+?)\\{\\/" + tags[i] + "\\}");
@@ -2136,118 +2147,174 @@ namespace RiveScript
                         string tag = mTag.Groups[0].Value;
                         string text = mTag.Groups[1].Value;
 
-                        // string transform.
-                        text = stringTransform(tags[i], text);
-                        reply = reply.Replace(tag, text);
-                    }
-                }
-            }
-
-            // <set> tag
-            if (reply.IndexOf("<set") > -1)
-            {
-                Regex reSet = new Regex("<set (.+?)=(.+?)>");
-                foreach (Match mSet in reSet.Matches(reply))
-                {
-                    string tag = mSet.Groups[0].Value;
-                    string var = mSet.Groups[1].Value;
-                    string value = mSet.Groups[2].Value;
-
-                    // Set the uservar.
-                    profile.set(var, value);
-                    reply = reply.Replace(tag, "");
-                    say("Set user var " + var + "=" + value);
-                }
-            }
-
-            // <add, sub, mult, div> tags
-            if (reply.IndexOf("<add") > -1 || reply.IndexOf("<sub") > -1 ||
-            reply.IndexOf("<mult") > -1 || reply.IndexOf("<div") > -1)
-            {
-                string[] tags = { "add", "sub", "mult", "div" };
-                for (int i = 0; i < tags.Length; i++)
-                {
-                    Regex reTag = new Regex("<" + tags[i] + " (.+?)=(.+?)>");
-                    foreach (Match mTag in reTag.Matches(reply))
-                    {
-                        string tag = mTag.Groups[0].Value;
-                        string var = mTag.Groups[1].Value;
-                        string value = mTag.Groups[2].Value;
-
-                        // Get the user var.
-                        string curvalue = profile.get(var);
-                        int current = 0;
-                        if (!curvalue.Equals("undefined"))
+                        if (tags[i] == "person")
                         {
-                            // Convert it to a int.
-                            try
-                            {
-                                current = int.Parse(curvalue);
-                            }
-                            catch (FormatException)
-                            {
-                                // Current value isn't a number!
-                                reply = reply.Replace(tag, "[ERR: Can't \"" + tags[i] + "\" non-numeric variable " + var + "]");
-                                continue;
-                            }
-                        }
-
-                        // Value must be a number too.
-                        int modifier = 0;
-                        try
-                        {
-                            modifier = int.Parse(value);
-                        }
-                        catch (FormatException)
-                        {
-                            reply = reply.Replace(tag, "[ERR: Can't \"" + tags[i] + "\" non-numeric value " + value + "]");
-                            continue;
-                        }
-
-                        // Run the operation.
-                        if (tags[i].Equals("add"))
-                        {
-                            current += modifier;
-                        }
-                        else if (tags[i].Equals("sub"))
-                        {
-                            current -= modifier;
-                        }
-                        else if (tags[i].Equals("mult"))
-                        {
-                            current *= modifier;
+                            // Run person substitutions.
+                            say("Run person substitutions: before: " + text);
+                            text = Util.Substitute(person_s, person, text);
+                            say("After: " + text);
+                            reply = reply.Replace(tag, text);
                         }
                         else
                         {
-                            // Don't divide by zero.
-                            if (modifier == 0)
-                            {
-                                reply = reply.Replace(tag, "[ERR: Can't divide by zero!]");
-                                continue;
-                            }
-                            current /= modifier;
+                            // string transform.
+                            text = stringTransform(tags[i], text);
+                            reply = reply.Replace(tag, text);
                         }
 
-                        // Store the new value.
-                        profile.set(var, current.ToString());
-                        reply = reply.Replace(tag, "");
                     }
                 }
             }
 
-            // <get> tag
-            if (reply.IndexOf("<get") > -1)
-            {
-                Regex reGet = new Regex("<get (.+?)>");
-                foreach (Match mGet in reGet.Matches(reply))
-                {
-                    string tag = mGet.Groups[0].Value;
-                    string var = mGet.Groups[1].Value;
 
-                    // Get the user var.
-                    reply = reply.Replace(tag, profile.get(var));
+            // Handle all variable-related tags with an iterative regexp approach, to
+            // allow for nesting of tags in arbitrary ways (think <set a=<get b>>)
+            // Dummy out the <call> tags first, because we don't handle them right here.
+            reply = reply.Replace("<call>", "{__call__}");
+            reply = reply.Replace("</call>", "{/__call__}");
+
+
+            while (true)
+            {
+                // This regexp will match a <tag> which contains no other tag inside it,
+                // i.e. in the case of <set a=<get b>> it will match <get b> but not the
+                // <set> tag, on the first pass. The second pass will get the <set> tag,
+                // and so on.
+                Regex reTag = new Regex("<([^<]+?)>");
+                Match mTag = reTag.Match(reply);
+                if (mTag == null || !mTag.Success)
+                {
+                    break; // No remaining tags!
                 }
+
+
+                string match = mTag.Groups[1].Value;
+                string[] parts = match.Split(" ");
+                string tag = parts[0].ToLower();
+                string data = "";
+                if (parts.Length > 1)
+                {
+                    //data = Util.Join(parts.ToSubArray(1, parts.Length), " ");
+                    data = Util.Join(Util.CopyOfRange(parts, 1, parts.Length), " ");
+                }
+                string insert = "";
+
+                // Handle the tags.
+                if (tag == "bot" || tag == "env")
+                {
+                    // <bot> and <env> tags are similar
+                    IDictionary<string, string> target = (tag == "bot") ? vars : globals;
+                    if (data.IndexOf("=") > -1)
+                    {
+                        // Assigning a variable
+                        parts = data.Split("=", 2);
+                        string name = parts[0];
+                        string value = parts[1];
+                        say("Set " + tag + " variable " + name + " = " + value);
+                        target.Add(name, value);
+                    }
+                    else
+                    {
+                        // Getting a bot/env variable
+                        if (target.ContainsKey(data))
+                        {
+                            insert = target[data];
+                        }
+                        else
+                        {
+                            insert = Constants.Undefined;
+                        }
+                    }
+                }
+                else if (tag == "set")
+                {
+                    // <set> user vars
+                    parts = data.Split("=", 2);
+                    string name = parts[0];
+                    string value = parts[1];
+                    say("Set user var " + name + "=" + value);
+                    // Set the uservar.
+                    profile.set(name, value);
+                }
+                else if (tag == "add" || tag == "sub" || tag == "mult" || tag == "div")
+                {
+                    // Math operator tags
+                    parts = data.Split("=");
+                    string name = parts[0];
+                    int result = 0;
+
+                    // Initialize the variable?
+                    if (profile.get(name) == Constants.Undefined)
+                    {
+                        profile.set(name, "0");
+                    }
+
+
+                    try
+                    {
+                        int value = int.Parse(parts[1]);
+                        try
+                        {
+                            result = int.Parse(profile.get(name));
+
+                            // Run the operation.
+                            if (tag == "add")
+                            {
+                                result += value;
+                            }
+                            else if (tag == "sub")
+                            {
+                                result -= value;
+                            }
+                            else if (tag == "mult")
+                            {
+                                result *= value;
+                            }
+                            else
+                            {
+                                // Don't divide by zero.
+                                if (value == 0)
+                                {
+                                    insert = "[ERR: Can't divide by zero!]";
+                                }
+
+                                result /= value;
+                            }
+                        }
+                        catch (FormatException e)
+                        {
+                            insert = "[ERR: Math can't \"" + tag + "\" non-numeric variable " + name + "]";
+                        }
+                    }
+                    catch (FormatException e)
+                    {
+                        insert = "[ERR: Math can't \"" + tag + "\" non-numeric value " + parts[1] + "]";
+                    }
+
+                    // No errors?
+                    if (insert == "")
+                    {
+                        profile.set(name, result.ToString());
+                    }
+                }
+                else if (tag == "get")
+                {
+                    // Get the user var.
+                    insert = profile.get(data);
+                }
+                else
+                {
+                    // Unrecognized tag, preserve it
+                    insert = "\\x00" + match + "\\x01";
+                }
+
+                reply = reply.Replace(mTag.Groups[0].Value, insert);
             }
+
+            // Recover mangled HTML-like tags
+            reply = reply.Replace("\\x00", "<");
+            reply = reply.Replace("\\x01", ">");
+
 
             // {topic} tag
             if (reply.IndexOf("{topic=") > -1)
@@ -2266,7 +2333,9 @@ namespace RiveScript
             // {@redirect} tag
             if (reply.IndexOf("{@") > -1)
             {
-                Regex reRed = new Regex("\\{@(.+?)\\}");
+                //Regex reRed = new Regex("\\{@(.+?)\\}");
+                Regex reRed = new Regex("\\{@([^\\}]*?)\\}");
+
                 foreach (Match mRed in reRed.Matches(reply))
                 {
                     string tag = mRed.Groups[0].Value;
@@ -2279,6 +2348,8 @@ namespace RiveScript
             }
 
             // <call> tag
+            reply = reply.Replace("{__call__}", "<call>");
+            reply = reply.Replace("{/__call__}", "</call>");
             if (reply.IndexOf("<call>") > -1)
             {
                 Regex reCall = new Regex("<call>(.+?)<\\/call>");
@@ -2344,9 +2415,8 @@ namespace RiveScript
                     say("cc: " + letters.Length);
                     if (letters.Length > 1)
                     {
-                        say("letter 1: " + letters[1]);
+                        //Note : On splitregex, first and last are blank spaces, so use 1 index
                         letters[1] = letters[1].ToUpper();
-                        say("new letter 1: " + letters[1]);
                         words[i] = String.Join("", letters);
                         say("new word: " + words[i]);
                     }
@@ -2356,6 +2426,7 @@ namespace RiveScript
             else if (format.Equals("sentence"))
             {
                 // Uppercase the first letter of the first word.
+                //Note : On splitregex, first and last are blank spaces, so use 1 index
                 string[] letters = text.SplitRegex("");
                 if (letters.Length > 1)
                 {
@@ -2453,8 +2524,8 @@ namespace RiveScript
                 var extra = "";
 
                 // Includes? Inherits?
-                var includes = topics.topic(topic).listIncludes();
-                var inherits = topics.topic(topic).listInherits();
+                var includes = topics.topic(topic).includes();
+                var inherits = topics.topic(topic).inherits();
                 if (includes.Length > 0)
                 {
                     extra = "includes ";

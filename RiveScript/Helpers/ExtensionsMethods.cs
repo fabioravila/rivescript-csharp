@@ -23,6 +23,12 @@ namespace RiveScript
             return @this.Split(new[] { pattern }, StringSplitOptions.None);
         }
 
+
+        public static string[] Split(this string @this, string pattern, int count)
+        {
+            return @this.Split(new[] { pattern }, count, StringSplitOptions.None);
+        }
+
         public static string[] SplitRegex(this string @this, string pattern)
         {
             return new Regex(pattern).Split(@this);
@@ -67,16 +73,16 @@ namespace RiveScript
             return list.ToArray();
         }
 
-        public static T[] SubArray<T>(this T[] data, int index, int length)
+        public static T[] ToSubArray<T>(this T[] data, int index, int length)
         {
             T[] result = new T[length];
             Array.Copy(data, index, result, 0, length);
             return result;
         }
 
-        public static T[] SubArray<T>(this T[] data, int index)
+        public static T[] ToSubArray<T>(this T[] data, int index)
         {
-            return data.SubArray(index, data.Length - index);
+            return data.ToSubArray(index, data.Length - index);
         }
 
         public static bool Contains(this string @this, string value)
