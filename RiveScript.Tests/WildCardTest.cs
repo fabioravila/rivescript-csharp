@@ -138,5 +138,15 @@ namespace RiveScript.Tests
 
             Assert.AreEqual("So did you say \"hello man\" because \"bob\" told you to?", reply);
         }
+
+
+        [TestMethod]
+        public void Empty_WildCard()
+        {
+            var rs = TestHelper.getEmptyStreamed(new[] { "+ [(a|b) ](c|d)",
+                                                         "- <star2>" });
+
+            rs.reply("c").AssertAreEqual("c");
+        }
     }
 }

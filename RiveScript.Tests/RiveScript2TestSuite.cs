@@ -276,7 +276,7 @@ namespace RiveScript.Tests
                                                     "",
                                                     "+ *",
                                                     "% who is there",
-                                                    "- <set joke=<star>><sentence> who?",
+                                                    "- <set joke=<sentence>><sentence> who?",
                                                     "",
                                                     "+ <get joke> *",
                                                     "- Haha! \"{sentence}<get joke> <star>{/sentence}\"! :D",
@@ -296,7 +296,7 @@ namespace RiveScript.Tests
             rs.reply("Orange.")
               .AssertAreEqual("Orange who?");
             rs.reply("Orange you glad i didn't say banana?")
-              .AssertAreEqual("Haha! \"orange you glad i did not say banana\"! :D");
+              .AssertAreEqual("Haha! \"Orange you glad i did not say banana\"! :D");
         }
 
         [TestMethod]
