@@ -94,6 +94,7 @@ namespace RiveScript
             Topic.setDebug(debug);
         }
 
+
         /// <summary>
         /// Return the text of the last error message given.
         /// </summary>
@@ -521,7 +522,7 @@ namespace RiveScript
 
             // File scoped parser options.
             IDictionary<string, string> local_options = new Dictionary<string, string>();
-            local_options.Add("concat", "none");
+            local_options.AddOrUpdate("concat", "none");
             //local_options.Add("concat", "space");
             //local_options.Add("concat", "newline");
 
@@ -530,16 +531,12 @@ namespace RiveScript
             {
                 lineno++; // Increment the line counter.
                 string line = code[i];
-                say("Otiginal Line: " + line);
+                say("Original Line: " + line);
 
 
 
                 // Trim the line of whitespaces.
                 line = Util.Strip(line);
-
-
-
-
 
                 // Are we inside an object?
                 if (inobj)
@@ -790,7 +787,7 @@ namespace RiveScript
                     {
                         // Local file scoped parser options
                         say("\tSet local parser option " + var + " = " + value);
-                        local_options.Add(var, value);
+                        local_options.AddOrUpdate(var, value);
                     }
                     else if (type.Equals("global"))
                     {
@@ -1800,6 +1797,10 @@ namespace RiveScript
             regexp = regexp.ReplaceRegex("\\s*\\{weight=\\d+\\}\\s*", ""); // Remove {weight} tags
             regexp = regexp.ReplaceRegex("<zerowidthstar>", "(.*?)"); // *  ->  (.*?)
 
+            regexp = regexp.ReplaceRegex("\\|{ 2,}", "|"); //Remove empty entities
+            regexp = regexp.ReplaceRegex("(\\(|\\[)\\|", "$1"); //Remove empty entities from start of alt/opts
+            regexp = regexp.ReplaceRegex("\\| (\\) |\\])", "$1"); //Remove empty entities from end of alt/opts
+
             // Handle optionals.
             if (regexp.IndexOf("[") > -1)
             {
@@ -1852,7 +1853,16 @@ namespace RiveScript
             }
 
             // Make \w more accurate for our purposes.
-            regexp = regexp.Replace("\\w", "[A-Za-z ]");
+
+            if (this.utf8)
+            {
+                regexp = regexp.Replace("\\w", "[\\p{L} ]");
+            }
+            else
+            {
+                regexp = regexp.Replace("\\w", "[A-Za-z ]");
+            }
+
 
             // Filter in arrays.
             if (regexp.IndexOf("@") > -1)
@@ -2211,7 +2221,8 @@ namespace RiveScript
                         string name = parts[0];
                         string value = parts[1];
                         say("Set " + tag + " variable " + name + " = " + value);
-                        target.Add(name, value);
+
+                        target.AddOrUpdate(name, value);
                     }
                     else
                     {

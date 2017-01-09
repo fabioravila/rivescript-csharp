@@ -60,6 +60,11 @@
     <Compile Include="RandomReplyTest.cs" />
     <Compile Include="RpgGameTest.cs" />
     <Compile Include="RSTS_Tests\BeginTest.cs" />
+    <Compile Include="RSTS_Tests\BotVariablesTest.cs" />
+    <Compile Include="RSTS_Tests\UnicodeTest.cs" />
+    <Compile Include="RSTS_Tests\SubstitutionsTest.cs" />
+    <Compile Include="RSTS_Tests\OptionsTest.cs" />
+    <Compile Include="RSTS_Tests\MathTest.cs" />
     <Compile Include="RSTS_Tests\TriggersTest.cs" />
     <Compile Include="RSTS_Tests\RepliesTest.cs" />
     <Compile Include="SimpleReplyTest.cs" />
