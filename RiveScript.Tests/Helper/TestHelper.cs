@@ -151,7 +151,7 @@ namespace RiveScript.Tests
             return rs.reply(DefaultUser, message);
         }
 
-        public static bool setUserVar(this RiveScript rs, string name, string value)
+        public static bool setUservar(this RiveScript rs, string name, string value)
         {
             return rs.setUservar(DefaultUser, name, value);
         }

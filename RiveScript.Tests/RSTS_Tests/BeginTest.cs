@@ -64,8 +64,8 @@ namespace RiveScript.Tests.RSTS
 
             rs.reply("Hello bot.").AssertAreEqual("Hello human.");
 
-            rs.setUserVar("met", "true");
-            rs.setUserVar("name", "undefined");
+            rs.setUservar("met", "true");
+            rs.setUservar("name", "undefined");
 
             rs.reply("My name is bob").AssertAreEqual("Hello, Bob.");
             rs.getUserVar("name").AssertAreEqual("Bob");

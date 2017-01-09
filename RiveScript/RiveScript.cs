@@ -9,9 +9,9 @@ namespace RiveScript
 {
     public class RiveScript
     {
-        private const string ERR_NO_REPLY_MATCHED = "ERR: No Reply Matched";
-        private const string ERR_NO_REPLY_FOUND = "ERR: No Reply Found";
-        private const string ERR_DEEP_RECURSION = "ERR: Deep Recursion Detected!";
+        public const string ERR_NO_REPLY_MATCHED = "ERR: No Reply Matched";
+        public const string ERR_NO_REPLY_FOUND = "ERR: No Reply Found";
+        public const string ERR_DEEP_RECURSION = "ERR: Deep Recursion Detected!";
 
 
         // Private class variables.
@@ -1856,11 +1856,11 @@ namespace RiveScript
 
             if (this.utf8)
             {
-                regexp = regexp.Replace("\\w", "[\\p{L} ]");
+                regexp = regexp.Replace("\\w", "[\\p{L}]");
             }
             else
             {
-                regexp = regexp.Replace("\\w", "[A-Za-z ]");
+                regexp = regexp.Replace("\\w", "[A-Za-z]");
             }
 
 
@@ -2470,6 +2470,7 @@ namespace RiveScript
             //Trim start and end
             message = message.TrimStart();
             message = message.TrimEnd();
+            message = message.Trim();
 
 
             // In UTF-8 mode, only strip metacharcters and HTML brackets (to protect against obvious XSS attacks).
