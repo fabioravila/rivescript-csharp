@@ -4,11 +4,8 @@ using System.Linq;
 
 namespace RiveScript.Tests.RSTS
 {
-    /// <summary>
-    /// Testes based on http://www.rivescript.com/try files
-    /// </summary>
     [TestClass]
-    public class Triggers
+    public class TriggersTest
     {
         [TestMethod]
         public void RSTS_Triggers__weighted_triggers()

@@ -4,11 +4,8 @@ using System.Linq;
 
 namespace RiveScript.Tests.RSTS
 {
-    /// <summary>
-    /// Testes based on http://www.rivescript.com/try files
-    /// </summary>
     [TestClass]
-    public class Replies
+    public class RepliesTest
     {
         [TestMethod]
         public void RSTS_Replies__reply_arrays()
