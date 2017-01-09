@@ -33,7 +33,7 @@ namespace RiveScript.Tests
             var rs = TestHelper.getStreamed(new[] { "+ _ is my name",
                                                     "- Hello <star>"});
 
-            var reply = rs.reply("default", " Bob is my name");
+            var reply = rs.reply("default", "Bob is my name");
 
             Assert.AreEqual("Hello bob", reply);
         }
@@ -44,9 +44,9 @@ namespace RiveScript.Tests
             var rs = TestHelper.getStreamed(new[] { "+ my name is _",
                                                     "- Hello, <star>."});
 
-            var reply = rs.reply("default", " my name is Bob Lee");
+            var reply = rs.reply("default", "my name is Bob");
 
-            Assert.AreEqual("Hello, bob lee.", reply);
+            Assert.AreEqual("Hello, bob.", reply);
         }
 
         [TestMethod]
@@ -56,9 +56,9 @@ namespace RiveScript.Tests
                                                     "- Hello <star>"});
 
 
-            var reply = rs.reply("default", " my name is Bob Lee for you");
+            var reply = rs.reply("default", "my name is Bob for you");
 
-            Assert.AreEqual("Hello bob lee", reply);
+            Assert.AreEqual("Hello bob", reply);
         }
 
         [TestMethod]
@@ -68,9 +68,9 @@ namespace RiveScript.Tests
                                                     "- Hello <star>"});
 
 
-            var reply = rs.reply("default", " Bob Lee is my name");
+            var reply = rs.reply("default", " Bob is my name");
 
-            Assert.AreEqual("Hello bob lee", reply);
+            Assert.AreEqual("Hello bob", reply);
         }
 
         [TestMethod]
@@ -79,7 +79,7 @@ namespace RiveScript.Tests
             var rs = TestHelper.getStreamed(new[] { "+ my name is _",
                                                     "- Hello, <star>."});
 
-            var reply = rs.reply("default", " my name is 123");
+            var reply = rs.reply("default", "my name is 123");
 
             Assert.AreEqual(TestHelper.ErrorNoReplyMatched, reply);
         }

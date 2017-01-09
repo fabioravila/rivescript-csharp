@@ -18,6 +18,14 @@ namespace RiveScript
             }
         }
 
+        public static void AddOrUpdate(this IDictionary<string, string> dic, string key, string value)
+        {
+            if (dic.ContainsKey(key))
+                dic[key] = value;
+            else
+                dic.Add(key, value);
+        }
+
         public static string[] Split(this string @this, string pattern)
         {
             return @this.Split(new[] { pattern }, StringSplitOptions.None);

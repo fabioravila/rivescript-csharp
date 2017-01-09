@@ -8,6 +8,7 @@ namespace RiveScript.Tests
     public static class TestHelper
     {
         public static string ErrorNoReplyMatched = "ERR: No Reply Matched";
+        public static string DefaultUser = "default";
 
         public static RiveScript getStreamed(string[] code)
         {
@@ -147,7 +148,17 @@ namespace RiveScript.Tests
 
         public static string reply(this RiveScript rs, string message)
         {
-            return rs.reply("default", message);
+            return rs.reply(DefaultUser, message);
+        }
+
+        public static bool setUservar(this RiveScript rs, string name, string value)
+        {
+            return rs.setUservar(DefaultUser, name, value);
+        }
+
+        public static string getUserVar(this RiveScript rs, string name)
+        {
+            return rs.getUserVar(DefaultUser, name);
         }
 
 
