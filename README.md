@@ -1,11 +1,12 @@
 # CSharp RiveScript Interpreter
 
+[![Build status](https://ci.appveyor.com/api/projects/status/crwboe7fa6aseqvc/branch/master?svg=true)](https://ci.appveyor.com/project/fabioravila/rivescript-csharp/branch/master)
+[![MIT License](https://img.shields.io/github/license/fabioravila/rivescript-csharp.svg)](./LICENSE)
+
 ## SYNOPSIS
 
 This is a C# implementation of a RiveScript interpreter, per the Working Draft
 at http://www.rivescript.com/wd/RiveScript.html
-
-[![Build status](https://ci.appveyor.com/api/projects/status/crwboe7fa6aseqvc/branch/master?svg=true)](https://ci.appveyor.com/project/fabioravila/rivescript-csharp/branch/master)
 
 This code was initially developed based on the official version of the Java interpreter
 rivescript-java - https://github.com/aichaos/rivescript-java
@@ -29,6 +30,7 @@ PS: This is my first public library, then I'm sorry for the lack of knowledge of
 - [x] Develop a native objects for csharp
 - [x] Migrate last fixes and changes from rivescript-java since jan-2016 (some push a lot)
 - [ ] Create a RSBot Demo Script
+- [ ] Complete test based on rsts
 - [ ] Complete the code documentation and adjust appveyor to build and release on tag
 - [ ] [...]
 
