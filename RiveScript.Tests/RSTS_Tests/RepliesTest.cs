@@ -312,5 +312,46 @@ namespace RiveScript.Tests.RSTS
 
             });
         }
+
+
+
+        [TestMethod]
+        public void RSTS_Replies__previous_2()
+        {
+            var rs = TestHelper.getEmptyStreamed(new[] { "+ hello",
+                                                         "- Can you guess my name?",
+
+                                                         "+ *",
+                                                         "% can you guess my name",
+                                                         "- My name is Jo.",
+
+                                                         "+ [*] jo [*]",
+                                                         "% can you guess my name",
+                                                         "- Lucky guess ;-)" });
+
+            rs.reply("hello").AssertAreEqual("Can you guess my name?");
+            rs.reply("Jo").AssertAreEqual("Lucky guess ;-)");
+        }
+
+
+        [TestMethod]
+        public void RSTS_Replies__previous_3()
+        {
+            var rs = TestHelper.getEmptyStreamed(new[] { "+ hello",
+                                                         "- Can you guess my name?",
+
+                                                         "+ [*] jo [*]",
+                                                         "% can you guess my name",
+                                                         "- Lucky guess ;-)",
+
+                                                         "+ *",
+                                                         "% can you guess my name",
+                                                         "- My name is Jo."});
+
+            rs.reply("hello").AssertAreEqual("Can you guess my name?");
+            rs.reply("Jo").AssertAreEqual("Lucky guess ;-)");
+        }
+
+
     }
 }
