@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace RiveScript
 {
@@ -23,9 +24,11 @@ namespace RiveScript
         /// </summary>
         /// <param name="sorted"></param>
         /// <returns></returns>
-        public ICollection<string> Dump(ICollection<string> sorted)
+        public ICollection<string> Dump()
         {
             // Sort each sort-category by the number of words they have, in descending order.
+            ICollection<string> sorted = new List<string>();
+
             sorted = addSortedList(sorted, atomic);
             sorted = addSortedList(sorted, option);
             sorted = addSortedList(sorted, alpha);
@@ -38,6 +41,85 @@ namespace RiveScript
             sorted = addSortedList(sorted, star);
 
             return sorted;
+        }
+
+        public void Fill(ICollection<string> unsorted)
+        {
+            // Loop through the triggers and sort them into their buckets.
+            foreach (var e in unsorted)
+            {
+                var trigger = e.ToString(); //Copy the element
+
+                // Count the number of whole words it has.
+                //Javacode: String[] words = trigger.split("[ |\\*|\\#|\\_]");
+                var words = Regex.Split(trigger, "[ |\\*|\\#|_]");
+                int wc = 0;
+                for (int w = 0; w < words.Length; w++)
+                {
+                    if (words[w].Length > 0)
+                    {
+                        wc++;
+                    }
+                }
+
+                //How make this here?
+                //say("On trigger: " + trigger + " (it has " + wc + " words) - inherit level: " + inherits);
+
+                // Profile it.
+                if (trigger.IndexOf("_") > -1)
+                {
+                    // It has the alpha wildcard, _.
+                    if (wc > 0)
+                    {
+                        this.addAlpha(wc, trigger);
+                    }
+                    else
+                    {
+                        this.addUnder(trigger);
+                    }
+                }
+                else if (trigger.IndexOf("#") > -1)
+                {
+                    // It has the numeric wildcard, #.
+                    if (wc > 0)
+                    {
+                        this.addNumber(wc, trigger);
+                    }
+                    else
+                    {
+                        this.addPound(trigger);
+                    }
+                }
+                else if (trigger.IndexOf("*") > -1)
+                {
+                    // It has the global wildcard, *.
+                    if (wc > 0)
+                    {
+                        this.addWild(wc, trigger);
+                    }
+                    else
+                    {
+                        this.addStar(trigger);
+                    }
+                }
+                else if (trigger.IndexOf("[") > -1)
+                {
+                    // It has optional parts.
+                    this.addOption(wc, trigger);
+                }
+                else
+                {
+                    // Totally atomic.
+                    this.addAtomic(wc, trigger);
+                }
+            }
+        }
+
+        public static ICollection<string> SortAtOnce(ICollection<string> unsorted)
+        {
+            var bucket = new Inheritance();
+            bucket.Fill(unsorted);
+            return bucket.Dump();
         }
 
         /// <summary>

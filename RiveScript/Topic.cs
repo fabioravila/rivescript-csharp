@@ -244,84 +244,17 @@ namespace RiveScript
                         in mind when keeping track of how to sort these things.
                     */
 
-                    var highest_inherits = inherits; // highest {inherits} we've seen
-
                     // Initialize a sort bucket that will keep inheritance levels'
                     // triggers in separate places.
                     //com.rivescript.InheritanceManager bucket = new com.rivescript.InheritanceManager();
                     var bucket = new Inheritance();
 
                     // Loop through the triggers and sort them into their buckets.
-                    foreach (var e in p_list)
-                    {
-                        var trigger = e.ToString(); //Copy the element
-
-                        // Count the number of whole words it has.
-                        //Javacode: String[] words = trigger.split("[ |\\*|\\#|\\_]");
-                        var words = Regex.Split(trigger, "[ |\\*|\\#|_]");
-                        int wc = 0;
-                        for (int w = 0; w < words.Length; w++)
-                        {
-                            if (words[w].Length > 0)
-                            {
-                                wc++;
-                            }
-                        }
-
-                        say("On trigger: " + trigger + " (it has " + wc + " words) - inherit level: " + inherits);
-
-                        // Profile it.
-                        if (trigger.IndexOf("_") > -1)
-                        {
-                            // It has the alpha wildcard, _.
-                            if (wc > 0)
-                            {
-                                bucket.addAlpha(wc, trigger);
-                            }
-                            else
-                            {
-                                bucket.addUnder(trigger);
-                            }
-                        }
-                        else if (trigger.IndexOf("#") > -1)
-                        {
-                            // It has the numeric wildcard, #.
-                            if (wc > 0)
-                            {
-                                bucket.addNumber(wc, trigger);
-                            }
-                            else
-                            {
-                                bucket.addPound(trigger);
-                            }
-                        }
-                        else if (trigger.IndexOf("*") > -1)
-                        {
-                            // It has the global wildcard, *.
-                            if (wc > 0)
-                            {
-                                bucket.addWild(wc, trigger);
-                            }
-                            else
-                            {
-                                bucket.addStar(trigger);
-                            }
-                        }
-                        else if (trigger.IndexOf("[") > -1)
-                        {
-                            // It has optional parts.
-                            bucket.addOption(wc, trigger);
-                        }
-                        else
-                        {
-                            // Totally atomic.
-                            bucket.addAtomic(wc, trigger);
-                        }
-                    }
+                    bucket.Fill(p_list);
 
                     // Sort each inheritence level individually.
                     say("Dumping sort bucket !");
-                    var subsort = bucket.Dump(new List<string>());
+                    var subsort = bucket.Dump();
                     foreach (var item in subsort)
                     {
                         say("ADD TO SORT: " + item);
@@ -401,6 +334,7 @@ namespace RiveScript
 
             // Loop through the triggers to find those with a %Previous.
             var triggers = listTriggers(true);
+
             for (int i = 0; i < triggers.Length; i++)
             {
                 var pattern = triggers[i];
@@ -409,7 +343,6 @@ namespace RiveScript
                     // This one has it.
                     _hasPrevious = true;
 
-                    //var parts = pattern.Split("\\{previous\\}", 2); //Java original code
                     var parts = pattern.SplitRegex("\\{previous\\}", 2);
                     var previous = parts[1];
 
@@ -422,7 +355,15 @@ namespace RiveScript
                 }
             }
 
-            // TODO: we need to sort the triggers but ah well
+            // Loop over keys
+            // TODO: Can do better to solve this, its is not best performance options
+            // NOTE: ToArray is necessary to clone key list and avoid error on interation
+            foreach (var key in prev2trig.Keys.ToArray())
+            {
+                prev2trig[key] = Inheritance.SortAtOnce(prev2trig[key]);
+            }
+
+
             this.previous = prev2trig;
         }
 
