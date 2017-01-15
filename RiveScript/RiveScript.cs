@@ -224,8 +224,11 @@ namespace RiveScript
         /// <returns></returns>
         public bool stream(string code)
         {
+            //Adjust carriage return
+            code = code.Replace("\r\n", "\n");
+
             // Split the given code up into lines.
-            var lines = code.Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+            var lines = code.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
 
             // Send the lines to the parser.
             return parse("(streamed)", lines);
