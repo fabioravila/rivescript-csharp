@@ -24,9 +24,6 @@ namespace RiveScript
         private static Random rand = new Random();  // A random number generator
 
 
-        //The version of the RiveScript C# library.
-        public static readonly double VERSION = 0.01;
-
         // Constant RiveScript command symbols.
         private static readonly double RS_VERSION = 2.0; // This implements RiveScript 2.0
         private static readonly string CMD_DEFINE = "!";
@@ -228,7 +225,7 @@ namespace RiveScript
         public bool stream(string code)
         {
             // Split the given code up into lines.
-            var lines = code.Split(new[] { "\n" }, StringSplitOptions.None);
+            var lines = code.Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
 
             // Send the lines to the parser.
             return parse("(streamed)", lines);
