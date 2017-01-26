@@ -80,6 +80,7 @@
     <Compile Include="RepetitionTest.cs" />
     <Compile Include="ConditionalTest.cs" />
     <Compile Include="Issue4Test.cs" />
+    <Compile Include="ThreadSafeTest.cs" />
     <Compile Include="UTF8Test.cs" />
     <Compile Include="WildCardTest.cs" />
   </ItemGroup>

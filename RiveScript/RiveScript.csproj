@@ -50,6 +50,7 @@
     <Compile Include="Helpers\Rot13.cs" />
     <Compile Include="Helpers\StringLongToShortComparer.cs" />
     <Compile Include="RiveScript.cs" />
+    <Compile Include="RiveScriptExtensions.cs" />
     <Compile Include="Topic.cs" />
     <Compile Include="TopicManager.cs" />
     <Compile Include="Trigger.cs" />

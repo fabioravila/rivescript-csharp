@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace RiveScript
 {
@@ -55,7 +56,8 @@ namespace RiveScript
         private string[] subs_s = null;                                                                             // sorted subs
         private IDictionary<string, string> person = new Dictionary<string, string>();                              // ! person
         private string[] person_s = null; // sorted persons
-        private string _currentUser = Constants.Undefined;
+
+        private ThreadLocal<string> _currentUser = new ThreadLocal<string>();
 
 
         public static bool IsErrReply(string reply)
@@ -67,7 +69,6 @@ namespace RiveScript
                    test == ERR_DEEP_RECURSION;
         }
 
-
         /// <summary>
         /// Create a new RiveScript interpreter object, specifying the debug mode.
         /// </summary>
@@ -78,6 +79,7 @@ namespace RiveScript
             Topic.setDebug(debug);// Set static debug modes.
             this.utf8 = utf8;
             this.strict = strict;
+            _currentUser.Value = Constants.Undefined;
         }
 
         /// <summary>
@@ -499,7 +501,7 @@ namespace RiveScript
 
         public string currentUser()
         {
-            return _currentUser;
+            return _currentUser.Value ?? Constants.Undefined;
         }
 
         #endregion
@@ -1213,7 +1215,7 @@ namespace RiveScript
         {
             say("Asked reply to [" + username + "] " + message);
 
-            _currentUser = username;
+            _currentUser.Value = username;
 
             // Format their message first.
             message = formatMessage(message);
@@ -1255,7 +1257,7 @@ namespace RiveScript
             clients.client(username).addInput(message);
             clients.client(username).addReply(reply);
 
-            _currentUser = Constants.Undefined;
+            _currentUser.Value = Constants.Undefined;
 
             // Return their reply.
             return reply;

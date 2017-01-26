@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 
@@ -9,7 +10,7 @@ namespace RiveScript
     /// </summary>
     public class ClientManager
     {
-        private Dictionary<string, Client> clients = new Dictionary<string, Client>();
+        private ConcurrentDictionary<string, Client> clients = new ConcurrentDictionary<string, Client>();
 
         public ClientManager() { }
 
@@ -20,12 +21,7 @@ namespace RiveScript
 
         public Client client(string username)
         {
-            if (false == clients.ContainsKey(username))
-            {
-                clients.Add(username, new Client(username));
-            }
-
-            return clients[username];
+            return clients.GetOrAdd(username, new Client(username));
         }
 
         public bool clientExists(string username)
