@@ -41,6 +41,7 @@
     <Compile Include="Client.cs" />
     <Compile Include="ClientManager.cs" />
     <Compile Include="Constants.cs" />
+    <Compile Include="ErrorMessages.cs" />
     <Compile Include="Helpers\ExtensionsMethods.cs" />
     <Compile Include="Helpers\FileHelper.cs" />
     <Compile Include="Inheritance.cs" />

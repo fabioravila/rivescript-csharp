@@ -18,7 +18,6 @@ namespace RiveScript.Tests
         {
 
             var rs = new RiveScript(debug: true);
-            rs.setCSharpHandler();
 
             rs.stream(@"+ trigger
                         - <call>currentuser</call>
@@ -50,7 +49,6 @@ namespace RiveScript.Tests
         {
 
             var rs = new RiveScript(debug: true);
-            rs.setCSharpHandler();
             rs.stream(@"+ trigger
                         - <call>currentuser</call>
 

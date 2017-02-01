@@ -346,7 +346,7 @@ namespace RiveScript.Tests
                                                     ""});
 
             rs.reply("Test recursion")
-              .AssertAreEqual("ERR: Deep Recursion Detected!");
+              .AssertAreEqual(rs.errors.deepRecursion);
         }
 
         /*

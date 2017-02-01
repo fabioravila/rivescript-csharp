@@ -29,8 +29,7 @@ namespace RiveScript.Tests
             var reply = rs.reply(USER, "he's an idiot");
 
 
-            Assert.IsTrue(RiveScript.IsErrReply(reply));
-
+            Assert.IsTrue(rs.IsErrReply(reply));
         }
     }
 }

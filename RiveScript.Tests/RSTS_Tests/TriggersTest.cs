@@ -91,9 +91,9 @@ namespace RiveScript.Tests.RSTS
             rs.reply("hi Aiden").AssertAreEqual("Matched.");
             rs.reply("hi bot how are you?").AssertAreEqual("Matched.");
             rs.reply("yo computer what time is it?").AssertAreEqual("Matched.");
-            rs.reply("yoghurt is yummy").AssertAreEqual(RiveScript.ERR_NO_REPLY_MATCHED);
-            rs.reply("hide and seek is fun").AssertAreEqual(RiveScript.ERR_NO_REPLY_MATCHED);
-            rs.reply("hip hip hurrah").AssertAreEqual(RiveScript.ERR_NO_REPLY_MATCHED);
+            rs.reply("yoghurt is yummy").AssertAreEqual(rs.errors.replyNotMatched);
+            rs.reply("hide and seek is fun").AssertAreEqual(rs.errors.replyNotMatched);
+            rs.reply("hip hip hurrah").AssertAreEqual(rs.errors.replyNotMatched);
 
         }
 
@@ -116,12 +116,12 @@ namespace RiveScript.Tests.RSTS
 
             rs.reply("What color is my red shirt?").AssertAreEqual("Your shirt is red.");
             rs.reply("What color is my blue car?").AssertAreEqual("Your car is blue.");
-            rs.reply("What color is my pink house?").AssertAreEqual(RiveScript.ERR_NO_REPLY_MATCHED);
+            rs.reply("What color is my pink house?").AssertAreEqual(rs.errors.replyNotMatched);
             rs.reply("What color is my dark blue jacket?").AssertAreEqual("Your jacket is dark blue.");
             rs.reply("What color was Napoleon's white horse?").AssertAreEqual("It was white.");
             rs.reply("What color was my red shirt?").AssertAreEqual("It was red.");
             rs.reply("I have a blue car.").AssertAreEqual("Tell me more about your car.");
-            rs.reply("I have a cyan car.").AssertAreEqual(RiveScript.ERR_NO_REPLY_MATCHED);
+            rs.reply("I have a cyan car.").AssertAreEqual(rs.errors.replyNotMatched);
         }
 
 

@@ -9,7 +9,7 @@ namespace RiveScript.Tests
     public class CSharpObjectHandlerTest
     {
         [TestMethod]
-        public void Hello_World_Simple_Code()
+        public void Hello_World_Simple_Code_AndChsrpHandlerIsDefault()
         {
             var rs = new RiveScript();
             var oh = new CSharp();
@@ -64,7 +64,6 @@ namespace RiveScript.Tests
         public void Execute_Full_Object_Call_Without_Parameter()
         {
             var rs = new RiveScript();
-            rs.setHandler("csharp", new CSharp());
             rs.stream(new[] { "",
                               "+ who is current user",
                               "- current user is: <call>current</call>",
@@ -86,7 +85,6 @@ namespace RiveScript.Tests
         public void Execute_Full_Object_Call_With_Parameter()
         {
             var rs = new RiveScript();
-            rs.setHandler("csharp", new CSharp());
             rs.stream(new[] { "",
                               "+ sum # and #",
                               "- result is: <call>sum <star1> <star2></call>",
@@ -108,7 +106,6 @@ namespace RiveScript.Tests
         public void Execute_Full_Object_Call_Custom_References()
         {
             var rs = new RiveScript();
-            rs.setHandler("csharp", new CSharp());
             rs.stream(new[] { "",
                               "+ show data enum",
                               "- enum is: <call>test</call>",
@@ -137,9 +134,7 @@ namespace RiveScript.Tests
             //Mock entry assembly for test envirioment
             ContextHelper.SetEntryAssembly(typeof(CSharpObjectHandlerTest).Assembly);
 
-
             var rs = new RiveScript();
-            rs.setHandler("csharp", new CSharp());
             rs.stream(new[] { "",
                               "",
                               "",
