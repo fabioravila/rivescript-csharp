@@ -73,6 +73,38 @@ namespace RiveScript
         }
 
         /// <summary>
+        /// Create a new RiveScript interpreter object with default options
+        /// </summary>
+        /// <param name="options">Options object</param>
+        public RiveScript(Options options)
+        {
+            if (options == null)
+                options = Options.Default;
+
+            this.debug = options.debug;
+            Topic.setDebug(options.debug);// Set static debug modes.
+            this.utf8 = options.utf8;
+            this.strict = options.strict;
+            _currentUser.Value = Constants.Undefined;
+            this.forceCase = options.forceCase;
+            this.onDebug = options.onDebug;
+
+            this.depth = options.depth;
+            if (this.depth < 0) this.depth = 0;//Adjust depth
+
+            //Errors
+            this.errors = (options.errors ?? ErrorMessages.Default).AdjustDefaults();
+
+            //CSharp handler is default
+            this.setCSharpHandler();
+        }
+
+        /// <summary>
+        /// Create a new RiveScript interpreter object with default options
+        /// </summary>
+        public RiveScript() : this(Options.Default) { }
+
+        /// <summary>
         /// Create a new RiveScript interpreter object wiht parameter options
         /// </summary>
         /// <param name="debug">Debug mode</param>
@@ -81,33 +113,26 @@ namespace RiveScript
         /// <param name="depth">Recursion depth limit</param>
         /// <param name="forceCase">Force-lowercase triggers</param>
         /// <param name="errors">Customize certain error messages</param>
-        public RiveScript(bool debug = false, bool utf8 = false, bool strict = true, int depth = 50, bool forceCase = false, ErrorMessages errors = null, Action<string> onDebug = null)
-        {
-            this.debug = debug;
-            Topic.setDebug(debug);// Set static debug modes.
-            this.utf8 = utf8;
-            this.strict = strict;
-            _currentUser.Value = Constants.Undefined;
-            this.forceCase = forceCase;
-            this.onDebug = onDebug;
+        /// <param name="onDebug">Set a custom handler to catch debug log messages</param>
+        public RiveScript(bool debug = false,
+                          bool utf8 = false,
+                          bool strict = true,
+                          int depth = 50,
+                          bool forceCase = false,
+                          ErrorMessages errors = null,
+                          Action<string> onDebug = null)
+            : this(new Options
+            {
+                debug = debug,
+                utf8 = utf8,
+                strict = strict,
+                depth = depth,
+                forceCase = forceCase,
+                errors = errors,
+                onDebug = onDebug
+            })
+        { }
 
-            this.depth = depth;
-            if (this.depth < 0) this.depth = 0;//Adjust depth
-
-
-            //Errors
-            this.errors = (errors ?? ErrorMessages.Default).AdjustDefaults();
-
-
-
-            //CSharp handler is default
-            this.setCSharpHandler();
-        }
-
-        /// <summary>
-        /// Create a new RiveScript interpreter object with debug disabled.
-        /// </summary>
-        public RiveScript() : this(debug: false, utf8: false, strict: false) { }
 
         public void setDebug(bool debug)
         {
@@ -2715,7 +2740,6 @@ namespace RiveScript
                 Console.WriteLine(line);
         }
 
-
         /// <summary>
         /// Print a line of warning text including a file name and line number.
         /// </summary>
@@ -2743,10 +2767,13 @@ namespace RiveScript
         /// <param name="e"></param>
         protected void trace(System.IO.IOException e)
         {
-            if (this.debug)
-            {
+            if (!debug)
+                return;
+
+            if (onDebug != null)
+                onDebug.Invoke(e.StackTrace);
+            else
                 System.Diagnostics.Debug.WriteLine(e.StackTrace);
-            }
         }
 
         #endregion
