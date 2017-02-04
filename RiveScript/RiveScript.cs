@@ -10,16 +10,16 @@ namespace RiveScript
 {
     public class RiveScript
     {
-        public const string ERR_NO_REPLY_MATCHED = "ERR: No Reply Matched";
-        public const string ERR_NO_REPLY_FOUND = "ERR: No Reply Found";
-        public const string ERR_DEEP_RECURSION = "ERR: Deep Recursion Detected!";
-
 
         // Private class variables.
         private bool debug = false;                 // Debug mode
         private int depth = 50;                     // Recursion depth limit
         private bool utf8 = false;                  // uft8 mode flag
-        private bool strict = false;                // strict mode flag
+        private bool strict = true;                // strict mode flag
+        private bool forceCase = false;
+        private Regex unicodePunctuation = new Regex("[., !?;:]/g");
+        private Action<string> onDebug = null;
+
 
         private string _error = "";                  // Last error text
         private static Random rand = new Random();  // A random number generator
@@ -43,7 +43,7 @@ namespace RiveScript
         // Bot's users' data structure.
         private ClientManager clients = new ClientManager();
 
-        // Object handlers //TODO: At this moment, this the lib is not able to do this
+        // Object handlers //TODO: At this moment, just have a CSHarpHander
         private IDictionary<string, IObjectHandler> handlers = new Dictionary<string, IObjectHandler>();
         private IDictionary<string, string> objects = new Dictionary<string, string>(); // name->language mappers
 
@@ -56,36 +56,83 @@ namespace RiveScript
         private string[] subs_s = null;                                                                             // sorted subs
         private IDictionary<string, string> person = new Dictionary<string, string>();                              // ! person
         private string[] person_s = null; // sorted persons
-
         private ThreadLocal<string> _currentUser = new ThreadLocal<string>();
 
 
-        public static bool IsErrReply(string reply)
+
+        public ErrorMessages errors { get; private set; }
+
+        public bool IsErrReply(string reply)
         {
             var test = (reply ?? "").Trim();
 
-            return test == ERR_NO_REPLY_MATCHED ||
-                   test == ERR_NO_REPLY_FOUND ||
-                   test == ERR_DEEP_RECURSION;
+            return test == errors.deepRecursion ||
+                   test == errors.objectNotFound ||
+                   test == errors.replyNotFound ||
+                   test == errors.replyNotMatched;
         }
 
         /// <summary>
-        /// Create a new RiveScript interpreter object, specifying the debug mode.
+        /// Create a new RiveScript interpreter object with default options
         /// </summary>
-        /// <param name="debug">Is true Enable debug mode (a *lot* of stuff is printed to the terminal)</param>
-        public RiveScript(bool debug = false, bool utf8 = false, bool strict = false)
+        /// <param name="options">Options object</param>
+        public RiveScript(Options options)
         {
-            this.debug = debug;
-            Topic.setDebug(debug);// Set static debug modes.
-            this.utf8 = utf8;
-            this.strict = strict;
+            if (options == null)
+                options = Options.Default;
+
+            this.debug = options.debug;
+            Topic.setDebug(options.debug);// Set static debug modes.
+            this.utf8 = options.utf8;
+            this.strict = options.strict;
             _currentUser.Value = Constants.Undefined;
+            this.forceCase = options.forceCase;
+            this.onDebug = options.onDebug;
+
+            this.depth = options.depth;
+            if (this.depth < 0) this.depth = 0;//Adjust depth
+
+            //Errors
+            this.errors = (options.errors ?? ErrorMessages.Default).AdjustDefaults();
+
+            //CSharp handler is default
+            this.setCSharpHandler();
         }
 
         /// <summary>
-        /// Create a new RiveScript interpreter object with debug disabled.
+        /// Create a new RiveScript interpreter object with default options
         /// </summary>
-        public RiveScript() : this(false, false, false) { }
+        public RiveScript() : this(Options.Default) { }
+
+        /// <summary>
+        /// Create a new RiveScript interpreter object wiht parameter options
+        /// </summary>
+        /// <param name="debug">Debug mode</param>
+        /// <param name="utf8">Enable UTF-8 mode</param>
+        /// <param name="strict">Strict mode</param>
+        /// <param name="depth">Recursion depth limit</param>
+        /// <param name="forceCase">Force-lowercase triggers</param>
+        /// <param name="errors">Customize certain error messages</param>
+        /// <param name="onDebug">Set a custom handler to catch debug log messages</param>
+        public RiveScript(bool debug = false,
+                          bool utf8 = false,
+                          bool strict = true,
+                          int depth = 50,
+                          bool forceCase = false,
+                          ErrorMessages errors = null,
+                          Action<string> onDebug = null)
+            : this(new Options
+            {
+                debug = debug,
+                utf8 = utf8,
+                strict = strict,
+                depth = depth,
+                forceCase = forceCase,
+                errors = errors,
+                onDebug = onDebug
+            })
+        { }
+
 
         public void setDebug(bool debug)
         {
@@ -429,6 +476,11 @@ namespace RiveScript
             }
             else
             {
+                // Topic? And are we forcing case?
+                if (name == "topic" && this.forceCase)
+                    value = value.ToLower();
+
+
                 clients.client(user).set(name, value);
             }
 
@@ -540,6 +592,9 @@ namespace RiveScript
                 // Trim the line of whitespaces.
                 line = Util.Strip(line);
 
+                if (line.Length == 0)
+                    continue; //Skip blank line
+
                 // Are we inside an object?
                 if (inobj)
                 {
@@ -594,9 +649,10 @@ namespace RiveScript
                     continue;
                 }
 
-                // Skip any blank lines.
+                // Skip any blank lines and weird lines.
                 if (line.Length < 2)
                 {
+                    warn($"Weird single-character line '#" + line + "' found (in topic #" + topic + ")");
                     continue;
                 }
 
@@ -610,10 +666,16 @@ namespace RiveScript
                 // Ignore inline comments.
                 if (line.IndexOf(" // ") > -1)
                 {
-
                     string[] split = line.Split(new[] { " // " }, StringSplitOptions.None);
                     line = split[0];
                 }
+
+
+                // In the event of a +Trigger, if we are force-lowercasing it, then do so
+                // now before the syntax check.
+                if (this.forceCase && cmd == CMD_TRIGGER)
+                    line = line.ToLower();
+
 
                 //Run a syntax check on this line
                 var syntaxError = checkSyntax(cmd, line);
@@ -624,7 +686,7 @@ namespace RiveScript
                     if (strict)
                         error(err);
                     else
-                        cry(err);
+                        warn(err);
                 }
 
 
@@ -752,13 +814,13 @@ namespace RiveScript
                         }
                         catch (FormatException)
                         {
-                            cry("RiveScript version \"" + value + "\" not a valid floating number", filename, lineno);
+                            warn("RiveScript version \"" + value + "\" not a valid floating number", filename, lineno);
                             continue;
                         }
 
                         if (version > RS_VERSION)
                         {
-                            cry("We can't parse RiveScript v" + value + " documents", filename, lineno);
+                            warn("We can't parse RiveScript v" + value + " documents", filename, lineno);
                             return false;
                         }
 
@@ -769,12 +831,12 @@ namespace RiveScript
                         // All the other types require a variable and value.
                         if (var.Equals(""))
                         {
-                            cry("Missing a " + type + " variable name", filename, lineno);
+                            warn("Missing a " + type + " variable name", filename, lineno);
                             continue;
                         }
                         if (value.Equals(""))
                         {
-                            cry("Missing a " + type + " value", filename, lineno);
+                            warn("Missing a " + type + " value", filename, lineno);
                             continue;
                         }
                         if (value.Equals("<undef>"))
@@ -858,7 +920,7 @@ namespace RiveScript
                     }
                     else
                     {
-                        cry("Unknown definition type \"" + type + "\"", filename, lineno);
+                        warn("Unknown definition type \"" + type + "\"", filename, lineno);
                         continue;
                     }
                 }
@@ -889,8 +951,13 @@ namespace RiveScript
                         type = "topic";
                         name = "__begin__";
                     }
+
                     if (type.Equals("topic"))
                     {
+                        if (this.forceCase)
+                            name = name.ToLower();
+
+
                         // Starting a new topic.
                         say("\tSet topic to " + name);
                         onTrig = "";
@@ -940,7 +1007,7 @@ namespace RiveScript
                         onTrig = "";
                         if (lang.Length == 0)
                         {
-                            cry("Trying to parse unknown programming language (assuming it's JavaScript)", filename, lineno);
+                            warn("Trying to parse unknown programming language (assuming it's JavaScript)", filename, lineno);
                             lang = "javascript"; // Assume it's JavaScript
                         }
                         if (!handlers.ContainsKey(lang))
@@ -975,7 +1042,7 @@ namespace RiveScript
                     }
                     else
                     {
-                        cry("Unknown end topic type \"" + type + "\"", filename, lineno);
+                        warn("Unknown end topic type \"" + type + "\"", filename, lineno);
                     }
                 }
                 else if (cmd.Equals(CMD_TRIGGER))
@@ -1005,7 +1072,7 @@ namespace RiveScript
                     // This can't come before a trigger!
                     if (onTrig.Length == 0)
                     {
-                        cry("Reply found before trigger", filename, lineno);
+                        warn("Reply found before trigger", filename, lineno);
                         continue;
                     }
 
@@ -1030,7 +1097,7 @@ namespace RiveScript
                     // This can't come before a trigger!
                     if (onTrig.Length == 0)
                     {
-                        cry("Redirect found before trigger", filename, lineno);
+                        warn("Redirect found before trigger", filename, lineno);
                         continue;
                     }
 
@@ -1046,7 +1113,7 @@ namespace RiveScript
                     // This can't come before a trigger!
                     if (onTrig.Length == 0)
                     {
-                        cry("Redirect found before trigger", filename, lineno);
+                        warn("Redirect found before trigger", filename, lineno);
                         continue;
                     }
 
@@ -1055,7 +1122,7 @@ namespace RiveScript
                 }
                 else
                 {
-                    cry("Unrecognized command \"" + cmd + "\"", filename, lineno);
+                    warn("Unrecognized command \"" + cmd + "\"", filename, lineno);
                 }
             }
 
@@ -1093,9 +1160,13 @@ namespace RiveScript
                 }
                 else if (parts[0] == "topic")
                 {
-                    if (line.MatchRegex(@"[^a-z0-9_\-\s]"))
+                    if (this.forceCase && line.MatchRegex(@"[^a-z0-9_\-\s]"))
                     {
                         return "Topics should be lowercased and contain only letters and numbers";
+                    }
+                    else if (line.MatchRegex(@"[^A-Za-z0-9_\-\s]"))
+                    {
+                        return "Topics should contain only letters and numbers in forceCase mode";
                     }
                 }
                 else if (parts[0] == "object")
@@ -1292,7 +1363,7 @@ namespace RiveScript
             // Avoid letting the user fall into a missing topic.
             if (topics.exists(topic) == false)
             {
-                cry("User " + user + " was in a missing topic named \"" + topic + "\"!");
+                warn("User " + user + " was in a missing topic named \"" + topic + "\"!");
                 topic = "random";
                 profile.set("topic", "random");
             }
@@ -1300,8 +1371,8 @@ namespace RiveScript
             // Avoid deep recursion.
             if (step > depth)
             {
-                _reply = ERR_DEEP_RECURSION;
-                cry(_reply);
+                _reply = this.errors.deepRecursion;
+                warn(_reply);
                 return _reply;
             }
 
@@ -1487,7 +1558,7 @@ namespace RiveScript
                     // Exists?
                     if (matched == null)
                     {
-                        cry("Unknown error: they matched trigger " + matchedTrigger + ", but it doesn't exist?");
+                        warn("Unknown error: they matched trigger " + matchedTrigger + ", but it doesn't exist?");
                         foundMatch = false;
                         break;
                     }
@@ -1728,11 +1799,11 @@ namespace RiveScript
             // Still no reply?
             if (!foundMatch)
             {
-                _reply = ERR_NO_REPLY_MATCHED;
+                _reply = this.errors.replyNotMatched;
             }
             else if (_reply.Length == 0)
             {
-                _reply = ERR_NO_REPLY_FOUND;
+                _reply = this.errors.replyNotFound;
             }
 
             say("Final reply: " + _reply + "(begin: " + begin + ")");
@@ -2022,6 +2093,7 @@ namespace RiveScript
             string[] stars = vstars.ToArray();
             string[] botstars = vbotstars.ToArray();
 
+            var giveup = 0;
 
             //See: https://github.com/aichaos/rivescript-java/commit/0a923d6c62baeb0b47b15cb21bba8bedd30a2061
             // Turn arrays into randomized sets.
@@ -2029,8 +2101,16 @@ namespace RiveScript
             {
                 Regex reArray = new Regex("\\(@([A-Za-z0-9_]+)\\)");
 
+                giveup = 0;
                 foreach (Match mReply in reArray.Matches(reply))
                 {
+                    if (giveup++ > depth)
+                    {
+                        warn("Infinite loop looking for arrays in reply!");
+                        giveup = 0;
+                        break;
+                    }
+
                     string tag = mReply.Groups[0].Value;
                     string name = mReply.Groups[1].Value;
                     string result;
@@ -2088,6 +2168,14 @@ namespace RiveScript
                 Regex reInput = new Regex("<input([0-9])>");
                 foreach (Match mInput in reInput.Matches(reply))
                 {
+                    if (giveup++ > depth)
+                    {
+                        warn("Infinite loop looking for inputs!");
+                        giveup = 0;
+                        break;
+                    }
+
+
                     string tag = mInput.Groups[0].Value;
                     int index = int.Parse(mInput.Groups[1].Value);
                     //string text = profile.getInput(index).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
@@ -2100,6 +2188,13 @@ namespace RiveScript
                 Regex reReply = new Regex("<reply([0-9])>");
                 foreach (Match mReply in reReply.Matches(reply))
                 {
+                    if (giveup++ > depth)
+                    {
+                        warn("Infinite loop looking for reply!");
+                        giveup = 0;
+                        break;
+                    }
+
                     string tag = mReply.Groups[0].Value;
                     int index = int.Parse(mReply.Groups[1].Value);
                     //string text = profile.getReply(index).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
@@ -2120,6 +2215,13 @@ namespace RiveScript
                 Regex reRandom = new Regex("\\{random\\}(.+?)\\{\\/random\\}");
                 foreach (Match mRandom in reRandom.Matches(reply))
                 {
+                    if (giveup++ > depth)
+                    {
+                        warn("Infinite loop looking for random tag!");
+                        giveup = 0;
+                        break;
+                    }
+
                     string tag = mRandom.Groups[0].Value;
                     string[] candidates = mRandom.Groups[1].Value.SplitRegex("\\|");
                     string chosen = candidates[rand.Next(candidates.Length)];
@@ -2388,7 +2490,7 @@ namespace RiveScript
                     }
                     else
                     {
-                        reply = reply.Replace(tag, "[ERR: Object Not Found]");
+                        reply = reply.Replace(tag, this.errors.objectNotFound);
                     }
                 }
             }
@@ -2479,10 +2581,11 @@ namespace RiveScript
             if (utf8)
             {
                 message = message.ReplaceRegex("[\\<>]+", "");
-                //if@master.unicodePunctuation)
-                //{
-                //  message = message.replace(@master.unicodePunctuation, "");
-                //}
+
+                if (this.unicodePunctuation != null)
+                {
+                    message = this.unicodePunctuation.Replace(message, "");
+                }
 
                 // For the bot's reply, also strip common punctuation.
                 if (botReply)
@@ -2626,22 +2729,15 @@ namespace RiveScript
         /// <param name="line"></param>
         protected void say(string line)
         {
-            if (debug)
-            {
-                Console.WriteLine("[RS] " + line);
-            }
-        }
+            if (!debug)
+                return;
 
-        /// <summary>
-        /// Print a line of warning text to the terminal.
-        /// </summary>
-        /// <param name="line"></param>
-        protected void cry(string line)
-        {
-            if (debug)
-                Console.WriteLine("<RS> " + line);
+            line = "[RS] " + line;
+
+            if (onDebug != null)
+                onDebug.Invoke(line);
             else
-                System.Diagnostics.Debug.WriteLine("<RS> " + line);
+                Console.WriteLine(line);
         }
 
         /// <summary>
@@ -2650,12 +2746,19 @@ namespace RiveScript
         /// <param name="text"></param>
         /// <param name="file"></param>
         /// <param name="line"></param>
-        protected void cry(string text, string file, int line)
+        protected void warn(string text, string file = null, int? line = null)
         {
-            if (debug)
-                Console.WriteLine("<RS> " + text + " at " + file + " line " + line + ".");
+            if (file != null && line != null)
+                text += (" at " + file + " line " + line + ".");
+
+            text = "<RS> " + text;
+
+            if (onDebug != null)
+                onDebug.Invoke(text);
+            else if (debug)
+                Console.WriteLine(text);
             else
-                System.Diagnostics.Debug.WriteLine("<RS> " + text + " at " + file + " line " + line + ".");
+                System.Diagnostics.Debug.WriteLine(text);
         }
 
         /// <summary>
@@ -2664,10 +2767,13 @@ namespace RiveScript
         /// <param name="e"></param>
         protected void trace(System.IO.IOException e)
         {
-            if (this.debug)
-            {
+            if (!debug)
+                return;
+
+            if (onDebug != null)
+                onDebug.Invoke(e.StackTrace);
+            else
                 System.Diagnostics.Debug.WriteLine(e.StackTrace);
-            }
         }
 
         #endregion
