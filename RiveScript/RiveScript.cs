@@ -17,7 +17,7 @@ namespace RiveScript
         private bool utf8 = false;                  // uft8 mode flag
         private bool strict = true;                // strict mode flag
         private bool forceCase = false;
-        private Regex unicodePunctuation = new Regex("[., !?;:]/g");
+        private Regex unicodePunctuation;
         private Action<string> onDebug = null;
 
 
@@ -75,25 +75,26 @@ namespace RiveScript
         /// <summary>
         /// Create a new RiveScript interpreter object with default options
         /// </summary>
-        /// <param name="options">Options object</param>
-        public RiveScript(Options options)
+        /// <param name="config">Options object</param>
+        public RiveScript(Config config)
         {
-            if (options == null)
-                options = Options.Default;
+            if (config == null)
+                config = Config.Default;
 
-            this.debug = options.debug;
-            Topic.setDebug(options.debug);// Set static debug modes.
-            this.utf8 = options.utf8;
-            this.strict = options.strict;
+            debug = config.debug;
+            Topic.setDebug(config.debug);// Set static debug modes.
+            utf8 = config.utf8;
+            strict = config.strict;
             _currentUser.Value = Constants.Undefined;
-            this.forceCase = options.forceCase;
-            this.onDebug = options.onDebug;
+            forceCase = config.forceCase;
+            onDebug = config.onDebug;
+            unicodePunctuation = new Regex($"{config.unicodePonctuations}/g");
 
-            this.depth = options.depth;
-            if (this.depth < 0) this.depth = 0;//Adjust depth
+            depth = config.depth;
+            if (depth < 0) depth = 0;//Adjust depth
 
             //Errors
-            this.errors = (options.errors ?? ErrorMessages.Default).AdjustDefaults();
+            errors = (config.errors ?? ErrorMessages.Default).AdjustDefaults();
 
             //CSharp handler is default
             this.setCSharpHandler();
@@ -102,7 +103,7 @@ namespace RiveScript
         /// <summary>
         /// Create a new RiveScript interpreter object with default options
         /// </summary>
-        public RiveScript() : this(Options.Default) { }
+        public RiveScript() : this(Config.Default) { }
 
         /// <summary>
         /// Create a new RiveScript interpreter object wiht parameter options
@@ -121,7 +122,7 @@ namespace RiveScript
                           bool forceCase = false,
                           ErrorMessages errors = null,
                           Action<string> onDebug = null)
-            : this(new Options
+            : this(new Config
             {
                 debug = debug,
                 utf8 = utf8,
@@ -146,7 +147,7 @@ namespace RiveScript
         /// </summary>
         public string error()
         {
-            return this._error;
+            return _error;
         }
 
         /// <summary>
@@ -339,11 +340,11 @@ namespace RiveScript
                 // Debug is a bool.
                 if (Util.IsTrue(value))
                 {
-                    this.debug = true;
+                    debug = true;
                 }
                 else if (Util.IsFalse(value) || delete)
                 {
-                    this.debug = false;
+                    debug = false;
                 }
                 else
                 {
@@ -355,7 +356,7 @@ namespace RiveScript
                 // Depth is an integer.
                 try
                 {
-                    this.depth = int.Parse(value);
+                    depth = int.Parse(value);
                 }
                 catch (FormatException)
                 {
@@ -477,7 +478,7 @@ namespace RiveScript
             else
             {
                 // Topic? And are we forcing case?
-                if (name == "topic" && this.forceCase)
+                if (name == "topic" && forceCase)
                     value = value.ToLower();
 
 
@@ -664,16 +665,19 @@ namespace RiveScript
                 say("\tCmd: " + cmd);
 
                 // Ignore inline comments.
+
                 if (line.IndexOf(" // ") > -1)
                 {
                     string[] split = line.Split(new[] { " // " }, StringSplitOptions.None);
                     line = split[0];
+                    //remove space between comment and code
+                    line = line.TrimEnd(' ');
                 }
 
 
                 // In the event of a +Trigger, if we are force-lowercasing it, then do so
                 // now before the syntax check.
-                if (this.forceCase && cmd == CMD_TRIGGER)
+                if (forceCase && cmd == CMD_TRIGGER)
                     line = line.ToLower();
 
 
@@ -857,13 +861,13 @@ namespace RiveScript
                     {
                         // Is it a special global? (debug or depth or etc).
                         say("\tSet global " + var + " = " + value);
-                        this.setGlobal(var, value);
+                        setGlobal(var, value);
                     }
                     else if (type.Equals("var"))
                     {
                         // Set a bot variable.
                         say("\tSet bot variable " + var + " = " + value);
-                        this.setVariable(var, value);
+                        setVariable(var, value);
                     }
                     else if (type.Equals("array"))
                     {
@@ -910,13 +914,13 @@ namespace RiveScript
                     {
                         // Set a substitution.
                         say("\tSubstitution " + var + " => " + value);
-                        this.setSubstitution(var, value);
+                        setSubstitution(var, value);
                     }
                     else if (type.Equals("person"))
                     {
                         // Set a person substitution.
                         say("\tPerson substitution " + var + " => " + value);
-                        this.setPersonSubstitution(var, value);
+                        setPersonSubstitution(var, value);
                     }
                     else
                     {
@@ -954,7 +958,7 @@ namespace RiveScript
 
                     if (type.Equals("topic"))
                     {
-                        if (this.forceCase)
+                        if (forceCase)
                             name = name.ToLower();
 
 
@@ -1160,7 +1164,7 @@ namespace RiveScript
                 }
                 else if (parts[0] == "topic")
                 {
-                    if (this.forceCase && line.MatchRegex(@"[^a-z0-9_\-\s]"))
+                    if (forceCase && line.MatchRegex(@"[^a-z0-9_\-\s]"))
                     {
                         return "Topics should be lowercased and contain only letters and numbers";
                     }
@@ -1371,7 +1375,7 @@ namespace RiveScript
             // Avoid deep recursion.
             if (step > depth)
             {
-                _reply = this.errors.deepRecursion;
+                _reply = errors.deepRecursion;
                 warn(_reply);
                 return _reply;
             }
@@ -1401,10 +1405,10 @@ namespace RiveScript
                 say("Looking for a %Previous");
                 string[] allTopics = { topic };
 
-                if (this.topics.topic(topic).includes().Length > 0 || this.topics.topic(topic).inherits().Length > 0)
+                if (topics.topic(topic).includes().Length > 0 || topics.topic(topic).inherits().Length > 0)
                 {
                     // We need to walk the topic tree.
-                    allTopics = this.topics.getTopicTree(topic, 0);
+                    allTopics = topics.getTopicTree(topic, 0);
                 }
 
 
@@ -1412,12 +1416,12 @@ namespace RiveScript
                 {
                     // Does this topic have a %Previous anywhere?
                     say("Seeing if " + allTopics[i] + " has a %Previous");
-                    if (this.topics.topic(allTopics[i]).hasPrevious())
+                    if (topics.topic(allTopics[i]).hasPrevious())
                     {
                         say("Topic " + allTopics[i] + " has at least one %Previous");
 
                         // Get them.
-                        string[] previous = this.topics.topic(allTopics[i]).listPrevious();
+                        string[] previous = topics.topic(allTopics[i]).listPrevious();
                         for (int j = 0; j < previous.Length; j++)
                         {
                             say("Candidate: " + previous[j]);
@@ -1441,7 +1445,7 @@ namespace RiveScript
                                 }
 
                                 // Now see if the user matched this trigger too!
-                                string[] candidates = this.topics.topic(allTopics[i]).listPreviousTriggers(previous[j]);
+                                string[] candidates = topics.topic(allTopics[i]).listPreviousTriggers(previous[j]);
                                 for (int k = 0; k < candidates.Length; k++)
                                 {
                                     say("Does the user's message match " + candidates[k] + "?");
@@ -1455,18 +1459,22 @@ namespace RiveScript
 
                                         // Make sure it's all valid.
                                         string realTrigger = candidates[k] + "{previous}" + previous[j];
-                                        if (this.topics.topic(allTopics[i]).triggerExists(realTrigger))
+                                        if (topics.topic(allTopics[i]).triggerExists(realTrigger))
                                         {
                                             // Seems to be! Collect the stars.
                                             for (int s = 1; s <= mH.Groups.Count; s++)
                                             {
-                                                say("Add star: " + mH.Groups[s].Value);
-                                                stars.Add(mH.Groups[s].Value);
+                                                var star = mH.Groups[s].Value;
+                                                if (star == null)
+                                                    star = "";
+
+                                                say("Add star: " + star);
+                                                stars.Add(star);
                                             }
 
                                             foundMatch = true;
                                             matchedTrigger = candidates[k];
-                                            matched = this.topics.topic(allTopics[i]).trigger(realTrigger);
+                                            matched = topics.topic(allTopics[i]).trigger(realTrigger);
                                         }
 
                                         break;
@@ -1517,15 +1525,15 @@ namespace RiveScript
 
                         // We found a match, but what if the trigger we matched belongs to
                         // an inherited topic? Check for that.
-                        if (this.topics.topic(topic).triggerExists(trigger))
+                        if (topics.topic(topic).triggerExists(trigger))
                         {
                             // No, the trigger does belong to us.
-                            matched = this.topics.topic(topic).trigger(trigger);
+                            matched = topics.topic(topic).trigger(trigger);
                         }
                         else
                         {
                             say("Trigger doesn't exist under this topic, trying to find it!");
-                            matched = this.topics.findTriggerByInheritance(topic, trigger, 0);
+                            matched = topics.findTriggerByInheritance(topic, trigger, 0);
                         }
 
                         foundMatch = true;
@@ -1799,11 +1807,11 @@ namespace RiveScript
             // Still no reply?
             if (!foundMatch)
             {
-                _reply = this.errors.replyNotMatched;
+                _reply = errors.replyNotMatched;
             }
             else if (_reply.Length == 0)
             {
-                _reply = this.errors.replyNotFound;
+                _reply = errors.replyNotFound;
             }
 
             say("Final reply: " + _reply + "(begin: " + begin + ")");
@@ -1864,15 +1872,16 @@ namespace RiveScript
             var regexp = trigger.ReplaceRegex("^\\*$", "<zerowidthstar>");
 
             // Simple regexps are simple.
-            regexp = regexp.ReplaceRegex("\\*", "(.+?)");             // *  ->  (.+?)
-            regexp = regexp.ReplaceRegex("#", "(\\d+?)");         // #  ->  (\d+?)
-            regexp = regexp.ReplaceRegex("_", "(\\w+?)");     // _  ->  ([A-Za-z ]+?)
-            regexp = regexp.ReplaceRegex("\\s*\\{weight=\\d+\\}\\s*", ""); // Remove {weight} tags
-            regexp = regexp.ReplaceRegex("<zerowidthstar>", "(.*?)"); // *  ->  (.*?)
+            regexp = regexp.ReplaceRegex("\\*", "(.+?)");                   // *  ->  (.+?)
+            regexp = regexp.ReplaceRegex("#", "(\\d+?)");                   // #  ->  (\d+?)
+            regexp = regexp.ReplaceRegex("_", "(\\w+?)");                   // _  ->  ([A-Za-z ]+?)
 
-            regexp = regexp.ReplaceRegex("\\|{ 2,}", "|"); //Remove empty entities
-            regexp = regexp.ReplaceRegex("(\\(|\\[)\\|", "$1"); //Remove empty entities from start of alt/opts
-            regexp = regexp.ReplaceRegex("\\| (\\) |\\])", "$1"); //Remove empty entities from end of alt/opts
+            regexp = regexp.ReplaceRegex("\\s*\\{weight=\\d+\\}\\s*", "");  // Remove {weight} tags
+            regexp = regexp.ReplaceRegex("<zerowidthstar>", "(.*?)");       // *  ->  (.*?)
+
+            regexp = regexp.ReplaceRegex("\\|{ 2,}", "|");          //Remove empty entities
+            regexp = regexp.ReplaceRegex("(\\(|\\[)\\|", "$1");     //Remove empty entities from start of alt/opts
+            regexp = regexp.ReplaceRegex("\\| (\\) |\\])", "$1");   //Remove empty entities from end of alt/opts
 
             // Handle optionals.
             if (regexp.IndexOf("[") > -1)
@@ -1927,7 +1936,7 @@ namespace RiveScript
 
             // Make \w more accurate for our purposes.
 
-            if (this.utf8)
+            if (utf8)
             {
                 regexp = regexp.Replace("\\w", "[\\p{L}]");
             }
@@ -2242,7 +2251,7 @@ namespace RiveScript
                     say("Stream new code in: " + code);
 
                     // Stream it.
-                    this.stream(code);
+                    stream(code);
                     reply = reply.Replace(tag, "");
                 }
             }
@@ -2490,7 +2499,7 @@ namespace RiveScript
                     }
                     else
                     {
-                        reply = reply.Replace(tag, this.errors.objectNotFound);
+                        reply = reply.Replace(tag, errors.objectNotFound);
                     }
                 }
             }
@@ -2582,9 +2591,9 @@ namespace RiveScript
             {
                 message = message.ReplaceRegex("[\\<>]+", "");
 
-                if (this.unicodePunctuation != null)
+                if (unicodePunctuation != null)
                 {
-                    message = this.unicodePunctuation.Replace(message, "");
+                    message = unicodePunctuation.Replace(message, "");
                 }
 
                 // For the bot's reply, also strip common punctuation.

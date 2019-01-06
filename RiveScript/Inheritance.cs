@@ -71,11 +71,11 @@ namespace RiveScript
                     // It has the alpha wildcard, _.
                     if (wc > 0)
                     {
-                        this.addAlpha(wc, trigger);
+                        addAlpha(wc, trigger);
                     }
                     else
                     {
-                        this.addUnder(trigger);
+                        addUnder(trigger);
                     }
                 }
                 else if (trigger.IndexOf("#") > -1)
@@ -83,11 +83,11 @@ namespace RiveScript
                     // It has the numeric wildcard, #.
                     if (wc > 0)
                     {
-                        this.addNumber(wc, trigger);
+                        addNumber(wc, trigger);
                     }
                     else
                     {
-                        this.addPound(trigger);
+                        addPound(trigger);
                     }
                 }
                 else if (trigger.IndexOf("*") > -1)
@@ -95,22 +95,22 @@ namespace RiveScript
                     // It has the global wildcard, *.
                     if (wc > 0)
                     {
-                        this.addWild(wc, trigger);
+                        addWild(wc, trigger);
                     }
                     else
                     {
-                        this.addStar(trigger);
+                        addStar(trigger);
                     }
                 }
                 else if (trigger.IndexOf("[") > -1)
                 {
                     // It has optional parts.
-                    this.addOption(wc, trigger);
+                    addOption(wc, trigger);
                 }
                 else
                 {
                     // Totally atomic.
-                    this.addAtomic(wc, trigger);
+                    addAtomic(wc, trigger);
                 }
             }
         }

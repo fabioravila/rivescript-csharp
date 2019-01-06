@@ -23,7 +23,7 @@ namespace RiveScript
 
         public override bool Equals(string x, string y)
         {
-            return this.Compare(x, y) == 0;
+            return Compare(x, y) == 0;
         }
 
         public override int GetHashCode(string obj)

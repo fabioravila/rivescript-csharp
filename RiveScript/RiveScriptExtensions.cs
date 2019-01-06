@@ -1,8 +1,4 @@
-﻿using RiveScript.lang;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using RiveScript.Lang;
 
 namespace RiveScript
 {

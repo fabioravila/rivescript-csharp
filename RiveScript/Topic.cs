@@ -183,7 +183,7 @@ namespace RiveScript
                 var prior = new Dictionary<int, ICollection<string>>();
 
                 // Assign each trigger to its priority level.
-                say("BEGIN sortTriggers in topic " + this.name);
+                say("BEGIN sortTriggers in topic " + name);
 
                 var rePrior = new Regex("\\{weight=(\\d+?)\\}");
                 for (int i = 0; i < triggers.Length; i++)

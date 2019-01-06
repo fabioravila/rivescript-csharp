@@ -48,19 +48,22 @@
     <Compile Include="Helpers\FileHelper.cs" />
     <Compile Include="Inheritance.cs" />
     <Compile Include="IObjectHandler.cs" />
-    <Compile Include="lang\CSharp.cs" />
+    <Compile Include="Lang\CSharp.cs" />
     <Compile Include="Options.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Helpers\Rot13.cs" />
     <Compile Include="Helpers\StringLongToShortComparer.cs" />
     <Compile Include="RiveScript.cs" />
+    <Compile Include="RiveScriptException.cs" />
     <Compile Include="RiveScriptExtensions.cs" />
     <Compile Include="Topic.cs" />
     <Compile Include="TopicManager.cs" />
     <Compile Include="Trigger.cs" />
     <Compile Include="Helpers\Util.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="AST\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

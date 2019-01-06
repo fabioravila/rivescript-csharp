@@ -1,6 +1,5 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using RiveScript.lang;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using RiveScript.Lang;
 using RiveScript.Tests.Helper;
 
 namespace RiveScript.Tests

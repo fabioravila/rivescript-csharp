@@ -2,11 +2,9 @@
 using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 
-namespace RiveScript.lang
+namespace RiveScript.Lang
 {
     public class CSharp : IObjectHandler
     {
