@@ -1,4 +1,5 @@
 ﻿using Microsoft.CSharp;
+using RiveScript.Macro;
 using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;

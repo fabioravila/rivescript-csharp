@@ -18,13 +18,29 @@ namespace RiveScript
             }
         }
 
-        public static void AddOrUpdate(this IDictionary<string, string> dic, string key, string value)
+        public static void AddOrUpdate<TKey, TValue>(this IDictionary<TKey, TValue> dic, TKey key, TValue value)
         {
             if (dic.ContainsKey(key))
                 dic[key] = value;
             else
                 dic.Add(key, value);
         }
+
+        public static TValue GetOrDefault<Tkey, TValue>(this IDictionary<Tkey, TValue> dic, Tkey key)
+        {
+            return GetOrDefault(dic, key, default(TValue));
+        }
+
+
+        public static TValue GetOrDefault<Tkey, TValue>(this IDictionary<Tkey, TValue> dic, Tkey key, TValue defaultValue)
+        {
+            if (dic.ContainsKey(key))
+                return dic[key];
+
+
+            return defaultValue;
+        }
+
 
         public static string[] Split(this string @this, string pattern)
         {

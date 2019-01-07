@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 
-namespace RiveScript
+namespace RiveScript.AST
 {
     /// <summary>
     /// Tipic class for RiveScript
@@ -22,7 +22,7 @@ namespace RiveScript
         private string name = "";
 
         /// <summary>
-        /// Create a topic manager. Only one per RiveScript interpreter needed.
+        /// Create a topic.
         /// </summary>
         /// <param name="name"></param>
         public Topic(string name)
@@ -50,12 +50,27 @@ namespace RiveScript
         /// <returns></returns>
         public Trigger trigger(string pattern)
         {
-            if (false == triggers.ContainsKey(pattern))
+            if (!triggers.ContainsKey(pattern))
             {
-                triggers.Add(pattern, new Trigger(name, pattern));
+                var trigger = new Trigger(pattern);
+                trigger.setTopic(name);
+
+                triggers.Add(pattern, trigger);
             }
 
             return triggers[pattern];
+        }
+
+
+        public void addTrigger(Trigger trigger)
+        {
+            var pattern = trigger.getPattern();
+            trigger.setTopic(name);
+
+            if (!triggers.ContainsKey(pattern))
+                triggers.Add(pattern, trigger);
+            else
+                triggers[pattern] = trigger;
         }
 
         /// <summary>

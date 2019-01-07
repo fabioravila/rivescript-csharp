@@ -1,4 +1,6 @@
-﻿using System;
+﻿using RiveScript.AST;
+using RiveScript.Macro;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -53,9 +55,9 @@ namespace RiveScript
         private IDictionary<string, string> vars = new Dictionary<string, string>();                                // ! var
         private IDictionary<string, ICollection<string>> arrays = new Dictionary<string, ICollection<string>>();    // ! array
         private IDictionary<string, string> subs = new Dictionary<string, string>();                                // ! sub
-        private string[] subs_s = null;                                                                             // sorted subs
         private IDictionary<string, string> person = new Dictionary<string, string>();                              // ! person
         private string[] person_s = null; // sorted persons
+        private string[] subs_s = null;                                                                             // sorted subs
         private ThreadLocal<string> _currentUser = new ThreadLocal<string>();
 
 
@@ -605,7 +607,7 @@ namespace RiveScript
                         if (handlers.ContainsKey(objLang))
                         {
                             // Yes, call the handler's onLoad function.
-                            handlers[objLang].onLoad(objName, objBuff.ToArray());
+                            handlers[objLang].Load(objName, objBuff.ToArray());
 
                             // Map the name to the language.
                             objects.Add(objName, objLang);
@@ -1573,7 +1575,7 @@ namespace RiveScript
 
                     // Get the trigger object.
                     Trigger trigger = matched;
-                    say("The trigger matched belongs to topic " + trigger.topic());
+                    say("The trigger matched belongs to topic " + trigger.getTopic());
 
                     // Check for conditions.
                     string[] conditions = trigger.listConditions();
