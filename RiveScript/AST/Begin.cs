@@ -2,6 +2,9 @@
 
 namespace RiveScript.AST
 {
+    /// <summary>
+    /// Represents the "begin block" (configuration) data.
+    /// </summary>
     public class Begin
     {
         IDictionary<string, string> globals { get; set; } = new Dictionary<string, string>();                             // ! global

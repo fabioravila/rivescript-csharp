@@ -26,6 +26,25 @@ namespace RiveScript
         }
 
         /// <summary>
+        /// Shift an item to the beginning of an array and rotate.
+        /// </summary>
+        /// <param name="array"></param>
+        /// <param name="addition"></param>
+        /// <returns></returns>
+        public static List<string> Unshift(List<string> list, string addition)
+        {
+            //TODO: Use Array.Copy
+            for (int i = list.Count - 1; i > 0; i--)
+            {
+                list[i] = list[i - 1];
+            }
+
+            list[0] = addition;
+            return list;
+        }
+
+
+        /// <summary>
         /// Run a substitutions on a string
         /// </summary>
         /// <param name="sorted"> The sorted list os substitutions patterns to process</param>
@@ -109,9 +128,14 @@ namespace RiveScript
             return list;
         }
 
-
         public static string Join(string[] value, string separator)
         {
+            if (value == null)
+                return null;
+
+            if (separator == null)
+                separator = "";
+
             return string.Join(separator, value);
         }
 
@@ -123,10 +147,14 @@ namespace RiveScript
             return dest;
         }
 
-
         public static MatchCollection GetRegexMatches(string pattern, string input)
         {
             return new Regex(pattern).Matches(input);
+        }
+
+        public static MatchCollection GetRegexMatches(Regex regex, string input)
+        {
+            return regex.Matches(input);
         }
 
         public static bool IsTrue(string value)
@@ -138,7 +166,6 @@ namespace RiveScript
         {
             return value == "false" || value == "0" || value == "no";
         }
-
 
         public static string Strip(string line)
         {
@@ -166,6 +193,26 @@ namespace RiveScript
             }
         }
 
+        public static int CountWords(string source)
+        {
+            //a fast way to do this
+            int count = 0;
+            bool inWord = false;
 
+            foreach (char t in source)
+            {
+                if (char.IsWhiteSpace(t))
+                {
+                    inWord = false;
+                }
+                else
+                {
+                    if (!inWord) count++;
+                    inWord = true;
+                }
+            }
+            return count;
+        }
     }
+}
 }

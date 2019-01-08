@@ -8,7 +8,7 @@ namespace RiveScript.Tests.RSTS
         [TestMethod]
         public void RSTS_Substitutions__message_substitutions()
         {
-            var rs = new RiveScript(debug: true);
+            var rs = new RiveScript(Config.Debug);
 
             rs.stream(new[] { "+ whats up",
                               "- nm.",
@@ -37,7 +37,7 @@ namespace RiveScript.Tests.RSTS
         [TestMethod]
         public void RSTS_Substitutions__person_substitutions()
         {
-            var rs = new RiveScript(debug: true);
+            var rs = new RiveScript(Config.Debug);
 
             rs.stream(new[] { "+ say *",
                               "- <person>" });

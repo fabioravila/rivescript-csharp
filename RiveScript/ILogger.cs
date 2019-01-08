@@ -1,4 +1,4 @@
-﻿namespace RiveScript.Log
+﻿namespace RiveScript
 {
     public interface ILogger
     {

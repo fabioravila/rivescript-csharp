@@ -2,6 +2,9 @@
 
 namespace RiveScript.Session
 {
+    /// <summary>
+    ///  Container for user variables.
+    /// </summary>
     public class UserData
     {
         IDictionary<string, string> variables = new Dictionary<string, string>();

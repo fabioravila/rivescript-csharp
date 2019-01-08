@@ -3,13 +3,9 @@
     public class ErrorMessages
     {
         public string replyNotMatched { get; set; }
-
         public string replyNotFound { get; set; }
-
         public string objectNotFound { get; set; }
-
         public string deepRecursion { get; set; }
-
 
         public static ErrorMessages Default
         {

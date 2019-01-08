@@ -1,6 +1,9 @@
 ﻿
 namespace RiveScript.Macro
 {
+    /// <summary>
+    /// Interface for RiveScript object handlers
+    /// </summary>
     public interface IObjectHandler
     {
         /// <summary>
@@ -10,7 +13,7 @@ namespace RiveScript.Macro
         /// <param name="name">The name of the object</param>
         /// <param name="code">The source code inside the object</param>
         /// <returns></returns>
-        bool Load(string name, string[] code);
+        void Load(string name, string[] code);
 
         /// <summary>
         /// Handler for when a user invokes the object. Should return the text

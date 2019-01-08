@@ -8,8 +8,6 @@ namespace RiveScript.Session
 {
     public interface ISessionManager
     {
-     
-
         /**
          * Makes sure a username has a session (creates one if not).
          *

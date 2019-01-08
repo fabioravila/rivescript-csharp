@@ -2,6 +2,9 @@
 
 namespace RiveScript.Exceptions
 {
+    /// <summary>
+    /// Thrown to indicate an error during parsing.
+    /// </summary>
     public class ParserException : RiveScriptException
     {
 

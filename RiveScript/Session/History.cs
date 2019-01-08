@@ -18,5 +18,25 @@ namespace RiveScript.Session
                 reply.Add(Constants.Undefined);
             }
         }
+
+
+        /// <summary>
+        /// Add a line to the user´s input history
+        /// </summary>
+        /// <param name="text"></param>
+        public void addInput(string text)
+        {
+            input = Util.Unshift(input, text);
+        }
+
+        /// <summary>
+        /// Add a line to the user´s reply history
+        /// </summary>
+        /// <param name="text"></param>
+        public void addReply(string text)
+        {
+            reply = Util.Unshift(reply, text);
+        }
+
     }
 }

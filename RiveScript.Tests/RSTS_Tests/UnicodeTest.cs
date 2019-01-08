@@ -8,7 +8,7 @@ namespace RiveScript.Tests.RSTS
         [TestMethod]
         public void RSTS_Unicode__unicode()
         {
-            var rs = new RiveScript(debug: true, utf8: true);
+            var rs = new RiveScript(Config.DebugUTF8);
 
             rs.stream(new[] { "! sub who's = who is",
                               "+ äh",
@@ -62,7 +62,7 @@ namespace RiveScript.Tests.RSTS
         [TestMethod]
         public void RSTS_Unicode__wildcard()
         {
-            var rs = new RiveScript(debug: true, utf8: true);
+            var rs = new RiveScript(Config.DebugUTF8);
 
             rs.stream(new[] {   "+ my name is _",
                                 "- Nice to meet you, <star>.",

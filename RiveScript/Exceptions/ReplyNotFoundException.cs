@@ -1,5 +1,8 @@
 ﻿namespace RiveScript.Exceptions
 {
+    /// <summary>
+    /// Thrown to indicate no reply was found.
+    /// </summary>
     public class ReplyNotFoundException : RiveScriptException
     {
 

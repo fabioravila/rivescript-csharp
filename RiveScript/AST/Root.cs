@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace RiveScript.AST
 {
+    /// <summary>
+    /// Represents the root of the Abstract Syntax Tree (AST).
+    /// </summary>
     public class Root
     {
         public Begin begin { get; set; } = new Begin();

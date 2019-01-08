@@ -1,5 +1,8 @@
 ﻿namespace RiveScript.Exceptions
 {
+    /// <summary>
+    /// Thrown to indicate the replies are not sorted.
+    /// </summary>
     public class RepliesNotSortedException : RiveScriptException
     {
 

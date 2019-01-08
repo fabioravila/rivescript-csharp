@@ -1,5 +1,8 @@
 ﻿namespace RiveScript.Exceptions
 {
+    /// <summary>
+    /// Thrown to indicate no default topic exists.
+    /// </summary>
     public class NoDefaultTopicException : RiveScriptException
     {
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RiveScript.AST;
+using System;
 using System.Collections.Generic;
 
 namespace RiveScript

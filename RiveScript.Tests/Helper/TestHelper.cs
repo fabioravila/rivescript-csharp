@@ -12,7 +12,7 @@ namespace RiveScript.Tests
 
         public static RiveScript getStreamed(string[] code)
         {
-            var rs = new RiveScript(debug: false);
+            var rs = new RiveScript(Config.Default);
 
             //Stram bais variables for teste suite
             rs.stream(new[] { "// Bot Variables",
@@ -131,7 +131,7 @@ namespace RiveScript.Tests
 
         public static RiveScript getEmptyStreamed(string[] code)
         {
-            var rs = new RiveScript(debug: false);
+            var rs = new RiveScript(Config.Default);
 
             rs.setDebug(true);
             rs.stream(code);

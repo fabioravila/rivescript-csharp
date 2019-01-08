@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -31,7 +32,6 @@ namespace RiveScript
             return GetOrDefault(dic, key, default(TValue));
         }
 
-
         public static TValue GetOrDefault<Tkey, TValue>(this IDictionary<Tkey, TValue> dic, Tkey key, TValue defaultValue)
         {
             if (dic.ContainsKey(key))
@@ -41,12 +41,24 @@ namespace RiveScript
             return defaultValue;
         }
 
+        public static TValue GetOrDefault<Tkey, TValue>(this ConcurrentDictionary<Tkey, TValue> dic, Tkey key, TValue defaultValue)
+        {
+            if (dic.TryGetValue(key, out TValue value))
+                return value;
+
+            return defaultValue;
+        }
+
+        public static TValue GetOrDefault<Tkey, TValue>(this ConcurrentDictionary<Tkey, TValue> dic, Tkey key)
+        {
+            return GetOrDefault(dic, key, default(TValue));
+        }
+
 
         public static string[] Split(this string @this, string pattern)
         {
             return @this.Split(new[] { pattern }, StringSplitOptions.None);
         }
-
 
         public static string[] Split(this string @this, string pattern, int count)
         {

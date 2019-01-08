@@ -7,7 +7,7 @@ namespace RiveScript.Tests
     {
         private RiveScript getWithGlobalTopic(string[] code)
         {
-            var rs = new RiveScript(true);
+            var rs = new RiveScript(Config.Debug);
             rs.stream(new[] { "+ go topic *",
                               "- {topic=<star>}ok",
                               "> topic global",

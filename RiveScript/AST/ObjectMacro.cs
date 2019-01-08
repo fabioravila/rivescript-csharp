@@ -2,6 +2,9 @@
 
 namespace RiveScript.AST
 {
+    /// <summary>
+    /// Represents a RiveScript Object Macro.
+    /// </summary>
     public class ObjectMacro
     {
         public string Name { get; set; }

@@ -1,5 +1,8 @@
 ﻿using RiveScript.AST;
+using RiveScript.Log;
 using RiveScript.Macro;
+using RiveScript.Session;
+using RiveScript.Parser;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -7,61 +10,56 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using RiveScript.Parse;
+using RiveScript.Lang;
 
 namespace RiveScript
 {
     public class RiveScript
     {
+        static readonly string[] DEFAULT_FILE_EXTENSINS = new[] { ".rive", ".rs" };
+        static Random rand = new Random();  // A random number generator
 
         // Private class variables.
-        private bool debug = false;                 // Debug mode
-        private int depth = 50;                     // Recursion depth limit
-        private bool utf8 = false;                  // uft8 mode flag
-        private bool strict = true;                // strict mode flag
-        private bool forceCase = false;
-        private Regex unicodePunctuation;
-        private Action<string> onDebug = null;
+        bool debug = false;                 // Debug mode
+        int depth = 50;                     // Recursion depth limit
+        bool utf8 = false;                  // uft8 mode flag
+        bool strict = true;                 // strict mode flag
+        bool forceCase = false;
+        Regex unicodePunctuation;
+        Action<string> onDebug = null;
+        string _error = "";                  // Last error text
 
+        //Logger
+        ILogger logger;
 
-        private string _error = "";                  // Last error text
-        private static Random rand = new Random();  // A random number generator
+        //user variable session manager
+        ISessionManager sessions;
 
-
-        // Constant RiveScript command symbols.
-        private static readonly double RS_VERSION = 2.0; // This implements RiveScript 2.0
-        private static readonly string CMD_DEFINE = "!";
-        private static readonly string CMD_TRIGGER = "+";
-        private static readonly string CMD_PREVIOUS = "%";
-        private static readonly string CMD_REPLY = "-";
-        private static readonly string CMD_CONTINUE = "^";
-        private static readonly string CMD_REDIRECT = "@";
-        private static readonly string CMD_CONDITION = "*";
-        private static readonly string CMD_LABEL = ">";
-        private static readonly string CMD_ENDLABEL = "<";
+        //THe AST parser
+        Parser parser;
 
         // The topic data structure, and the "thats" data structure.
-        private TopicManager topics = new TopicManager();
+        TopicManager topics = new TopicManager();
+
 
         // Bot's users' data structure.
-        private ClientManager clients = new ClientManager();
+        ClientManager clients = new ClientManager();
 
         // Object handlers //TODO: At this moment, just have a CSHarpHander
-        private IDictionary<string, IObjectHandler> handlers = new Dictionary<string, IObjectHandler>();
-        private IDictionary<string, string> objects = new Dictionary<string, string>(); // name->language mappers
+        IDictionary<string, IObjectHandler> handlers = new Dictionary<string, IObjectHandler>();
+        IDictionary<string, string> objects = new Dictionary<string, string>(); // name->language mappers
 
         // Simpler internal data structures.
-        private ICollection<string> listTopics = new List<string>();                                                // vector containing topic list (for quicker lookups)
-        private IDictionary<string, string> globals = new Dictionary<string, string>();                             // ! global
-        private IDictionary<string, string> vars = new Dictionary<string, string>();                                // ! var
-        private IDictionary<string, ICollection<string>> arrays = new Dictionary<string, ICollection<string>>();    // ! array
-        private IDictionary<string, string> subs = new Dictionary<string, string>();                                // ! sub
-        private IDictionary<string, string> person = new Dictionary<string, string>();                              // ! person
-        private string[] person_s = null; // sorted persons
-        private string[] subs_s = null;                                                                             // sorted subs
-        private ThreadLocal<string> _currentUser = new ThreadLocal<string>();
-
-
-
+        ICollection<string> listTopics = new List<string>();                                                // vector containing topic list (for quicker lookups)
+        IDictionary<string, string> globals = new Dictionary<string, string>();                             // ! global
+        IDictionary<string, string> vars = new Dictionary<string, string>();                                // ! var
+        IDictionary<string, ICollection<string>> arrays = new Dictionary<string, ICollection<string>>();    // ! array
+        IDictionary<string, string> subs = new Dictionary<string, string>();                                // ! sub
+        IDictionary<string, string> person = new Dictionary<string, string>();                              // ! person
+        string[] person_s = null; // sorted persons
+        string[] subs_s = null;                                                                             // sorted subs
+        ThreadLocal<string> _currentUser = new ThreadLocal<string>();
         public ErrorMessages errors { get; private set; }
 
         public bool IsErrReply(string reply)
@@ -77,70 +75,47 @@ namespace RiveScript
         /// <summary>
         /// Create a new RiveScript interpreter object with default options
         /// </summary>
+        public RiveScript() : this(null) { }
+
+        /// <summary>
+        /// Create a new RiveScript interpreter object with default options
+        /// </summary>
         /// <param name="config">Options object</param>
         public RiveScript(Config config)
         {
             if (config == null)
                 config = Config.Default;
 
+            logger = config.logger ?? new EmptyLogger();
+            Topic.setLogger(logger);
+
+            sessions = config.sessionManager ?? new ConcurrentDictionarySessionManager();
+
             debug = config.debug;
-            Topic.setDebug(config.debug);// Set static debug modes.
             utf8 = config.utf8;
             strict = config.strict;
             _currentUser.Value = Constants.Undefined;
             forceCase = config.forceCase;
             onDebug = config.onDebug;
             unicodePunctuation = new Regex($"{config.unicodePonctuations}/g");
-
             depth = config.depth;
-            if (depth < 0) depth = 0;//Adjust depth
+
+            if (depth <= 0) depth = Config.DEFAULT_DEPTH;//Adjust depth
 
             //Errors
             errors = (config.errors ?? ErrorMessages.Default).AdjustDefaults();
 
+            //Create parser
+            parser = new Parser(new ParserConfig(strict: strict, utf8: utf8, forceCase: forceCase));
+
             //CSharp handler is default
-            this.setCSharpHandler();
+            setHandler(Constants.CSharpHandlerName, new CSharp(this));
         }
-
-        /// <summary>
-        /// Create a new RiveScript interpreter object with default options
-        /// </summary>
-        public RiveScript() : this(Config.Default) { }
-
-        /// <summary>
-        /// Create a new RiveScript interpreter object wiht parameter options
-        /// </summary>
-        /// <param name="debug">Debug mode</param>
-        /// <param name="utf8">Enable UTF-8 mode</param>
-        /// <param name="strict">Strict mode</param>
-        /// <param name="depth">Recursion depth limit</param>
-        /// <param name="forceCase">Force-lowercase triggers</param>
-        /// <param name="errors">Customize certain error messages</param>
-        /// <param name="onDebug">Set a custom handler to catch debug log messages</param>
-        public RiveScript(bool debug = false,
-                          bool utf8 = false,
-                          bool strict = true,
-                          int depth = 50,
-                          bool forceCase = false,
-                          ErrorMessages errors = null,
-                          Action<string> onDebug = null)
-            : this(new Config
-            {
-                debug = debug,
-                utf8 = utf8,
-                strict = strict,
-                depth = depth,
-                forceCase = forceCase,
-                errors = errors,
-                onDebug = onDebug
-            })
-        { }
-
 
         public void setDebug(bool debug)
         {
             this.debug = debug;
-            Topic.setDebug(debug);
+            //Topic.setDebug(debug);
         }
 
 

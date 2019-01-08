@@ -1,5 +1,8 @@
-﻿namespace RiveScript.Parser
+﻿namespace RiveScript.Parse
 {
+    /// <summary>
+    /// User-configurable properties of the RiveScript
+    /// </summary>
     public class ParserConfig
     {
         public bool strict { get; private set; }

@@ -9,7 +9,7 @@ namespace RiveScript.Tests.RSTS
         public void RSTS_Options__concat()
         {
             //# The concat option is file scoped and doesn't persist across streams.
-            var rs = new RiveScript(debug: true);
+            var rs = new RiveScript(Config.Debug);
 
             rs.stream(new[] { "// Default concat mode = none",
                               "+ test concat default",

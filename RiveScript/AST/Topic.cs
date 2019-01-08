@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RiveScript.Log;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -10,13 +11,14 @@ namespace RiveScript.AST
     /// </summary>
     public class Topic
     {
-        private static bool debug = false;
-        private Dictionary<string, Trigger> triggers = new Dictionary<string, Trigger>(); // Topics contain triggers
-        private bool _hasPrevious = false; // Has at least one %Previous
-        private Dictionary<string, ICollection<string>> previous = new Dictionary<string, ICollection<string>>();// Mapping of %Previous's to their triggers
-        private ICollection<string> _includes = new List<string>();// Included topics
-        private ICollection<string> _inherits = new List<string>();// Inherited topics
-        private string[] sorted = null; // Sorted trigger list
+        static ILogger logger;
+
+        Dictionary<string, Trigger> triggers = new Dictionary<string, Trigger>(); // Topics contain triggers
+        bool _hasPrevious = false; // Has at least one %Previous
+        Dictionary<string, ICollection<string>> previous = new Dictionary<string, ICollection<string>>();// Mapping of %Previous's to their triggers
+        ICollection<string> _includes = new List<string>();// Included topics
+        ICollection<string> _inherits = new List<string>();// Inherited topics
+        string[] sorted = null; // Sorted trigger list
 
         //Currently selected topic
         private string name = "";
@@ -31,15 +33,14 @@ namespace RiveScript.AST
         }
 
         /// <summary>
-        /// Turn on or off debug mode statically. This debug mode is static so it will
+        /// Set static logger object
 	    /// be shared among all RiveScript instances and all Topics.
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static bool setDebug(bool value)
+        public static void setLogger(ILogger logger)
         {
-            debug = value;
-            return debug;
+            Topic.logger = logger;
         }
 
         /// <summary>
@@ -109,11 +110,12 @@ namespace RiveScript.AST
             if (raw)
             {
                 var trigs = triggers.Keys;
-                if (debug)
+
+                if (logger.isDebugEnable)
                 {
                     foreach (var t in trigs)
                     {
-                        say("RAW TRIGGER: " + t);
+                        logger.debug("RAW TRIGGER: " + t);
                     }
                 }
                 return trigs.ToArray();
@@ -123,7 +125,7 @@ namespace RiveScript.AST
             if (sorted == null)
             {
                 // Um no, that's bad.
-                say("[ERROR] You called listTriggers() for topic " + name + " before its replies have been sorted!");
+                logger.debug("[ERROR] You called listTriggers() for topic " + name + " before its replies have been sorted!");
                 return new string[0];
             }
 
@@ -191,14 +193,14 @@ namespace RiveScript.AST
                 }
 
                 int inherits = h;
-                say("Sorting triggers by heritage level " + inherits);
+                logger.debug("Sorting triggers by heritage level " + inherits);
                 var triggers = heritage[inherits].ToArray();
 
                 // Sort-priority maps.
                 var prior = new Dictionary<int, ICollection<string>>();
 
                 // Assign each trigger to its priority level.
-                say("BEGIN sortTriggers in topic " + name);
+                logger.debug("BEGIN sortTriggers in topic " + name);
 
                 var rePrior = new Regex("\\{weight=(\\d+?)\\}");
                 for (int i = 0; i < triggers.Length; i++)
@@ -249,7 +251,7 @@ namespace RiveScript.AST
                 var prior_sorted = Util.SortKeysDesc(prior);
                 for (int p = 0; p < prior_sorted.Length; p++)
                 {
-                    say("Sorting triggers w/ priority " + prior_sorted[p]);
+                    logger.debug("Sorting triggers w/ priority " + prior_sorted[p]);
                     var p_list = prior[prior_sorted[p]];
 
                     /*
@@ -268,11 +270,11 @@ namespace RiveScript.AST
                     bucket.Fill(p_list);
 
                     // Sort each inheritence level individually.
-                    say("Dumping sort bucket !");
+                    logger.debug("Dumping sort bucket !");
                     var subsort = bucket.Dump();
                     foreach (var item in subsort)
                     {
-                        say("ADD TO SORT: " + item);
+                        logger.debug("ADD TO SORT: " + item);
                         sorted.Add(item);
                     }
                 }
@@ -441,19 +443,6 @@ namespace RiveScript.AST
         public string[] inherits()
         {
             return _inherits.ToArray();
-        }
-
-        /// <summary>
-        /// JUst a debug funcion
-        /// </summary>
-        /// <param name="line"></param>
-        private void say(string line)
-        {
-            //TODO: CHange this for a debug provider
-            if (debug)
-            { // doesn't work?
-                System.Console.WriteLine("[RS::Topic] " + line);
-            }
         }
     }
 }

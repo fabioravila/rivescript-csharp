@@ -9,8 +9,11 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace RiveScript.Parser
+namespace RiveScript.Parse
 {
+    /// <summary>
+    /// Parser for RiveScript source code
+    /// </summary>
     public class Parser
     {
         // Constant RiveScript command symbols.
@@ -363,7 +366,7 @@ namespace RiveScript.Parser
                             logger.warn("Missing a " + kind + " value", filename, lineno);
                             continue;
                         }
-                        if (value.Equals("<undef>"))
+                        if (value.Equals(Constants.UNDEF_TAG))
                         {
                             // Deleting its value.
                             delete = true;
