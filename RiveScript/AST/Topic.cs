@@ -68,10 +68,7 @@ namespace RiveScript.AST
             var pattern = trigger.getPattern();
             trigger.setTopic(name);
 
-            if (!triggers.ContainsKey(pattern))
-                triggers.Add(pattern, trigger);
-            else
-                triggers[pattern] = trigger;
+            triggers.AddOrUpdate(pattern, trigger);
         }
 
         /// <summary>
@@ -222,7 +219,7 @@ namespace RiveScript.AST
                     if (false == prior.ContainsKey(priority))
                     {
                         // Create it.
-                        prior.Add(priority, new List<String>());
+                        prior.Add(priority, new List<string>());
                     }
 
                     // Add it.

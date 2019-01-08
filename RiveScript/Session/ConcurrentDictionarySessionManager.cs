@@ -57,6 +57,16 @@ namespace RiveScript.Session
             return value.getVariable(name);
         }
 
+
+        public void remove(string username, string name)
+        {
+            var value = users.GetOrDefault(username);
+            if (value == null)
+                return;
+
+            value.removeVariable(name);
+        }
+
         public UserData get(string username)
         {
             return users.GetOrDefault(username);
@@ -85,7 +95,7 @@ namespace RiveScript.Session
 
         public UserData init(string username)
         {
-            return users.GetOrAdd(username, key => CreateDefaultSession());
+            return users.GetOrAdd(username, key => CreateDefaultSession(key));
         }
 
         public void set(string username, string name, string value)
@@ -133,9 +143,9 @@ namespace RiveScript.Session
             }
         }
 
-        UserData CreateDefaultSession()
+        UserData CreateDefaultSession(string username)
         {
-            var data = new UserData();
+            var data = new UserData(username);
             data.setVariable("topic", "random");
             data.lastMatch = "";
             return data;
@@ -143,7 +153,7 @@ namespace RiveScript.Session
 
         UserData CloneUserData(UserData original)
         {
-            var clone = CreateDefaultSession();
+            var clone = CreateDefaultSession(original.username);
 
             //Copy user variables
             foreach (var item in original.getVariables())
@@ -162,5 +172,6 @@ namespace RiveScript.Session
 
             return clone;
         }
+
     }
 }

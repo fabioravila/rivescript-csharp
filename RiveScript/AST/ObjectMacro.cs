@@ -9,6 +9,6 @@ namespace RiveScript.AST
     {
         public string Name { get; set; }
         public string Language { get; set; }
-        public ICollection<string> code { get; set; }
+        public ICollection<string> Code { get; set; }
     }
 }

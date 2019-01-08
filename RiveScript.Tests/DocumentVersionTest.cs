@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using RiveScript.Exceptions;
 
 namespace RiveScript.Tests
 {
@@ -30,8 +31,17 @@ namespace RiveScript.Tests
         {
             var rs = new RiveScript(Config.Debug);
 
-            var result = rs.stream("! version = 2.1");
-            Assert.IsFalse(result);
+            try
+            {
+                var result = rs.stream("! version = 2.1");
+                Assert.IsFalse(result);
+            }
+            catch (ParserException ex)
+            {
+                return;
+            }
+
+            Assert.Fail();
         }
 
     }

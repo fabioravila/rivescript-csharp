@@ -11,7 +11,6 @@ namespace RiveScript.AST
         private string pattern = "";
         private string topicName = "";
         private ICollection<string> _redirect = new List<string>();
-        public string redirect { get; set; }
         private ICollection<string> reply = new List<string>();
         private ICollection<string> condition = new List<string>();
         private bool previous = false;
@@ -78,7 +77,7 @@ namespace RiveScript.AST
 
         internal bool hasRedirect()
         {
-            return this.redirect.Length > 0;
+            return _redirect.Count > 0;
         }
     }
 }

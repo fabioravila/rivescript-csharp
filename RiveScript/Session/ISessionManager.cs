@@ -8,114 +8,109 @@ namespace RiveScript.Session
 {
     public interface ISessionManager
     {
-        /**
-         * Makes sure a username has a session (creates one if not).
-         *
-         * @param username the username
-         * @return the user data
-         */
+        /// <summary>
+        /// Makes sure a username has a session (creates one if not).
+        /// </summary>
+        /// <param name="username">the username</param>
+        /// <returns>the user data</returns>
         UserData init(string username);
 
-        /**
-         * Sets a user's variable.
-         *
-         * @param username the username
-         * @param name     the variable name
-         * @param value    the variable value
-         */
+        /// <summary>
+        ///  Sets a user's variable.
+        /// </summary>
+        /// <param name="username">the username</param>
+        /// <param name="name">the variable name</param>
+        /// <param name="value">the variable value</param>
         void set(string username, string name, string value);
 
-        /**
-         * Sets a user's variables.
-         *
-         * @param username the username
-         * @param vars     the user variables
-         */
+        /// <summary>
+        /// Sets a user's variables.
+        /// </summary>
+        /// <param name="username">the username</param>
+        /// <param name="vars">the user variables</param>
         void set(string username, IDictionary<string, string> vars);
 
-        /**
-         * Adds input and reply to a user's history.
-         *
-         * @param username the username
-         * @param input    the input
-         * @param reply    the reply
-         */
+        /// <summary>
+        ///  Adds input and reply to a user's history.
+        /// </summary>
+        /// <param name="username">the username</param>
+        /// <param name="input">the input</param>
+        /// <param name="reply">the reply</param>
         void addHistory(string username, string input, string reply);
 
-        /**
-         * Sets a user's the last matched trigger.
-         *
-         * @param username the username
-         * @param trigger  the trigger
-         */
+
+        /// <summary>
+        /// Sets a user's the last matched trigger.
+        /// </summary>
+        /// <param name="username">the username</param>
+        /// <param name="trigger">the trigger</param>
         void setLastMatch(string username, string trigger);
 
-        /**
-         * Returns a user variable.
-         *
-         * @param username the username
-         * @param name     the variable name
-         * @return the variable value
-         */
+        /// <summary>
+        /// Returns a user variable.
+        /// </summary>
+        /// <param name="username">the username</param>
+        /// <param name="name">the variable name</param>
+        /// <returns>the variable value</returns>
         string get(string username, string name);
 
-        /**
-         * Returns all variables for a user.
-         *
-         * @param username the username
-         * @return the user data
-         */
+        /// <summary>
+        /// Remove a user variable.
+        /// </summary>
+        /// <param name="username">the username</param>
+        /// <param name="name">the variable name</param>
+        /// <returns>the variable value</returns>
+        void remove(string username, string name);
+
+        /// <summary>
+        /// Returns all variables for a user.
+        /// </summary>
+        /// <param name="username">username the username</param>
+        /// <returns>user data</returns>
         UserData get(string username);
 
-        /**
-         * Returns all variables about all users.
-         *
-         * @return the users and their user data
-         */
+        /// <summary>
+        /// Returns all variables about all users.
+        /// </summary>
+        /// <returns>the users and their user data</returns>
         IDictionary<string, UserData> getAll();
 
-        /**
-         * Returns a user's last matched trigger.
-         *
-         * @param username the username
-         * @return the last matched trigger
-         */
+        /// <summary>
+        /// Returns a user's last matched trigger.
+        /// </summary>
+        /// <param name="username">the username</param>
+        /// <returns>the last matched trigger</returns>
         string getLastMatch(string username);
 
-        /**
-         * Returns a user's history.
-         *
-         * @param username the username
-         * @return the history
-         */
+        /// <summary>
+        /// Returns a user's history.
+        /// </summary>
+        /// <param name="username">the username</param>
+        /// <returns>the history</returns>
         History getHistory(string username);
 
-        /**
-         * Clears a user's variables.
-         *
-         * @param username the username
-         */
+        /// <summary>
+        /// Clears a user's variables.
+        /// </summary>
+        /// <param name="username">the username</param>
         void clear(string username);
 
-        /**
-         * Clear all variables of all users.
-         */
+        /// <summary>
+        /// Clear all variables of all users.
+        /// </summary>
         void clearAll();
 
-        /**
-         * Makes a snapshot of a user's variables.
-         *
-         * @param username the username
-         */
+        /// <summary>
+        /// Makes a snapshot of a user's variables.
+        /// </summary>
+        /// <param name="username"> the username</param>
         void freeze(string username);
 
-        /**
-         * Unfreezes a user's variables.
-         *
-         * @param username the username
-         * @param action   the thaw action
-         * @see ThawAction
-         */
+        /// <summary>
+        /// Unfreezes a user's variables.
+        /// </summary>
+        /// <param name="username">the username</param>
+        /// <param name="action">the thaw action</param>
         void thaw(string username, ThawAction action);
     }
 }

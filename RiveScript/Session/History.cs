@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace RiveScript.Session
 {
@@ -36,6 +37,38 @@ namespace RiveScript.Session
         public void addReply(string text)
         {
             reply = Util.Unshift(reply, text);
+        }
+
+        /// <summary>
+        /// Get specific input value by index
+        /// </summary>
+        /// <param name="index">The index of the input value to get (1-9)</param>
+        /// <exception cref="IndexOutOfRangeException"></exception>
+        /// <returns></returns>
+        public string getInput(int index)
+        {
+            if (index >= 1 && index <= input.Count - 1)
+            {
+                return input[index - 1];
+            }
+
+            throw new IndexOutOfRangeException();
+        }
+
+        /// <summary>
+        /// Get specific reply value by index
+        /// </summary>
+        /// <param name="index">The index of the reply value to get (1-9)</param>
+        /// <exception cref="IndexOutOfRangeException"></exception>
+        /// <returns></returns>
+        public string getReply(int index)
+        {
+            if (index >= 1 && index <= reply.Count - 1)
+            {
+                return reply[index - 1];
+            }
+
+            throw new IndexOutOfRangeException();
         }
 
     }

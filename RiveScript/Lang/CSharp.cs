@@ -52,6 +52,16 @@ namespace RiveScript.Lang
             macros.AddOrUpdate(name, new DelegateMacro(del));
         }
 
+        public void AddSubroutine(string name, ISubroutine subroutine)
+        {
+            if (subroutine == null)
+                throw new ArgumentNullException(nameof(subroutine), "Subroutine must not be null");
+
+            macros.AddOrUpdate(name, subroutine);
+        }
+
+
+
         protected Assembly CreateAssembly(string name, string[] code)
         {
             /*
@@ -153,5 +163,8 @@ namespace RiveScript.Lang
             if (false == cs.Contains("return"))
                 throw new InvalidOperationException("ERR: object " + name + " - Has no return statement");
         }
+
+
+
     }
 }

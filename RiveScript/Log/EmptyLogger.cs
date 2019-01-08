@@ -1,4 +1,6 @@
-﻿namespace RiveScript.Log
+﻿using System;
+
+namespace RiveScript.Log
 {
     public class EmptyLogger : ILogger
     {
@@ -17,12 +19,27 @@
             //NOTHING
         }
 
+        public void error(Exception exception)
+        {
+            //NOTHING
+        }
+
         public void trace(string text)
         {
             //NOTHING
         }
 
+        public void trace(Exception exception)
+        {
+            //NOTHING
+        }
+
         public void warn(string text)
+        {
+            //NOTHING
+        }
+
+        public void warn(string text, string filenasme, int lineno)
         {
             //NOTHING
         }

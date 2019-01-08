@@ -55,8 +55,7 @@ namespace RiveScript.Parse
             forceCase = config.forceCase;
         }
 
-
-        private Root parse(string filename, string[] code)
+        public Root parse(string filename, string[] code)
         {
             logger.debug($"Parsing {filename}");
             if (logger.isTraceEnable)
@@ -117,7 +116,7 @@ namespace RiveScript.Parse
                         {
                             var macro = new ObjectMacro
                             {
-                                code = objectBuffer,
+                                Code = objectBuffer,
                                 Language = objectLanguage,
                                 Name = objectName,
                             };
@@ -690,9 +689,7 @@ namespace RiveScript.Parse
             return ast;
         }
 
-
-
-        private void checkSyntax(string cmd, string line)
+        void checkSyntax(string cmd, string line)
         {
             //Run syntax tests based on the command used.
 
@@ -746,7 +743,7 @@ namespace RiveScript.Parse
                 // This one is strict. The triggers are to be run through the regexp
                 // engine, therefore it should be acceptable for the regexp engine.
                 // - Entirely lowercase
-                // - No symbols except: ( | ) [ ] * _ // { } < > =
+                // - No symbols except: ( | ) [ ] * _ // { } < > = #
                 // - All brackets should be matched.
                 var parens = 0;
                 var square = 0;
@@ -762,9 +759,25 @@ namespace RiveScript.Parse
                         throw new ParserException("Triggers can't contain uppercase letters, backslashes or dots in UTF - 8 mode");
                     }
                 }
-                else if (line.MatchRegex(@"[^a-z0-9(|)\[\]*_//@{}<>=\s]"))
+                else if (line.MatchRegex(@"[^a-z0-9(|)\[\]*_#@{}<>=\/\s]"))
                 {
                     throw new ParserException("Triggers may only contain lowercase letters, numbers, and these symbols: ( | )[ ] * _ // { } < > =");
+                }
+                else if (line.MatchRegex(@"\(\||\|\)"))
+                {
+                    throw new ParserException("Piped alternations can't begin or end with a |");
+                }
+                else if (line.MatchRegex(@"\([^\)].+\|\|.+\)"))
+                {
+                    throw new ParserException("Piped alternations can't include blank entries");
+                }
+                else if (line.MatchRegex(@"\[\||\|\]"))
+                {
+                    throw new ParserException("Piped optionals can't begin or end with a |");
+                }
+                else if (line.MatchRegex(@"\[[^\]].+\|\|.+\]"))
+                {
+                    throw new ParserException("Piped optionals can't include blank entries");
                 }
 
                 // Count the brackets.

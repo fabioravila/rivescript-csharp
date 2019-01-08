@@ -11,11 +11,11 @@ namespace RiveScript.Tests
         public void Hello_World_Simple_Code_AndChsrpHandlerIsDefault()
         {
             var rs = new RiveScript();
-            var oh = new CSharp();
+            var oh = new CSharp(rs);
 
-            oh.onLoad("test", new string[] { "return \"Hello world\"; " });
+            oh.Load("test", new string[] { "return \"Hello world\"; " });
 
-            var result = oh.onCall("test", rs, new string[] { "" });
+            var result = oh.Call("test", rs, new string[] { "" });
 
             Assert.AreEqual("Hello world", result);
         }
@@ -24,11 +24,11 @@ namespace RiveScript.Tests
         public void Reply_RS_Instance()
         {
             var rs = new RiveScript();
-            var oh = new CSharp();
+            var oh = new CSharp(rs);
 
-            oh.onLoad("test", new string[] { "return rs.GetHashCode().ToString(); " });
+            oh.Load("test", new string[] { "return rs.GetHashCode().ToString(); " });
 
-            var result = oh.onCall("test", rs, new string[] { "" });
+            var result = oh.Call("test", rs, new string[] { "" });
 
             Assert.AreEqual(rs.GetHashCode().ToString(), result);
         }
@@ -37,11 +37,11 @@ namespace RiveScript.Tests
         public void Reply_Concatenet_Args_Id()
         {
             var rs = new RiveScript();
-            var oh = new CSharp();
+            var oh = new CSharp(rs);
 
-            oh.onLoad("test", new string[] { "return String.Join(\",\", args); " });
+            oh.Load("test", new string[] { "return String.Join(\",\", args); " });
 
-            var result = oh.onCall("test", rs, new string[] { "1", "2", "3" });
+            var result = oh.Call("test", rs, new string[] { "1", "2", "3" });
 
             Assert.AreEqual("1,2,3", result);
         }
@@ -50,11 +50,11 @@ namespace RiveScript.Tests
         public void Reply_CurrentUser_Not_Initialized()
         {
             var rs = new RiveScript();
-            var oh = new CSharp();
+            var oh = new CSharp(rs);
 
-            oh.onLoad("test", new string[] { "return rs.currentUser();" });
+            oh.Load("test", new string[] { "return rs.currentUser();" });
 
-            var result = oh.onCall("test", rs, new string[] { "" });
+            var result = oh.Call("test", rs, new string[] { "" });
 
             Assert.AreEqual(Constants.Undefined, result);
         }

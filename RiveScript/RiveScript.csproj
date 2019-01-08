@@ -56,6 +56,7 @@
     <Compile Include="Exceptions\RepliesNotSortedException.cs" />
     <Compile Include="Helpers\ExtensionsMethods.cs" />
     <Compile Include="Helpers\FileHelper.cs" />
+    <Compile Include="Helpers\StringLengthLongToShortComparer - Copy.cs" />
     <Compile Include="Inheritance.cs" />
     <Compile Include="Log\EmptyLogger.cs" />
     <Compile Include="ILogger.cs" />
@@ -68,7 +69,7 @@
     <Compile Include="Parse\ParserConfig.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Helpers\Rot13.cs" />
-    <Compile Include="Helpers\StringLongToShortComparer.cs" />
+    <Compile Include="Helpers\StringWordCountLongToShortComparer.cs" />
     <Compile Include="Regexp\Regexp.cs" />
     <Compile Include="RiveScript.cs" />
     <Compile Include="RiveScriptException.cs" />

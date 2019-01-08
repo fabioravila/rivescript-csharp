@@ -5,7 +5,7 @@ namespace RiveScript.Tests
     [TestClass]
     public class InheritsIncludesTest
     {
-        private RiveScript getWithGlobalTopic(string[] code)
+        RiveScript getWithGlobalTopic(string[] code)
         {
             var rs = new RiveScript(Config.Debug);
             rs.stream(new[] { "+ go topic *",

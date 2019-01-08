@@ -9,8 +9,9 @@ namespace RiveScript
     /// </summary>
     public class TopicManager
     {
-        private Dictionary<string, Topic> topics = new Dictionary<string, Topic>(); // Hash of managed topics
-        private ICollection<string> lTopics = new List<string>(); // A vector of topics
+        Dictionary<string, Topic> topics = new Dictionary<string, Topic>(); // Hash of managed topics
+        ICollection<string> lTopics = new List<string>(); // A vector of topics
+
 
         /// <summary>
         /// Create a topic manager. Only one per RiveScript interpreter needed.
@@ -24,7 +25,7 @@ namespace RiveScript
         /// <returns></returns>
         public Topic topic(string topic)
         {
-            if (false == topics.ContainsKey(topic))
+            if (!topics.ContainsKey(topic))
             {
                 topics.Add(topic, new Topic(topic));
                 lTopics.Add(topic);
@@ -51,6 +52,8 @@ namespace RiveScript
             return lTopics.ToArray();
         }
 
+        public int countTopics() => lTopics.Count;
+
         /// <summary>
         /// Sort the replies in all the topics.This will build trigger lists of
         /// the topics(taking into account topic inheritence/includes) and sending
@@ -60,7 +63,6 @@ namespace RiveScript
         {
             foreach (var topic in listTopics())
             {
-
                 var allTrig = topicTriggers(topic, 0, 0, false);
 
                 // Make this topic sort using this trigger list.
@@ -68,6 +70,10 @@ namespace RiveScript
 
                 // Make the topic update its %Previous buffer.
                 this.topic(topic).sortPrevious();
+
+
+                //cache de 
+
             }
         }
 
@@ -79,7 +85,7 @@ namespace RiveScript
         /// <param name="inheritance"></param>
         /// <param name="inherited"></param>
         /// <returns></returns>
-        private string[] topicTriggers(string topic, int depth, int inheritance, bool inherited)
+        string[] topicTriggers(string topic, int depth, int inheritance, bool inherited)
         {
             // Break if we're too deep.
             if (depth > 50)
