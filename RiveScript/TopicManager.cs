@@ -45,12 +45,15 @@ namespace RiveScript
         }
 
         /// <summary>
-        ///  Retrieve a list of the existing topics.
+        ///  Retrieve a list of the existing topics name.
         /// </summary>
-        public string[] listTopics()
-        {
-            return lTopics.ToArray();
-        }
+        public string[] listTopicsName() => lTopics.ToArray();
+
+
+        /// <summary>
+        ///  Retrieve a list of the existing topics name.
+        /// </summary>
+        public IDictionary<string, Topic> listTopics() => topics;
 
         public int countTopics() => lTopics.Count;
 
@@ -61,7 +64,7 @@ namespace RiveScript
         /// </summary>
         public void sortReplies()
         {
-            foreach (var topic in listTopics())
+            foreach (var topic in listTopicsName())
             {
                 var allTrig = topicTriggers(topic, 0, 0, false);
 

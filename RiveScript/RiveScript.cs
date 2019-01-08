@@ -105,8 +105,11 @@ namespace RiveScript
             //Errors
             errors = (config.errors ?? ErrorMessages.Default).AdjustDefaults();
 
+            //Create a TOpicManager, must be single for rivescript instance
+            topics = new TopicManager();
+
             //Create parser
-            parser = new Parser(new ParserConfig(strict: strict, utf8: utf8, forceCase: forceCase));
+            parser = new Parser(new ParserConfig(strict: strict, utf8: utf8, forceCase: forceCase), topics);
 
             csharpHandler = new CSharp(this);
             //CSharp handler is default
@@ -601,9 +604,6 @@ namespace RiveScript
         {
             var root = parser.parse(filename, code);
 
-            //Get topic manager
-            topics = root.topicManager;
-
             //Passing all ast variables to rivescript class
             //globals
             foreach (var item in root.begin.globals)
@@ -663,7 +663,7 @@ namespace RiveScript
         public void sortReplies()
         {
             // We need to make sort buffers under each topic.
-            var topics = this.topics.listTopics();
+            var topics = this.topics.listTopicsName();
             logger.debug("There are " + topics.Length + " topics to sort replies for.");
 
             // Tell the topic manager to sort its topics' replies.
@@ -2072,7 +2072,7 @@ namespace RiveScript
         /// </summary>
         public void dumpSorted()
         {
-            var topics = this.topics.listTopics();
+            var topics = this.topics.listTopicsName();
             for (int t = 0; t < topics.Length; t++)
             {
                 var topic = topics[t];
@@ -2094,7 +2094,7 @@ namespace RiveScript
         {
             // Dump the topic list.
             println("{");
-            var topicList = topics.listTopics();
+            var topicList = topics.listTopicsName();
             for (int t = 0; t < topicList.Length; t++)
             {
                 var topic = topicList[t];

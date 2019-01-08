@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace RiveScript.AST
 {
@@ -9,17 +10,11 @@ namespace RiveScript.AST
     {
         public Begin begin { get; set; } = new Begin();
         public List<ObjectMacro> objects { get; set; } = new List<ObjectMacro>();
-        public TopicManager topicManager = new TopicManager();
+        public IDictionary<string, Topic> topics = new Dictionary<string, Topic>();
 
-
-        public Topic getTopic(string name)
+        public void addTopic(Topic topic)
         {
-            return topicManager.topic(name);
-        }
-
-        public void addTopic(string name)
-        {
-            topicManager.topic(name);
+            topics.AddOrUpdate(topic.name, topic);
         }
 
         public void addObject(ObjectMacro obj)

@@ -21,7 +21,7 @@ namespace RiveScript.AST
         string[] sorted = null; // Sorted trigger list
 
         //Currently selected topic
-        private string name = "";
+        public string name { get; private set; }
 
         /// <summary>
         /// Create a topic.

@@ -42,13 +42,17 @@ namespace RiveScript.Parse
         bool utf8;
         bool forceCase;
         ILogger logger = new EmptyLogger(); //TODO adjust
+        TopicManager topicManager;
 
-        public Parser() : this(null) { }
+        public Parser(TopicManager topicManager) : this(null, topicManager) { }
 
-        public Parser(ParserConfig config)
+        public Parser(ParserConfig config, TopicManager topicManager)
         {
             if (config == null)
                 config = ParserConfig.Default;
+
+            this.topicManager = topicManager ?? throw new ArgumentNullException(nameof(topicManager), "Topicmanager instance must be not null");
+
 
             strict = config.strict;
             utf8 = config.utf8;
@@ -65,8 +69,6 @@ namespace RiveScript.Parse
                     logger.trace(line);
                 }
             }
-
-
 
 
             var startTime = DateTime.Now.Ticks;
@@ -512,11 +514,11 @@ namespace RiveScript.Parse
                                     // This topic is either inherited or included.
                                     if (mode == mode_includes)
                                     {
-                                        ast.getTopic(topic).includes(label[a]);
+                                        topicManager.topic(topic).includes(label[a]);
                                     }
                                     else if (mode == mode_inherits)
                                     {
-                                        ast.getTopic(topic).inherits(label[a]);
+                                        topicManager.topic(topic).inherits(label[a]);
                                     }
                                 }
                             }
@@ -592,7 +594,7 @@ namespace RiveScript.Parse
                         currentTrigger = line;
                     }
 
-                    ast.getTopic(topic).addTrigger(currentTriggerObject);
+                    topicManager.topic(topic).addTrigger(currentTriggerObject);
 
                     //TODO onld stuff to see
                     //if (previous.Length > 0)
@@ -678,6 +680,12 @@ namespace RiveScript.Parse
                 {
                     logger.warn("Unrecognized command \"" + cmd + "\"", filename, lineno);
                 }
+            }
+
+            //becouse we use topicmanager to manage topis, we have to fill ast topics
+            foreach (var item in topicManager.listTopics())
+            {
+                ast.addTopic(item.Value);
             }
 
 
