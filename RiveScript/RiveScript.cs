@@ -325,6 +325,11 @@ namespace RiveScript
             csharpHandler.AddSubroutine(name, subroutine);
         }
 
+        public void setSubroutine(this RiveScript rs, string name, Func<RiveScript, string[], string> subroutine)
+        {
+            rs.setSubroutine(name, new DelegateMacro(subroutine));
+        }
+
         /// <summary>
         /// Set a global variable for the interpreter (equivalent to ! global).
         /// Set the value to null to delete the variable.<p>
