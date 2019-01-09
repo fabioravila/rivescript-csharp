@@ -61,12 +61,12 @@ namespace RiveScript.Parse
 
         public Root parse(string filename, string[] code)
         {
-            logger.debug($"Parsing {filename}");
-            if (logger.isTraceEnable)
+            logger.Debug($"Parsing {filename}");
+            if (logger.IsTraceEnable)
             {
                 foreach (var line in code)
                 {
-                    logger.trace(line);
+                    logger.Trace(line);
                 }
             }
 
@@ -83,8 +83,8 @@ namespace RiveScript.Parse
             string objectName = null;                   // Name of the current object
             string objectLanguage = null;               // Programming language of the object
             ICollection<string> objectBuffer = null;    // Buffer for the current object
-            string currentTrigger = null;               // Trigger we're on
-            Trigger currentTriggerObject = null;        // Trigger we're on
+            string onTrigger = null;               // Trigger we're on
+            //Trigger currentTriggerObject = null;        // Trigger we're on
             string previous = null;                     // The a %Previous trigger
 
             // File scoped parser options.
@@ -98,7 +98,7 @@ namespace RiveScript.Parse
             {
                 lineno++; // Increment the line counter.
                 string line = code[i];
-                logger.debug("Original Line: " + line);
+                logger.Debug("Original Line: " + line);
 
 
 
@@ -170,7 +170,7 @@ namespace RiveScript.Parse
                 // Skip any blank lines and weird lines.
                 if (line.Length < 2)
                 {
-                    logger.warn($"Weird single-character line '#" + line + "' found (in topic #" + topic + ")");
+                    logger.Warn($"Weird single-character line '#" + line + "' found (in topic #" + topic + ")");
                     continue;
                 }
 
@@ -179,7 +179,7 @@ namespace RiveScript.Parse
                 line = Util.Strip(line.Substring(1));
 
 
-                logger.debug("\tCmd: " + cmd);
+                logger.Debug("\tCmd: " + cmd);
 
                 // Ignore in-line comments if there's a space before and after the "//".
                 if (line.IndexOf(" // ") > -1)
@@ -187,11 +187,10 @@ namespace RiveScript.Parse
                     string[] split = line.Split(new[] { " // " }, StringSplitOptions.None);
                     line = split[0];
                     //remove space between comment and code
-                    //line = line.TrimEnd(' ');
+                    line = line.TrimEnd(' ');
                 }
 
-                line = line.Trim();
-
+                // In the event of a +Trigger, if we are force-lowercasing it, then do so
                 // In the event of a +Trigger, if we are force-lowercasing it, then do so
                 // now before the syntax check.
                 if (forceCase && cmd == CMD_TRIGGER)
@@ -208,7 +207,7 @@ namespace RiveScript.Parse
                     if (strict)
                         throw pex;
                     else
-                        logger.warn($"Syntax logger.error(: {pex.Message} at {filename} line {lineno} near {cmd} {line}");
+                        logger.Warn($"Syntax logger.error(: {pex.Message} at {filename} line {lineno} near {cmd} {line}");
                 }
 
 
@@ -298,7 +297,7 @@ namespace RiveScript.Parse
                 //TODO: change to switch-case
                 if (cmd.Equals(CMD_DEFINE))
                 {
-                    logger.debug("\t! DEFINE");
+                    logger.Debug("\t! DEFINE");
                     //string[] halves = line.split("\\s*=\\s*", 2);
                     string[] halves = new Regex("\\s*=\\s*").Split(line, 2);
                     //string[] left = whatis[0].split("\\s+", 2);
@@ -333,7 +332,7 @@ namespace RiveScript.Parse
                     // Version is the only type that doesn't have a var.
                     if (kind.Equals("version"))
                     {
-                        logger.debug("\tUsing RiveScript version " + value);
+                        logger.Debug("\tUsing RiveScript version " + value);
 
                         // Convert the value into a double, catch exceptions.
                         double version = 0;
@@ -343,7 +342,7 @@ namespace RiveScript.Parse
                         }
                         catch (FormatException)
                         {
-                            logger.warn("RiveScript version \"" + value + "\" not a valid floating number", filename, lineno);
+                            logger.Warn("RiveScript version \"" + value + "\" not a valid floating number", filename, lineno);
                             continue;
                         }
 
@@ -359,12 +358,12 @@ namespace RiveScript.Parse
                         // All the other types require a variable and value.
                         if (name.Equals(""))
                         {
-                            logger.warn("Missing a " + kind + " variable name", filename, lineno);
+                            logger.Warn("Missing a " + kind + " variable name", filename, lineno);
                             continue;
                         }
                         if (value.Equals(""))
                         {
-                            logger.warn("Missing a " + kind + " value", filename, lineno);
+                            logger.Warn("Missing a " + kind + " value", filename, lineno);
                             continue;
                         }
                         if (value.Equals(Constants.UNDEF_TAG))
@@ -379,25 +378,25 @@ namespace RiveScript.Parse
                     if (kind.Equals("local"))
                     {
                         // Local file scoped parser options
-                        logger.debug("\tSet local parser option " + name + " = " + value);
+                        logger.Debug("\tSet local parser option " + name + " = " + value);
                         local_options.AddOrUpdate(name, value);
                     }
                     else if (kind.Equals("global"))
                     {
                         // Is it a special global? (debug or depth or etc).
-                        logger.debug("\tSet global " + name + " = " + value);
+                        logger.Debug("\tSet global " + name + " = " + value);
                         ast.begin.addGlobals(name, value);
                     }
                     else if (kind.Equals("var"))
                     {
                         // Set a bot variable.
-                        logger.debug("\tSet bot variable " + name + " = " + value);
+                        logger.Debug("\tSet bot variable " + name + " = " + value);
                         ast.begin.addVar(name, value);
                     }
                     else if (kind.Equals("array"))
                     {
                         // Set an array.
-                        logger.debug("\tSet array " + name);
+                        logger.Debug("\tSet array " + name);
 
                         // Deleting it?
                         if (delete)
@@ -438,25 +437,25 @@ namespace RiveScript.Parse
                     else if (kind.Equals("sub"))
                     {
                         // Set a substitution.
-                        logger.debug("\tSubstitution " + name + " => " + value);
+                        logger.Debug("\tSubstitution " + name + " => " + value);
                         ast.begin.addSub(name, value);
                     }
                     else if (kind.Equals("person"))
                     {
                         // Set a person substitution.
-                        logger.debug("\tPerson substitution " + name + " => " + value);
+                        logger.Debug("\tPerson substitution " + name + " => " + value);
                         ast.begin.addPerson(name, value);
                     }
                     else
                     {
-                        logger.warn("Unknown definition type \"" + kind + "\"", filename, lineno);
+                        logger.Warn("Unknown definition type \"" + kind + "\"", filename, lineno);
                         continue;
                     }
                 }
                 else if (cmd.Equals(CMD_LABEL))
                 {
                     // > LABEL
-                    logger.debug("\t> LABEL");
+                    logger.Debug("\t> LABEL");
                     //string[] label =  line.split("\\s+");
                     string[] label = line.SplitRegex("\\s+");
                     string type = "";
@@ -474,7 +473,7 @@ namespace RiveScript.Parse
                     if (type.Equals("begin"))
                     {
                         // The BEGIN statement.
-                        logger.debug("\tFound the BEGIN Statement.");
+                        logger.Debug("\tFound the BEGIN Statement.");
 
                         // A BEGIN is just a special topic.
                         type = "topic";
@@ -488,9 +487,9 @@ namespace RiveScript.Parse
 
 
                         // Starting a new topic.
-                        logger.debug("\tSet topic to " + name);
-                        currentTrigger = "";
-                        currentTriggerObject = null;
+                        logger.Debug("\tSet topic to " + name);
+                        onTrigger = "";
+                        //currentTriggerObject = null;
                         topic = name;
 
                         // Does this topic include or inherit another one?
@@ -535,10 +534,10 @@ namespace RiveScript.Parse
                         }
 
                         // Only try to parse a language we support.
-                        currentTrigger = "";
+                        onTrigger = "";
                         if (language.Length == 0)
                         {
-                            logger.warn("Trying to parse unknown programming language (assuming it's CSharp)", filename, lineno);
+                            logger.Warn("Trying to parse unknown programming language (assuming it's CSharp)", filename, lineno);
                             language = Constants.CSharpHandlerName; // Assume it's JavaScript
                         }
 
@@ -560,78 +559,81 @@ namespace RiveScript.Parse
                 else if (cmd.Equals(CMD_ENDLABEL))
                 {
                     // < ENDLABEL
-                    logger.debug("\t< ENDLABEL");
+                    logger.Debug("\t< ENDLABEL");
                     string type = line.Trim().ToLower();
 
                     if (type.Equals("begin") || type.Equals("topic"))
                     {
-                        logger.debug("\t\tEnd topic label.");
+                        logger.Debug("\t\tEnd topic label.");
                         topic = "random";
                     }
                     else if (type.Equals("object"))
                     {
-                        logger.debug("\t\tEnd object label.");
+                        logger.Debug("\t\tEnd object label.");
                         inObject = false;
                     }
                     else
                     {
-                        logger.warn("Unknown end topic type \"" + type + "\"", filename, lineno);
+                        logger.Warn("Unknown end topic type \"" + type + "\"", filename, lineno);
                     }
                 }
                 else if (cmd.Equals(CMD_TRIGGER))
                 {
                     // + TRIGGER
-                    logger.debug("\t+ TRIGGER pattern: " + line);
-                    currentTriggerObject = new Trigger(line);
+                    logger.Debug("\t+ TRIGGER pattern: " + line);
+                    
+                    //currentTriggerObject = new Trigger(line);
 
-                    if (previous.Length > 0)
-                    {
-                        currentTrigger = line + "{previous}" + previous;
-                        currentTriggerObject.setPrevious(true);
-                    }
-                    else
-                    {
-                        currentTrigger = line;
-                    }
-
-                    topicManager.topic(topic).addTrigger(currentTriggerObject);
-
-                    //TODO onld stuff to see
                     //if (previous.Length > 0)
                     //{
-                    //    // This trigger had a %Previous. To prevent conflict, tag the
-                    //    // trigger with the "that" text.
-                    //    currentTrigger = line + "{previous}" + previous;
-
-                    //    topics.topic(topic).trigger(line).hasPrevious(true);
-                    //    topics.topic(topic).addPrevious(line, previous);
+                    //    onTrigger = line + "{previous}" + previous;
+                    //    currentTriggerObject.setPrevious(true);
+                    //    topicManager.topic(topic).addPrevious(line, previous);
                     //}
                     //else
                     //{
-                    //    // Set the current trigger to this.
-                    //    currentTrigger = line;
+                    //    onTrigger = line;
                     //}
+
+                    //topicManager.topic(topic).addTrigger(currentTriggerObject);
+
+
+                    //TODO onld stuff to see
+                    if (previous.Length > 0)
+                    {
+                        // This trigger had a %Previous. To prevent conflict, tag the
+                        // trigger with the "that" text.
+                        onTrigger = line + "{previous}" + previous;
+
+                        topicManager.topic(topic).trigger(line).setPrevious(true);
+                        topicManager.topic(topic).addPrevious(line, previous);
+                    }
+                    else
+                    {
+                        // Set the current trigger to this.
+                        onTrigger = line;
+                    }
                 }
                 else if (cmd.Equals(CMD_REPLY))
                 {
                     // - REPLY
-                    logger.debug("\t- REPLY: " + line);
+                    logger.Debug("\t- REPLY: " + line);
 
                     // This can't come before a trigger!
-                    if (currentTriggerObject == null)
+                    if (onTrigger.Length == 0)
                     {
-                        logger.warn("Reply found before trigger", filename, lineno);
+                        logger.Warn("Reply found before trigger", filename, lineno);
                         continue;
                     }
 
                     // Warn if we also saw a hard redirect.
-                    if (currentTriggerObject.hasRedirect())
+                    if (topicManager.topic(topic).trigger(onTrigger).hasRedirect())
                     {
-                        logger.warn("You can't mix @Redirects with -Replies", filename, lineno);
+                        logger.Warn("You can't mix @Redirects with -Replies", filename, lineno);
                     }
 
-                    // Add the reply to the trigg
-                    currentTriggerObject.addReply(line);
+                    // Add the reply to the trigger
+                    topicManager.topic(topic).trigger(onTrigger).addReply(line);
                 }
                 else if (cmd.Equals(CMD_PREVIOUS))
                 {
@@ -648,37 +650,37 @@ namespace RiveScript.Parse
                 else if (cmd.Equals(CMD_REDIRECT))
                 {
                     // @ REDIRECT
-                    logger.debug("\t@ REDIRECT: " + line);
+                    logger.Debug("\t@ REDIRECT: " + line);
 
                     // This can't come before a trigger!
-                    if (currentTrigger.Length == 0)
+                    if (onTrigger.Length == 0)
                     {
-                        logger.warn("Redirect found before trigger", filename, lineno);
+                        logger.Warn("Redirect found before trigger", filename, lineno);
                         continue;
                     }
 
                     // Add the redirect to the trigger.
                     // TODO: this extends RiveScript, not compat w/ Perl yet
-                    currentTriggerObject.addRedirect(line);
+                    topicManager.topic(topic).trigger(onTrigger).addRedirect(line);
                 }
                 else if (cmd.Equals(CMD_CONDITION))
                 {
                     // * CONDITION
-                    logger.debug("\t* CONDITION: " + line);
+                    logger.Debug("\t* CONDITION: " + line);
 
                     // This can't come before a trigger!
-                    if (currentTriggerObject == null)
+                    if (onTrigger.Length == 0)
                     {
-                        logger.warn("Redirect found before trigger", filename, lineno);
+                        logger.Warn("Redirect found before trigger", filename, lineno);
                         continue;
                     }
 
                     // Add the condition to the trigger.
-                    currentTriggerObject.addCondition(line);
+                    topicManager.topic(topic).trigger(onTrigger).addCondition(line);
                 }
                 else
                 {
-                    logger.warn("Unrecognized command \"" + cmd + "\"", filename, lineno);
+                    logger.Warn("Unrecognized command \"" + cmd + "\"", filename, lineno);
                 }
             }
 
@@ -689,9 +691,9 @@ namespace RiveScript.Parse
             }
 
 
-            if (logger.isDebugEnable)
+            if (logger.IsDebugEnable)
             {
-                logger.debug($"Parsing {filename} completed in {DateTime.Now.Ticks - startTime} ms");
+                logger.Debug($"Parsing {filename} completed in {DateTime.Now.Ticks - startTime} ms");
             }
 
             return ast;

@@ -58,6 +58,7 @@
     <Compile Include="Helpers\FileHelper.cs" />
     <Compile Include="Helpers\StringLengthLongToShortComparer - Copy.cs" />
     <Compile Include="Inheritance.cs" />
+    <Compile Include="Log\ConsoleLogger.cs" />
     <Compile Include="Log\EmptyLogger.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="Macro\DelegateMacro.cs" />

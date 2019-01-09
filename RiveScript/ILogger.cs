@@ -4,18 +4,18 @@ namespace RiveScript
 {
     public interface ILogger
     {
-        void debug(string text);
-        void warn(string text);
-        void warn(string text, string filenasme, int lineno);
+        void Debug(string text);
+        void Warn(string text);
+        void Warn(string text, string filenasme, int lineno);
 
-        void error(string text);
-        void trace(string text);
+        void Error(string text);
+        void Trace(string text);
 
-        void error(Exception exception);
+        void Error(Exception exception);
 
-        bool isDebugEnable { get; }
-        bool isWarnEnable { get; }
-        bool isTraceEnable { get; }
-        bool isErrorEnable { get; }
+        bool IsDebugEnable { get; }
+        bool IsWarnEnable { get; }
+        bool IsTraceEnable { get; }
+        bool IsErrorEnable { get; }
     }
 }

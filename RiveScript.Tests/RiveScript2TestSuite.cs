@@ -301,7 +301,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Continue()
         {
-            var rs = TestHelper.getStreamed(new[] { "+ tell me a poem",
+            var rs = TestHelper.getEmptyStreamed(new[] { "+ tell me a poem",
                                                     "- Little Miss Muffit sat on her tuffet\n",
                                                     "^ in a nonchalant sort of way.\n",
                                                     "^ With her forcefield around her,\n",

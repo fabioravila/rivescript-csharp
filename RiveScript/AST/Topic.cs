@@ -108,11 +108,11 @@ namespace RiveScript.AST
             {
                 var trigs = triggers.Keys;
 
-                if (logger.isDebugEnable)
+                if (logger.IsDebugEnable)
                 {
                     foreach (var t in trigs)
                     {
-                        logger.debug("RAW TRIGGER: " + t);
+                        logger.Debug("RAW TRIGGER: " + t);
                     }
                 }
                 return trigs.ToArray();
@@ -122,7 +122,7 @@ namespace RiveScript.AST
             if (sorted == null)
             {
                 // Um no, that's bad.
-                logger.debug("[ERROR] You called listTriggers() for topic " + name + " before its replies have been sorted!");
+                logger.Debug("[ERROR] You called listTriggers() for topic " + name + " before its replies have been sorted!");
                 return new string[0];
             }
 
@@ -190,14 +190,14 @@ namespace RiveScript.AST
                 }
 
                 int inherits = h;
-                logger.debug("Sorting triggers by heritage level " + inherits);
+                logger.Debug("Sorting triggers by heritage level " + inherits);
                 var triggers = heritage[inherits].ToArray();
 
                 // Sort-priority maps.
                 var prior = new Dictionary<int, ICollection<string>>();
 
                 // Assign each trigger to its priority level.
-                logger.debug("BEGIN sortTriggers in topic " + name);
+                logger.Debug("BEGIN sortTriggers in topic " + name);
 
                 var rePrior = new Regex("\\{weight=(\\d+?)\\}");
                 for (int i = 0; i < triggers.Length; i++)
@@ -248,7 +248,7 @@ namespace RiveScript.AST
                 var prior_sorted = Util.SortKeysDesc(prior);
                 for (int p = 0; p < prior_sorted.Length; p++)
                 {
-                    logger.debug("Sorting triggers w/ priority " + prior_sorted[p]);
+                    logger.Debug("Sorting triggers w/ priority " + prior_sorted[p]);
                     var p_list = prior[prior_sorted[p]];
 
                     /*
@@ -267,11 +267,11 @@ namespace RiveScript.AST
                     bucket.Fill(p_list);
 
                     // Sort each inheritence level individually.
-                    logger.debug("Dumping sort bucket !");
+                    logger.Debug("Dumping sort bucket !");
                     var subsort = bucket.Dump();
                     foreach (var item in subsort)
                     {
-                        logger.debug("ADD TO SORT: " + item);
+                        logger.Debug("ADD TO SORT: " + item);
                         sorted.Add(item);
                     }
                 }
@@ -288,7 +288,7 @@ namespace RiveScript.AST
         /// <param name="previous"></param>
         public void addPrevious(string pattern, string previous)
         {
-            if (false == this.previous.ContainsKey(previous))
+            if (!this.previous.ContainsKey(previous))
             {
                 this.previous.Add(previous, new List<string>());
             }

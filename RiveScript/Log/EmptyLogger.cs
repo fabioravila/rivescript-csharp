@@ -4,27 +4,27 @@ namespace RiveScript.Log
 {
     public class EmptyLogger : ILogger
     {
-        public bool isTraceEnable => true;
-        public bool isDebugEnable => true;
-        public bool isWarnEnable => true;
-        public bool isErrorEnable => true;
+        public bool IsTraceEnable => true;
+        public bool IsDebugEnable => true;
+        public bool IsWarnEnable => true;
+        public bool IsErrorEnable => true;
 
-        public void debug(string text)
+        public void Debug(string text)
         {
             //NOTHING
         }
 
-        public void error(string text)
+        public void Error(string text)
         {
             //NOTHING
         }
 
-        public void error(Exception exception)
+        public void Error(Exception exception)
         {
             //NOTHING
         }
 
-        public void trace(string text)
+        public void Trace(string text)
         {
             //NOTHING
         }
@@ -34,12 +34,12 @@ namespace RiveScript.Log
             //NOTHING
         }
 
-        public void warn(string text)
+        public void Warn(string text)
         {
             //NOTHING
         }
 
-        public void warn(string text, string filenasme, int lineno)
+        public void Warn(string text, string filenasme, int lineno)
         {
             //NOTHING
         }

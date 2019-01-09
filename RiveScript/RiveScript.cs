@@ -155,7 +155,7 @@ namespace RiveScript
         /// <param name="file">file Path to a RiveScript document.</param>
         public bool loadFile(string file)
         {
-            logger.debug("Load file: " + file);
+            logger.Debug("Load file: " + file);
 
             // Run some sanity checks on the file handle.
             if (!File.Exists(file)) //Verify is is a file and is exists
@@ -181,7 +181,7 @@ namespace RiveScript
             }
             catch (IOException e)
             {
-                logger.error(e);
+                logger.Error(e);
                 return error(file + ": IOException while reading.");
             }
 
@@ -199,7 +199,7 @@ namespace RiveScript
         /// <returns></returns>
         public bool loadDirectory(string path, string[] exts)
         {
-            logger.debug("Load directory: " + path);
+            logger.Debug("Load directory: " + path);
 
             // Verify Directory
             if (!Directory.Exists(path))
@@ -645,7 +645,7 @@ namespace RiveScript
                 }
                 else
                 {
-                    logger.warn($"Object '{item.Name}' not loaded as no handler was found for programming language '{item.Language}'");
+                    logger.Warn($"Object '{item.Name}' not loaded as no handler was found for programming language '{item.Language}'");
                 }
             }
 
@@ -664,7 +664,7 @@ namespace RiveScript
         {
             // We need to make sort buffers under each topic.
             var topics = this.topics.listTopicsName();
-            logger.debug("There are " + topics.Length + " topics to sort replies for.");
+            logger.Debug("There are " + topics.Length + " topics to sort replies for.");
 
             // Tell the topic manager to sort its topics' replies.
             this.topics.sortReplies();
@@ -687,7 +687,7 @@ namespace RiveScript
         /// <returns></returns>
         public string reply(string username, string message)
         {
-            logger.debug("Asked reply to [" + username + "] " + message);
+            logger.Debug("Asked reply to [" + username + "] " + message);
 
             var startTime = DateTime.Now.Ticks;
 
@@ -770,7 +770,7 @@ namespace RiveScript
             // Avoid letting the user fall into a missing topic.
             if (topics.exists(topic) == false)
             {
-                logger.warn("User " + user + " was in a missing topic named \"" + topic + "\"!");
+                logger.Warn("User " + user + " was in a missing topic named \"" + topic + "\"!");
                 topic = "random";
                 profile.setVariable("topic", "random");
             }
@@ -779,7 +779,7 @@ namespace RiveScript
             if (step > depth)
             {
                 _reply = errors.deepRecursion;
-                logger.warn(_reply);
+                logger.Warn(_reply);
                 return _reply;
             }
 
@@ -805,7 +805,7 @@ namespace RiveScript
             // be the same as it was the first time, resulting in an infinite loop!
             if (step == 0)
             {
-                logger.debug("Looking for a %Previous");
+                logger.Debug("Looking for a %Previous");
                 string[] allTopics = { topic };
 
                 if (topics.topic(topic).includes().Length > 0 || topics.topic(topic).inherits().Length > 0)
@@ -818,32 +818,32 @@ namespace RiveScript
                 for (int i = 0; i < allTopics.Length; i++)
                 {
                     // Does this topic have a %Previous anywhere?
-                    logger.debug("Seeing if " + allTopics[i] + " has a %Previous");
+                    logger.Debug("Seeing if " + allTopics[i] + " has a %Previous");
                     if (topics.topic(allTopics[i]).hasPrevious())
                     {
-                        logger.debug("Topic " + allTopics[i] + " has at least one %Previous");
+                        logger.Debug("Topic " + allTopics[i] + " has at least one %Previous");
 
                         // Get them.
                         string[] previous = topics.topic(allTopics[i]).listPrevious();
                         for (int j = 0; j < previous.Length; j++)
                         {
-                            logger.debug("Candidate: " + previous[j]);
+                            logger.Debug("Candidate: " + previous[j]);
 
                             // Try to match the bot's last reply against this.
                             string lastReply = formatMessage(profile.history.getReply(1), true);
                             string regexp = triggerRegexp(user, profile, previous[j]);
-                            logger.debug("Compare " + lastReply + " <=> " + previous[j] + " (" + regexp + ")");
+                            logger.Debug("Compare " + lastReply + " <=> " + previous[j] + " (" + regexp + ")");
 
                             // Does it match?
                             Regex re = new Regex("^" + regexp + "$");
                             foreach (Match m in re.Matches(lastReply))
                             {
-                                logger.debug("OMFG the lastReply matches!");
+                                logger.Debug("OMFG the lastReply matches!");
 
                                 // Harvest the botstars.
                                 for (int s = 1; s <= m.Groups.Count; s++)
                                 {
-                                    logger.debug("Add botstar: " + m.Groups[s].Value);
+                                    logger.Debug("Add botstar: " + m.Groups[s].Value);
                                     botstars.Add(m.Groups[s].Value);
                                 }
 
@@ -851,14 +851,14 @@ namespace RiveScript
                                 string[] candidates = topics.topic(allTopics[i]).listPreviousTriggers(previous[j]);
                                 for (int k = 0; k < candidates.Length; k++)
                                 {
-                                    logger.debug("Does the user's message match " + candidates[k] + "?");
+                                    logger.Debug("Does the user's message match " + candidates[k] + "?");
                                     string humanside = triggerRegexp(user, profile, candidates[k]);
-                                    logger.debug("Compare " + message + " <=> " + candidates[k] + " (" + humanside + ")");
+                                    logger.Debug("Compare " + message + " <=> " + candidates[k] + " (" + humanside + ")");
 
                                     Regex reH = new Regex("^" + humanside + "$");
                                     foreach (Match mH in reH.Matches(message))
                                     {
-                                        logger.debug("It's a match!!!");
+                                        logger.Debug("It's a match!!!");
 
                                         // Make sure it's all valid.
                                         string realTrigger = candidates[k] + "{previous}" + previous[j];
@@ -871,7 +871,7 @@ namespace RiveScript
                                                 if (star == null)
                                                     star = "";
 
-                                                logger.debug("Add star: " + star);
+                                                logger.Debug("Add star: " + star);
                                                 stars.Add(star);
                                             }
 
@@ -909,20 +909,20 @@ namespace RiveScript
 
                     // Prepare the trigger for the regular expression engine.
                     string regexp = triggerRegexp(user, profile, trigger);
-                    logger.debug("Try to match \"" + message + "\" against \"" + trigger + "\" (" + regexp + ")");
+                    logger.Debug("Try to match \"" + message + "\" against \"" + trigger + "\" (" + regexp + ")");
 
                     // Is it a match?
                     Regex re = new Regex("^" + regexp + "$");
                     foreach (Match m in re.Matches(message))
                     {
-                        logger.debug("The trigger matches! Star count: " + m.Groups.Count);
+                        logger.Debug("The trigger matches! Star count: " + m.Groups.Count);
 
                         // Harvest the stars.
                         int starcount = m.Groups.Count;
                         for (int s = 1; s <= starcount; s++)
                         {
                             string star = (m.Groups[s].Value ?? "");
-                            logger.debug("Add star: " + star);
+                            logger.Debug("Add star: " + star);
                             stars.Add(star);
                         }
 
@@ -935,7 +935,7 @@ namespace RiveScript
                         }
                         else
                         {
-                            logger.debug("Trigger doesn't exist under this topic, trying to find it!");
+                            logger.Debug("Trigger doesn't exist under this topic, trying to find it!");
                             matched = topics.findTriggerByInheritance(topic, trigger, 0);
                         }
 
@@ -957,7 +957,7 @@ namespace RiveScript
             // Did they match anything?
             if (foundMatch)
             {
-                logger.debug("They were successfully matched to a trigger!");
+                logger.Debug("They were successfully matched to a trigger!");
 
                 /*---------------------------------*/
                 /*-- Process Their Matched Reply --*/
@@ -969,20 +969,20 @@ namespace RiveScript
                     // Exists?
                     if (matched == null)
                     {
-                        logger.warn("Unknown error: they matched trigger " + matchedTrigger + ", but it doesn't exist?");
+                        logger.Warn("Unknown error: they matched trigger " + matchedTrigger + ", but it doesn't exist?");
                         foundMatch = false;
                         break;
                     }
 
                     // Get the trigger object.
                     Trigger trigger = matched;
-                    logger.debug("The trigger matched belongs to topic " + trigger.getTopic());
+                    logger.Debug("The trigger matched belongs to topic " + trigger.getTopic());
 
                     // Check for conditions.
                     string[] conditions = trigger.listConditions();
                     if (conditions.Length > 0)
                     {
-                        logger.debug("This trigger has some conditions!");
+                        logger.Debug("This trigger has some conditions!");
 
                         // See if any conditions are true.
                         bool truth = false;
@@ -1004,7 +1004,7 @@ namespace RiveScript
                                 // Process tags on both halves.
                                 left = processTags(user, profile, message, left, stars, botstars, step + 1);
                                 right = processTags(user, profile, message, right, stars, botstars, step + 1);
-                                logger.debug("Compare: " + left + " " + eq + " " + right);
+                                logger.Debug("Compare: " + left + " " + eq + " " + right);
 
                                 // Defaults
                                 if (left.Length == 0)
@@ -1122,13 +1122,13 @@ namespace RiveScript
                                 {
                                     for (int j = 0; j < weight; j++)
                                     {
-                                        logger.debug("Trigger has a redirect (weight " + weight + "): " + redirects[i]);
+                                        logger.Debug("Trigger has a redirect (weight " + weight + "): " + redirects[i]);
                                         bucket.Add(i);
                                     }
                                 }
                                 else
                                 {
-                                    logger.debug("Trigger has a redirect (weight " + weight + "): " + redirects[i]);
+                                    logger.Debug("Trigger has a redirect (weight " + weight + "): " + redirects[i]);
                                     bucket.Add(i);
                                 }
 
@@ -1138,7 +1138,7 @@ namespace RiveScript
                         }
                         else
                         {
-                            logger.debug("Trigger has a redirect: " + redirects[i]);
+                            logger.Debug("Trigger has a redirect: " + redirects[i]);
                             bucket.Add(i);
                         }
                     }
@@ -1157,13 +1157,13 @@ namespace RiveScript
                                 {
                                     for (int j = 0; j < weight; j++)
                                     {
-                                        logger.debug("Trigger has a reply (weight " + weight + "): " + replies[i]);
+                                        logger.Debug("Trigger has a reply (weight " + weight + "): " + replies[i]);
                                         bucket.Add(redirects.Length + i);
                                     }
                                 }
                                 else
                                 {
-                                    logger.debug("Trigger has a reply (weight " + weight + "): " + replies[i]);
+                                    logger.Debug("Trigger has a reply (weight " + weight + "): " + replies[i]);
                                     bucket.Add(redirects.Length + i);
                                 }
 
@@ -1173,7 +1173,7 @@ namespace RiveScript
                         }
                         else
                         {
-                            logger.debug("Trigger has a reply: " + replies[i]);
+                            logger.Debug("Trigger has a reply: " + replies[i]);
                             bucket.Add(redirects.Length + i);
                         }
                     }
@@ -1183,14 +1183,14 @@ namespace RiveScript
                     if (choices.Length > 0)
                     {
                         int choice = choices[rand.Next(choices.Length)];
-                        logger.debug("Possible choices: " + choices.Length + "; chosen: " + choice);
+                        logger.Debug("Possible choices: " + choices.Length + "; chosen: " + choice);
                         if (choice < redirects.Length)
                         {
                             // The choice was a redirect!
                             string redirect = redirects[choice].ReplaceRegex("\\{weight=\\d+\\}", "");
                             redirect = processTags(user, profile, message, redirect, stars, botstars, step);
 
-                            logger.debug("Chosen a redirect to " + redirect + "!");
+                            logger.Debug("Chosen a redirect to " + redirect + "!");
                             _reply = getReply(user, redirect, begin, step + 1);
                         }
                         else
@@ -1199,7 +1199,7 @@ namespace RiveScript
                             choice -= redirects.Length;
                             if (choice < replies.Length)
                             {
-                                logger.debug("Chosen a reply: " + replies[choice]);
+                                logger.Debug("Chosen a reply: " + replies[choice]);
                                 _reply = replies[choice];
                             }
                         }
@@ -1217,7 +1217,7 @@ namespace RiveScript
                 _reply = errors.replyNotFound;
             }
 
-            logger.debug("Final reply: " + _reply + "(begin: " + begin + ")");
+            logger.Debug("Final reply: " + _reply + "(begin: " + begin + ")");
 
             // Special tag processing for the BEGIN statement.
             if (begin)
@@ -1247,7 +1247,7 @@ namespace RiveScript
                     {
                         string tag = mTopic.Groups[0].Value;
                         topic = mTopic.Groups[1].Value;
-                        logger.debug("Set user's topic to: " + topic);
+                        logger.Debug("Set user's topic to: " + topic);
                         profile.setVariable("topic", topic);
                         _reply = _reply.Replace(tag, "");
                     }
@@ -1516,7 +1516,7 @@ namespace RiveScript
                 {
                     if (giveup++ > depth)
                     {
-                        logger.warn("Infinite loop looking for arrays in reply!");
+                        logger.Warn("Infinite loop looking for arrays in reply!");
                         giveup = 0;
                         break;
                     }
@@ -1580,7 +1580,7 @@ namespace RiveScript
                 {
                     if (giveup++ > depth)
                     {
-                        logger.warn("Infinite loop looking for inputs!");
+                        logger.Warn("Infinite loop looking for inputs!");
                         giveup = 0;
                         break;
                     }
@@ -1600,7 +1600,7 @@ namespace RiveScript
                 {
                     if (giveup++ > depth)
                     {
-                        logger.warn("Infinite loop looking for reply!");
+                        logger.Warn("Infinite loop looking for reply!");
                         giveup = 0;
                         break;
                     }
@@ -1627,7 +1627,7 @@ namespace RiveScript
                 {
                     if (giveup++ > depth)
                     {
-                        logger.warn("Infinite loop looking for random tag!");
+                        logger.Warn("Infinite loop looking for random tag!");
                         giveup = 0;
                         break;
                     }
@@ -1649,7 +1649,7 @@ namespace RiveScript
                 {
                     string tag = mStream.Groups[0].Value;
                     string code = mStream.Groups[1].Value;
-                    logger.debug("Stream new code in: " + code);
+                    logger.Debug("Stream new code in: " + code);
 
                     // Stream it.
                     stream(code);
@@ -1674,9 +1674,9 @@ namespace RiveScript
                         if (tags[i] == "person")
                         {
                             // Run person substitutions.
-                            logger.debug("Run person substitutions: before: " + text);
+                            logger.Debug("Run person substitutions: before: " + text);
                             text = substitute(text, person_s, person);
-                            logger.debug("After: " + text);
+                            logger.Debug("After: " + text);
                             reply = reply.Replace(tag, text);
                         }
                         else
@@ -1734,7 +1734,7 @@ namespace RiveScript
                         parts = data.Split("=", 2);
                         string name = parts[0];
                         string value = parts[1];
-                        logger.debug("Set " + tag + " variable " + name + " = " + value);
+                        logger.Debug("Set " + tag + " variable " + name + " = " + value);
 
                         target.AddOrUpdate(name, value);
                     }
@@ -1757,7 +1757,7 @@ namespace RiveScript
                     parts = data.Split("=", 2);
                     string name = parts[0];
                     string value = parts[1];
-                    logger.debug("Set user var " + name + "=" + value);
+                    logger.Debug("Set user var " + name + "=" + value);
                     // Set the uservar.
                     profile.setVariable(name, value);
                 }
@@ -1849,7 +1849,7 @@ namespace RiveScript
                 {
                     string tag = mTopic.Groups[0].Value;
                     string topic = mTopic.Groups[1].Value;
-                    logger.debug("Set user's topic to: " + topic);
+                    logger.Debug("Set user's topic to: " + topic);
                     profile.setVariable("topic", topic);
                     reply = reply.Replace(tag, "");
                 }
@@ -1928,19 +1928,19 @@ namespace RiveScript
             {
                 // Capitalize Each First Letter
                 string[] words = text.Split(" ");
-                logger.debug("wc: " + words.Length);
+                logger.Debug("wc: " + words.Length);
                 for (int i = 0; i < words.Length; i++)
                 {
-                    logger.debug("word: " + words[i]);
+                    logger.Debug("word: " + words[i]);
                     //string[] letters = words[i].split("");
                     string[] letters = words[i].SplitRegex("");
-                    logger.debug("cc: " + letters.Length);
+                    logger.Debug("cc: " + letters.Length);
                     if (letters.Length > 1)
                     {
                         //Note : On splitregex, first and last are blank spaces, so use 1 index
                         letters[1] = letters[1].ToUpper();
                         words[i] = String.Join("", letters);
-                        logger.debug("new word: " + words[i]);
+                        logger.Debug("new word: " + words[i]);
                     }
                 }
                 return String.Join(" ", words);

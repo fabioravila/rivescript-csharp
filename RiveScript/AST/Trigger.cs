@@ -75,7 +75,7 @@ namespace RiveScript.AST
             return this.pattern;
         }
 
-        internal bool hasRedirect()
+        public bool hasRedirect()
         {
             return _redirect.Count > 0;
         }
