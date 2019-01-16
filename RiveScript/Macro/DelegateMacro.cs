@@ -7,14 +7,14 @@ namespace RiveScript.Macro
     /// </summary>
     public class DelegateMacro : ISubroutine
     {
-        Func<RiveScript, string[], string> action;
+        Func<RiveScriptEngine, string[], string> action;
 
-        public DelegateMacro(Func<RiveScript, string[], string> action)
+        public DelegateMacro(Func<RiveScriptEngine, string[], string> action)
         {
             this.action = action;
         }
 
-        public string Call(RiveScript rs, string[] args)
+        public string Call(RiveScriptEngine rs, string[] args)
         {
             return action.Invoke(rs, args);
         }

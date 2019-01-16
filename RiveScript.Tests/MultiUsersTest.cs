@@ -11,7 +11,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Previous_Replies()
         {
-            var rs = new RiveScript(Config.Debug);
+            var rs = new RiveScriptEngine(Config.Debug);
 
             rs.stream(@"! sub who's  = who is
                         ! sub it's   = it is

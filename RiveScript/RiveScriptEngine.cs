@@ -13,7 +13,7 @@ using RiveScript.Lang;
 
 namespace RiveScript
 {
-    public class RiveScript
+    public class RiveScriptEngine
     {
         static readonly string[] DEFAULT_FILE_EXTENSIONS = new[] { ".rive", ".rs" };
         static Random rand = new Random();  // A random number generator
@@ -75,13 +75,13 @@ namespace RiveScript
         /// <summary>
         /// Create a new RiveScript interpreter object with default options
         /// </summary>
-        public RiveScript() : this(null) { }
+        public RiveScriptEngine() : this(null) { }
 
         /// <summary>
         /// Create a new RiveScript interpreter object with default options
         /// </summary>
         /// <param name="config">Options object</param>
-        public RiveScript(Config config)
+        public RiveScriptEngine(Config config)
         {
             if (config == null)
                 config = Config.Default;
@@ -125,7 +125,7 @@ namespace RiveScript
 
         public string getVersion()
         {
-            return typeof(RiveScript).Assembly.GetName().Version.ToString();
+            return typeof(RiveScriptEngine).Assembly.GetName().Version.ToString();
         }
 
         /// <summary>
@@ -325,7 +325,7 @@ namespace RiveScript
             csharpHandler.AddSubroutine(name, subroutine);
         }
 
-        public void setSubroutine(this RiveScript rs, string name, Func<RiveScript, string[], string> subroutine)
+        public void setSubroutine(this RiveScriptEngine rs, string name, Func<RiveScriptEngine, string[], string> subroutine)
         {
             rs.setSubroutine(name, new DelegateMacro(subroutine));
         }

@@ -9,7 +9,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Simple_Random_Reply()
         {
-            var rs = new RiveScript();
+            var rs = new RiveScriptEngine();
 
             rs.streamForTest(new[] { "+ hello bot",
                                      "- Hello",
@@ -25,7 +25,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Simple_Random_Reply_Alternative_Syntax()
         {
-            var rs = new RiveScript();
+            var rs = new RiveScriptEngine();
 
             rs.streamForTest(new[] { "+ hello bot",
                                      "- {random}Hello|Hi|Hello human{/random}"});
@@ -40,7 +40,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Simple_Random_Word_Start()
         {
-            var rs = new RiveScript();
+            var rs = new RiveScriptEngine();
 
             rs.streamForTest(new[] { "+ hello bot",
                                      "- {random}Good|Best{/random} day"});
@@ -54,7 +54,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Simple_Random_Word_Middle()
         {
-            var rs = new RiveScript();
+            var rs = new RiveScriptEngine();
 
             rs.streamForTest(new[] { "+ hello bot",
                                      "- Hello {random}good|best{/random} day"});
@@ -68,7 +68,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Simple_Random_Word_End()
         {
-            var rs = new RiveScript();
+            var rs = new RiveScriptEngine();
 
             rs.streamForTest(new[] { "+ hello bot",
                                      "- Good {random}day|night{/random}"});
@@ -83,7 +83,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Complex_Random_With_Conditionals()
         {
-            var rs = new RiveScript();
+            var rs = new RiveScriptEngine();
 
             rs.streamForTest(new[] { "+ my name is *",
                                      "- <set name=<formal>>Nice to meet you, <get name>",
@@ -117,7 +117,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Complex_Random_With_Conditionals_And_Arrays_Triggers()
         {
-            var rs = new RiveScript();
+            var rs = new RiveScriptEngine();
 
             rs.streamForTest(new[] { "! array hello = hi hello",
                                      "^ hi there | good day",

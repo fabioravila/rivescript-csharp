@@ -15,11 +15,11 @@ namespace RiveScript.Lang
 
         readonly IDictionary<string, Assembly> assemblies = new Dictionary<string, Assembly>();
         readonly IDictionary<string, ISubroutine> macros = new Dictionary<string, ISubroutine>();
-        readonly RiveScript rs;
+        readonly RiveScriptEngine rs;
 
-        public CSharp(RiveScript rs) : this(rs, true) { }
+        public CSharp(RiveScriptEngine rs) : this(rs, true) { }
 
-        public CSharp(RiveScript rs, bool tryAddEntryAssembly)
+        public CSharp(RiveScriptEngine rs, bool tryAddEntryAssembly)
         {
             this.rs = rs ?? throw new ArgumentNullException(nameof(rs), "RiveScript instance muts not be null");
 
@@ -32,7 +32,7 @@ namespace RiveScript.Lang
             riveAssembly = System.IO.Path.GetFileName(typeof(IObjectHandler).Assembly.Location);
         }
 
-        public string Call(string name, RiveScript rs, string[] args)
+        public string Call(string name, RiveScriptEngine rs, string[] args)
         {
             if (!macros.ContainsKey(name))
                 return "ERR: Could not find a object code for " + name + ".";
@@ -46,7 +46,7 @@ namespace RiveScript.Lang
 
             var ass = CreateAssembly(name, code);
             var method = ass.GetType(ns + "." + name).GetMethod("method");
-            var del = (Func<RiveScript, string[], string>)Delegate.CreateDelegate(typeof(Func<RiveScript, string[], string>), method);
+            var del = (Func<RiveScriptEngine, string[], string>)Delegate.CreateDelegate(typeof(Func<RiveScriptEngine, string[], string>), method);
 
             assemblies.AddOrUpdate(name, ass);
             macros.AddOrUpdate(name, new DelegateMacro(del));

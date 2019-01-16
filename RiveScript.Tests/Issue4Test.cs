@@ -12,7 +12,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Substitutio_Rot13_Problem_Load_With_Duscott_Files()
         {
-            var rs = new RiveScript(Config.Debug);
+            var rs = new RiveScriptEngine(Config.Debug);
             var loaded = false;
 
             loaded = rs.loadFile("issue-4-rot13/begin.rive");

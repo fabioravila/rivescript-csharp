@@ -5,9 +5,9 @@ namespace RiveScript.Tests
     [TestClass]
     public class InheritsIncludesTest
     {
-        RiveScript getWithGlobalTopic(string[] code)
+        RiveScriptEngine getWithGlobalTopic(string[] code)
         {
-            var rs = new RiveScript(Config.Debug);
+            var rs = new RiveScriptEngine(Config.Debug);
             rs.stream(new[] { "+ go topic *",
                               "- {topic=<star>}ok",
                               "> topic global",

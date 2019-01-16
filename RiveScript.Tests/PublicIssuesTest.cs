@@ -11,7 +11,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Alternation_With_Optional_And_Space_Between()
         {
-            var rs = new RiveScript(Config.Debug);
+            var rs = new RiveScriptEngine(Config.Debug);
 
             rs.stream(new[] { "+ (aa|bb|cc) [bogus]",
                               "- reply"

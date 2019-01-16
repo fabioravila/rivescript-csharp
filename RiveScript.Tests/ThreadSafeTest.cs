@@ -15,7 +15,7 @@ namespace RiveScript.Tests
         public void CurrentUser_Is_ThreadSafe_On_Macro()
         {
 
-            var rs = new RiveScript(Config.Debug);
+            var rs = new RiveScriptEngine(Config.Debug);
 
             rs.stream(@"+ trigger
                         - <call>currentuser</call>
@@ -46,7 +46,7 @@ namespace RiveScript.Tests
         public void ClientManager_Is_ThreadSafe()
         {
 
-            var rs = new RiveScript(Config.Debug);
+            var rs = new RiveScriptEngine(Config.Debug);
             rs.stream(@"+ trigger
                         - <call>currentuser</call>
 

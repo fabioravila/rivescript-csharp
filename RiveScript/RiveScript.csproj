@@ -72,7 +72,7 @@
     <Compile Include="Helpers\Rot13.cs" />
     <Compile Include="Helpers\StringWordCountLongToShortComparer.cs" />
     <Compile Include="Regexp\Regexp.cs" />
-    <Compile Include="RiveScript.cs" />
+    <Compile Include="RiveScriptEngine.cs" />
     <Compile Include="RiveScriptException.cs" />
     <Compile Include="RiveScriptExtensions.cs" />
     <Compile Include="AST\Topic.cs" />

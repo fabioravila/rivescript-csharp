@@ -5,6 +5,6 @@
     /// </summary>
     public interface ISubroutine
     {
-        string Call(RiveScript rs, string[] args);
+        string Call(RiveScriptEngine rs, string[] args);
     }
 }

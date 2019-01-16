@@ -10,7 +10,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Hello_World_Simple_Code_AndChsrpHandlerIsDefault()
         {
-            var rs = new RiveScript();
+            var rs = new RiveScriptEngine();
             var oh = new CSharp(rs);
 
             oh.Load("test", new string[] { "return \"Hello world\"; " });
@@ -23,7 +23,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Reply_RS_Instance()
         {
-            var rs = new RiveScript();
+            var rs = new RiveScriptEngine();
             var oh = new CSharp(rs);
 
             oh.Load("test", new string[] { "return rs.GetHashCode().ToString(); " });
@@ -36,7 +36,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Reply_Concatenet_Args_Id()
         {
-            var rs = new RiveScript();
+            var rs = new RiveScriptEngine();
             var oh = new CSharp(rs);
 
             oh.Load("test", new string[] { "return String.Join(\",\", args); " });
@@ -49,7 +49,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Reply_CurrentUser_Not_Initialized()
         {
-            var rs = new RiveScript();
+            var rs = new RiveScriptEngine();
             var oh = new CSharp(rs);
 
             oh.Load("test", new string[] { "return rs.currentUser();" });
@@ -62,7 +62,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Execute_Full_Object_Call_Without_Parameter()
         {
-            var rs = new RiveScript();
+            var rs = new RiveScriptEngine();
             rs.stream(new[] { "",
                               "+ who is current user",
                               "- current user is: <call>current</call>",
@@ -83,7 +83,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Execute_Full_Object_Call_With_Parameter()
         {
-            var rs = new RiveScript();
+            var rs = new RiveScriptEngine();
             rs.stream(new[] { "",
                               "+ sum # and #",
                               "- result is: <call>sum <star1> <star2></call>",
@@ -104,7 +104,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Execute_Full_Object_Call_Custom_References()
         {
-            var rs = new RiveScript();
+            var rs = new RiveScriptEngine();
             rs.stream(new[] { "",
                               "+ show data enum",
                               "- enum is: <call>test</call>",
@@ -133,7 +133,7 @@ namespace RiveScript.Tests
             //Mock entry assembly for test envirioment
             ContextHelper.SetEntryAssembly(typeof(CSharpObjectHandlerTest).Assembly);
 
-            var rs = new RiveScript();
+            var rs = new RiveScriptEngine();
             rs.stream(new[] { "",
                               "",
                               "",

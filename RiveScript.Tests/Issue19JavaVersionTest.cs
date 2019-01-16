@@ -12,7 +12,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Start_Has_Work_After_Condition()
         {
-            var rs = new RiveScript(Config.DebugUTF8);
+            var rs = new RiveScriptEngine(Config.DebugUTF8);
             var loaded = false;
 
             loaded = rs.loadFile("issue-19-start-java-version/begin.rive");

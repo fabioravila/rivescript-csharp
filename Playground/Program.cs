@@ -19,7 +19,7 @@ namespace Playground
         {
             //It is an experience space for the library being developed
 
-            var rs = new RiveScript.RiveScript();
+            var rs = new RiveScript.RiveScriptEngine();
 
             //rs.setHandler("csharp", new CSharp());
             //rs.stream(new[] { "",

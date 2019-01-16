@@ -23,6 +23,6 @@ namespace RiveScript.Macro
         /// <param name="user">The user's ID</param>
         /// <param name="args">The argument list from the call tag</param>
         /// <returns></returns>
-        string Call(string name, RiveScript rs, string[] args);
+        string Call(string name, RiveScriptEngine rs, string[] args);
     }
 }

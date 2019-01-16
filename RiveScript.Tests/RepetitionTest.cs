@@ -8,7 +8,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Last_Reply_Repetition()
         {
-            var rs = new RiveScript(Config.Default);
+            var rs = new RiveScriptEngine(Config.Default);
 
             rs.streamForTest(new[] { "+ <reply>",
                                      "- I just say that",
@@ -28,7 +28,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Last_Input_Repetition()
         {
-            var rs = new RiveScript(Config.Default);
+            var rs = new RiveScriptEngine(Config.Default);
 
             rs.streamForTest(new[] { "+ <input>",
                                      "- Didn't you just say that?",
@@ -49,7 +49,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Last_Reply_Repetition_UTF8()
         {
-            var rs = new RiveScript(Config.UTF8);
+            var rs = new RiveScriptEngine(Config.UTF8);
 
             rs.streamForTest(new[] { "+ <reply>",
                                      "- Eu não acabei de falar isso?",
@@ -69,7 +69,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Last_Input_Repetition_UTF8()
         {
-            var rs = new RiveScript(Config.UTF8);
+            var rs = new RiveScriptEngine(Config.UTF8);
 
             rs.streamForTest(new[] { "+ <input>",
                                      "- Você não acabou de falar isso?",
