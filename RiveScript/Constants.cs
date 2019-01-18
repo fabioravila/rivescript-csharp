@@ -3,7 +3,9 @@ namespace RiveScript
 {
     public static class Constants
     {
-        public static string Undefined = "undefined";
-        public static string CSharpHandlerName = "csharp";
+        public const string Undefined = "undefined";
+        public const string CSharpHandlerName = "csharp";
+        public const int HISTORY_SIZE = 9;
+        public const string UNDEF_TAG = "<undef>";
     }
 }

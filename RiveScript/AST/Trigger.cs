@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
-namespace RiveScript
+namespace RiveScript.AST
 {
     /// <summary>
     /// Trigger class for RiveScript.
@@ -8,21 +9,25 @@ namespace RiveScript
     public class Trigger
     {
         private string pattern = "";
-        private string inTopic = "";
-        private ICollection<string> redirect = new List<string>();
+        private string topicName = "";
+        private ICollection<string> _redirect = new List<string>();
         private ICollection<string> reply = new List<string>();
         private ICollection<string> condition = new List<string>();
         private bool previous = false;
 
-        public Trigger(string topic, string pattern)
+        public Trigger(string pattern)
         {
-            inTopic = topic;
             this.pattern = pattern;
         }
 
-        public string topic()
+        public string getTopic()
         {
-            return inTopic;
+            return topicName;
+        }
+
+        public void setTopic(string topicName)
+        {
+            this.topicName = topicName;
         }
 
         public bool hasPrevious()
@@ -30,11 +35,9 @@ namespace RiveScript
             return previous;
         }
 
-        public void hasPrevious(bool paired)
+        public void setPrevious(bool paired)
         {
-            //original implementation
-            previous = true;
-            //previous = paired; - My inserstant
+            previous = paired;
         }
 
         public void addReply(string reply)
@@ -49,12 +52,12 @@ namespace RiveScript
 
         public void addRedirect(string meant)
         {
-            redirect.Add(meant);
+            _redirect.Add(meant);
         }
 
         public string[] listRedirects()
         {
-            return redirect.ToArray();
+            return _redirect.ToArray();
         }
 
         public void addCondition(string condition)
@@ -65,6 +68,16 @@ namespace RiveScript
         public string[] listConditions()
         {
             return condition.ToArray();
+        }
+
+        public string getPattern()
+        {
+            return this.pattern;
+        }
+
+        public bool hasRedirect()
+        {
+            return _redirect.Count > 0;
         }
     }
 }

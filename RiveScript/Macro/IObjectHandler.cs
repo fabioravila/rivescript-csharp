@@ -1,6 +1,9 @@
 ﻿
-namespace RiveScript
+namespace RiveScript.Macro
 {
+    /// <summary>
+    /// Interface for RiveScript object handlers
+    /// </summary>
     public interface IObjectHandler
     {
         /// <summary>
@@ -10,7 +13,7 @@ namespace RiveScript
         /// <param name="name">The name of the object</param>
         /// <param name="code">The source code inside the object</param>
         /// <returns></returns>
-        bool onLoad(string name, string[] code);
+        void Load(string name, string[] code);
 
         /// <summary>
         /// Handler for when a user invokes the object. Should return the text
@@ -20,6 +23,6 @@ namespace RiveScript
         /// <param name="user">The user's ID</param>
         /// <param name="args">The argument list from the call tag</param>
         /// <returns></returns>
-        string onCall(string name, RiveScript rs, string[] args);
+        string Call(string name, RiveScriptEngine rs, string[] args);
     }
 }

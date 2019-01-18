@@ -56,6 +56,7 @@
     <Compile Include="AlternationTest.cs" />
     <Compile Include="DocumentVersionTest.cs" />
     <Compile Include="Helper\ContextHelper.cs" />
+    <Compile Include="Issue19JavaVersionTest.cs" />
     <Compile Include="MultiUsersTest.cs" />
     <Compile Include="OptionalsWithAlternationsTest.cs" />
     <Compile Include="RandomReplyTest.cs" />
@@ -94,6 +95,12 @@
     <Content Include="TestData\basic_reply_3.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <None Include="TestData\issue-19-start-java-version\begin.rive">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="TestData\issue-19-start-java-version\main.rive">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="TestData\issue-4-rot13\begin.rive">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -10,9 +10,9 @@ namespace RiveScript.Tests
         public static string ErrorNoReplyMatched = "ERR: No Reply Matched";
         public static string DefaultUser = "default";
 
-        public static RiveScript getStreamed(string[] code)
+        public static RiveScriptEngine getStreamed(string[] code)
         {
-            var rs = new RiveScript(debug: false);
+            var rs = new RiveScriptEngine(Config.Default);
 
             //Stram bais variables for teste suite
             rs.stream(new[] { "// Bot Variables",
@@ -129,9 +129,9 @@ namespace RiveScript.Tests
             return rs;
         }
 
-        public static RiveScript getEmptyStreamed(string[] code)
+        public static RiveScriptEngine getEmptyStreamed(string[] code)
         {
-            var rs = new RiveScript(debug: false);
+            var rs = new RiveScriptEngine(Config.Default);
 
             rs.setDebug(true);
             rs.stream(code);
@@ -139,24 +139,24 @@ namespace RiveScript.Tests
             return rs;
         }
 
-        public static void streamForTest(this RiveScript rs, string[] code)
+        public static void streamForTest(this RiveScriptEngine rs, string[] code)
         {
             rs.setDebug(true);
             rs.stream(code);
             rs.sortReplies();
         }
 
-        public static string reply(this RiveScript rs, string message)
+        public static string reply(this RiveScriptEngine rs, string message)
         {
             return rs.reply(DefaultUser, message);
         }
 
-        public static bool setUservar(this RiveScript rs, string name, string value)
+        public static bool setUservar(this RiveScriptEngine rs, string name, string value)
         {
             return rs.setUservar(DefaultUser, name, value);
         }
 
-        public static string getUserVar(this RiveScript rs, string name)
+        public static string getUserVar(this RiveScriptEngine rs, string name)
         {
             return rs.getUserVar(DefaultUser, name);
         }

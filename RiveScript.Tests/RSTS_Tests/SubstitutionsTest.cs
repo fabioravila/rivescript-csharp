@@ -1,6 +1,4 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Linq;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace RiveScript.Tests.RSTS
 {
@@ -10,7 +8,7 @@ namespace RiveScript.Tests.RSTS
         [TestMethod]
         public void RSTS_Substitutions__message_substitutions()
         {
-            var rs = new RiveScript(debug: true);
+            var rs = new RiveScriptEngine(Config.Debug);
 
             rs.stream(new[] { "+ whats up",
                               "- nm.",
@@ -39,7 +37,7 @@ namespace RiveScript.Tests.RSTS
         [TestMethod]
         public void RSTS_Substitutions__person_substitutions()
         {
-            var rs = new RiveScript(debug: true);
+            var rs = new RiveScriptEngine(Config.Debug);
 
             rs.stream(new[] { "+ say *",
                               "- <person>" });

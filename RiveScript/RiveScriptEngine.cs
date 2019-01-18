@@ -1,65 +1,65 @@
-﻿using System;
+﻿using RiveScript.AST;
+using RiveScript.Log;
+using RiveScript.Macro;
+using RiveScript.Session;
+using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using RiveScript.Parse;
+using RiveScript.Lang;
 
 namespace RiveScript
 {
-    public class RiveScript
+    public class RiveScriptEngine
     {
+        static readonly string[] DEFAULT_FILE_EXTENSIONS = new[] { ".rive", ".rs" };
+        static Random rand = new Random();  // A random number generator
 
         // Private class variables.
-        private bool debug = false;                 // Debug mode
-        private int depth = 50;                     // Recursion depth limit
-        private bool utf8 = false;                  // uft8 mode flag
-        private bool strict = true;                // strict mode flag
-        private bool forceCase = false;
-        private Regex unicodePunctuation = new Regex("[., !?;:]/g");
-        private Action<string> onDebug = null;
+        bool debug = false;                 // Debug mode
+        int depth = 50;                     // Recursion depth limit
+        bool utf8 = false;                  // uft8 mode flag
+        bool strict = true;                 // strict mode flag
+        bool forceCase = false;
+        Regex unicodePunctuation;
+        Action<string> onDebug = null;
+        string _error = "";                  // Last error text
 
+        //Logger
+        ILogger logger;
 
-        private string _error = "";                  // Last error text
-        private static Random rand = new Random();  // A random number generator
+        //user variable session manager
+        // Bot's users' data structure.
+        ISessionManager sessions;
 
+        CSharp csharpHandler;
 
-        // Constant RiveScript command symbols.
-        private static readonly double RS_VERSION = 2.0; // This implements RiveScript 2.0
-        private static readonly string CMD_DEFINE = "!";
-        private static readonly string CMD_TRIGGER = "+";
-        private static readonly string CMD_PREVIOUS = "%";
-        private static readonly string CMD_REPLY = "-";
-        private static readonly string CMD_CONTINUE = "^";
-        private static readonly string CMD_REDIRECT = "@";
-        private static readonly string CMD_CONDITION = "*";
-        private static readonly string CMD_LABEL = ">";
-        private static readonly string CMD_ENDLABEL = "<";
+        //THe AST parser
+        Parser parser;
 
         // The topic data structure, and the "thats" data structure.
-        private TopicManager topics = new TopicManager();
-
-        // Bot's users' data structure.
-        private ClientManager clients = new ClientManager();
+        TopicManager topics;
 
         // Object handlers //TODO: At this moment, just have a CSHarpHander
-        private IDictionary<string, IObjectHandler> handlers = new Dictionary<string, IObjectHandler>();
-        private IDictionary<string, string> objects = new Dictionary<string, string>(); // name->language mappers
+        IDictionary<string, IObjectHandler> handlers = new Dictionary<string, IObjectHandler>();
+        IDictionary<string, string> objectLanguages = new Dictionary<string, string>(); // name->language mappers
+        IDictionary<string, ISubroutine> subroutines;        // Java object handlers
 
         // Simpler internal data structures.
-        private ICollection<string> listTopics = new List<string>();                                                // vector containing topic list (for quicker lookups)
-        private IDictionary<string, string> globals = new Dictionary<string, string>();                             // ! global
-        private IDictionary<string, string> vars = new Dictionary<string, string>();                                // ! var
-        private IDictionary<string, ICollection<string>> arrays = new Dictionary<string, ICollection<string>>();    // ! array
-        private IDictionary<string, string> subs = new Dictionary<string, string>();                                // ! sub
-        private string[] subs_s = null;                                                                             // sorted subs
-        private IDictionary<string, string> person = new Dictionary<string, string>();                              // ! person
-        private string[] person_s = null; // sorted persons
-        private ThreadLocal<string> _currentUser = new ThreadLocal<string>();
+        ICollection<string> listTopics = new List<string>();                                                // vector containing topic list (for quicker lookups)
+        IDictionary<string, string> globals = new Dictionary<string, string>();                             // ! global
+        IDictionary<string, string> vars = new Dictionary<string, string>();                                // ! var
+        IDictionary<string, ICollection<string>> arrays = new Dictionary<string, ICollection<string>>();    // ! array
+        IDictionary<string, string> subs = new Dictionary<string, string>();                                // ! sub
+        IDictionary<string, string> person = new Dictionary<string, string>();                              // ! person
 
 
-
+        string[] person_s = null; // sorted persons
+        string[] subs_s = null;                                                                             // sorted subs
+        ThreadLocal<string> _currentUser = new ThreadLocal<string>();
         public ErrorMessages errors { get; private set; }
 
         public bool IsErrReply(string reply)
@@ -75,78 +75,65 @@ namespace RiveScript
         /// <summary>
         /// Create a new RiveScript interpreter object with default options
         /// </summary>
-        /// <param name="options">Options object</param>
-        public RiveScript(Options options)
-        {
-            if (options == null)
-                options = Options.Default;
-
-            this.debug = options.debug;
-            Topic.setDebug(options.debug);// Set static debug modes.
-            this.utf8 = options.utf8;
-            this.strict = options.strict;
-            _currentUser.Value = Constants.Undefined;
-            this.forceCase = options.forceCase;
-            this.onDebug = options.onDebug;
-
-            this.depth = options.depth;
-            if (this.depth < 0) this.depth = 0;//Adjust depth
-
-            //Errors
-            this.errors = (options.errors ?? ErrorMessages.Default).AdjustDefaults();
-
-            //CSharp handler is default
-            this.setCSharpHandler();
-        }
+        public RiveScriptEngine() : this(null) { }
 
         /// <summary>
         /// Create a new RiveScript interpreter object with default options
         /// </summary>
-        public RiveScript() : this(Options.Default) { }
+        /// <param name="config">Options object</param>
+        public RiveScriptEngine(Config config)
+        {
+            if (config == null)
+                config = Config.Default;
 
-        /// <summary>
-        /// Create a new RiveScript interpreter object wiht parameter options
-        /// </summary>
-        /// <param name="debug">Debug mode</param>
-        /// <param name="utf8">Enable UTF-8 mode</param>
-        /// <param name="strict">Strict mode</param>
-        /// <param name="depth">Recursion depth limit</param>
-        /// <param name="forceCase">Force-lowercase triggers</param>
-        /// <param name="errors">Customize certain error messages</param>
-        /// <param name="onDebug">Set a custom handler to catch debug log messages</param>
-        public RiveScript(bool debug = false,
-                          bool utf8 = false,
-                          bool strict = true,
-                          int depth = 50,
-                          bool forceCase = false,
-                          ErrorMessages errors = null,
-                          Action<string> onDebug = null)
-            : this(new Options
-            {
-                debug = debug,
-                utf8 = utf8,
-                strict = strict,
-                depth = depth,
-                forceCase = forceCase,
-                errors = errors,
-                onDebug = onDebug
-            })
-        { }
+            logger = config.logger ?? new EmptyLogger();
+            Topic.setLogger(logger);
 
+            sessions = config.sessionManager ?? new ConcurrentDictionarySessionManager();
+
+            debug = config.debug;
+            utf8 = config.utf8;
+            strict = config.strict;
+            _currentUser.Value = Constants.Undefined;
+            forceCase = config.forceCase;
+            onDebug = config.onDebug;
+            unicodePunctuation = new Regex($"{config.unicodePonctuations}/g");
+            depth = config.depth;
+
+            if (depth <= 0) depth = Config.DEFAULT_DEPTH;//Adjust depth
+
+            //Errors
+            errors = (config.errors ?? ErrorMessages.Default).AdjustDefaults();
+
+            //Create a TOpicManager, must be single for rivescript instance
+            topics = new TopicManager();
+
+            //Create parser
+            parser = new Parser(new ParserConfig(strict: strict, utf8: utf8, forceCase: forceCase), topics);
+
+            csharpHandler = new CSharp(this);
+            //CSharp handler is default
+            handlers.Add(Constants.CSharpHandlerName, csharpHandler);
+        }
 
         public void setDebug(bool debug)
         {
             this.debug = debug;
-            Topic.setDebug(debug);
+            //Topic.setDebug(debug);
         }
 
+
+        public string getVersion()
+        {
+            return typeof(RiveScriptEngine).Assembly.GetName().Version.ToString();
+        }
 
         /// <summary>
         /// Return the text of the last error message given.
         /// </summary>
         public string error()
         {
-            return this._error;
+            return _error;
         }
 
         /// <summary>
@@ -163,6 +150,47 @@ namespace RiveScript
         #region Load Methods
 
         /// <summary>
+        /// Load a single RiveScript document.
+        /// </summary>
+        /// <param name="file">file Path to a RiveScript document.</param>
+        public bool loadFile(string file)
+        {
+            logger.Debug("Load file: " + file);
+
+            // Run some sanity checks on the file handle.
+            if (!File.Exists(file)) //Verify is is a file and is exists
+                return error(file + ": file not found.");
+
+            if (!FileHelper.CanRead(file))
+                return error(file + ": can't read from file.");
+
+
+            // Slurp the file's contents.
+            string[] lines;
+
+            try
+            {
+                //QUESTION: With ou without UTF8??
+                var encode = FileHelper.GetEncoding(file);
+                lines = File.ReadAllLines(file, encode);
+            }
+            catch (FileNotFoundException)
+            {
+                // How did this happen? We checked it earlier.
+                return error(file + ": file not found exception.");
+            }
+            catch (IOException e)
+            {
+                logger.Error(e);
+                return error(file + ": IOException while reading.");
+            }
+
+
+            // Send the code to the parser.
+            return parse(file, lines);
+        }
+
+        /// <summary>
         /// Load a directory full of RiveScript documents, specifying a custom
 	    /// list of valid file extensions.
         /// </summary>
@@ -171,16 +199,19 @@ namespace RiveScript
         /// <returns></returns>
         public bool loadDirectory(string path, string[] exts)
         {
-            say("Load directory: " + path);
+            logger.Debug("Load directory: " + path);
 
             // Verify Directory
-            if (false == Directory.Exists(path))
+            if (!Directory.Exists(path))
                 return error("Directory not found");
+
+            if (exts == null || exts.Length == 0)
+                exts = DEFAULT_FILE_EXTENSIONS;
 
             //Adjust exts for all have .
             for (int i = 0; i < exts.Length; i++)
             {
-                if (false == exts[i].StartsWith("."))
+                if (!exts[i].StartsWith("."))
                 {
                     exts[i] = "." + exts[i];
                 }
@@ -220,49 +251,7 @@ namespace RiveScript
         /// <returns></returns>
         public bool loadDirectory(string path)
         {
-            return loadDirectory(path, new[] { ".rive", ".rs" });
-        }
-
-        /// <summary>
-        /// Load a single RiveScript document.
-        /// </summary>
-        /// <param name="file">file Path to a RiveScript document.</param>
-        public bool loadFile(string file)
-        {
-            say("Load file: " + file);
-
-            // Run some sanity checks on the file handle.
-            if (false == File.Exists(file)) //Verify is is a file and is exists
-                return error(file + ": file not found.");
-
-            if (false == FileHelper.CanRead(file))
-                return error(file + ": can't read from file.");
-
-
-            // Slurp the file's contents.
-            string[] lines;
-
-            try
-            {
-                //QUESTION: With ou without UTF8??
-                //lines = File.ReadAllLines(file);
-                var encode = FileHelper.GetEncoding(file);
-                lines = File.ReadAllLines(file, encode);
-            }
-            catch (FileNotFoundException)
-            {
-                // How did this happen? We checked it earlier.
-                return error(file + ": file not found exception.");
-            }
-            catch (IOException e)
-            {
-                trace(e);
-                return error(file + ": IOException while reading.");
-            }
-
-
-            // Send the code to the parser.
-            return parse(file, lines);
+            return loadDirectory(path, DEFAULT_FILE_EXTENSIONS);
         }
 
         /// <summary>
@@ -306,7 +295,39 @@ namespace RiveScript
         /// <param name="handler">An instance of a class that implements an ObjectHandler.</param>
         public void setHandler(string name, IObjectHandler handler)
         {
+            //Do not modify C# handler (for now)
+            if (name == Constants.CSharpHandlerName)
+                return;
+
             handlers.Add(name, handler);
+        }
+
+        /// <summary>
+        /// Remove a handler for a programming language to be used with RiveScript object calls.
+        /// </summary>
+        /// <param name="name">The name of the programming language.</param>
+        public void removeHandler(string name)
+        {
+            //Do not remove C# handler, becou we will use this to agregate all subrotines and avois conflicts
+            if (name == Constants.CSharpHandlerName)
+                return;
+
+            handlers.Remove(name);
+        }
+
+        /// <summary>
+        /// If desire, can put a macro concrete compiled implementation in C#
+        /// </summary>
+        /// <param name="name">name of the </param>
+        /// <param name="subroutine"></param>
+        public void setSubroutine(string name, ISubroutine subroutine)
+        {
+            csharpHandler.AddSubroutine(name, subroutine);
+        }
+
+        public void setSubroutine(this RiveScriptEngine rs, string name, Func<RiveScriptEngine, string[], string> subroutine)
+        {
+            rs.setSubroutine(name, new DelegateMacro(subroutine));
         }
 
         /// <summary>
@@ -328,7 +349,7 @@ namespace RiveScript
         public bool setGlobal(string name, string value)
         {
             var delete = false;
-            if (value == null || value == "<undef>")
+            if (value == null || value == Constants.UNDEF_TAG)
             {
                 delete = true;
             }
@@ -339,11 +360,11 @@ namespace RiveScript
                 // Debug is a bool.
                 if (Util.IsTrue(value))
                 {
-                    this.debug = true;
+                    debug = true;
                 }
                 else if (Util.IsFalse(value) || delete)
                 {
-                    this.debug = false;
+                    debug = false;
                 }
                 else
                 {
@@ -355,7 +376,7 @@ namespace RiveScript
                 // Depth is an integer.
                 try
                 {
-                    this.depth = int.Parse(value);
+                    depth = int.Parse(value);
                 }
                 catch (FormatException)
                 {
@@ -374,10 +395,23 @@ namespace RiveScript
             }
             else
             {
-                globals.Add(name, value);
+                globals.AddOrUpdate(name, value);
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// This is equivalent to <env> in RiveScript. Returns null if the variable isn't defined.
+        /// </summary>
+        /// <param name="name">name the variable name</param>
+        /// <returns></returns>
+        public string getGlobal(string name)
+        {
+            if (name == "depth")
+                return depth.ToString();
+
+            return globals.GetOrDefault(name);
         }
 
         /// <summary>
@@ -391,19 +425,22 @@ namespace RiveScript
         /// <returns></returns>
         public bool setVariable(string name, string value)
         {
-            if (value == null || value == "<undef>")
-            {
+            if (value == null || value == Constants.UNDEF_TAG)
                 vars.Remove(name);
-            }
             else
-            {
-                if (vars.ContainsKey(name))
-                    vars[name] = value;
-                else
-                    vars.Add(name, value);
-            }
+                vars.AddOrUpdate(name, value);
 
             return true;
+        }
+
+        /// <summary>
+        /// This is equivalent to <bot> in RiveScript. Returns null if the variable isn't defined.
+        /// </summary>
+        /// <param name="name">name the variable name</param>
+        /// <returns></returns>
+        public string getVariable(string name)
+        {
+            return vars.GetOrDefault(name);
         }
 
         /// <summary>
@@ -417,20 +454,33 @@ namespace RiveScript
         /// <returns></returns>
         public bool setSubstitution(string pattern, string output)
         {
-            if (output == null || output == "<undef>")
-            {
-                if (subs.ContainsKey(pattern))
-                    subs.Remove(pattern);
-            }
+            if (output == null || output == Constants.UNDEF_TAG)
+                subs.Remove(pattern);
             else
-            {
-                if (subs.ContainsKey(pattern))
-                    subs[pattern] = output;
-                else
-                    subs.Add(pattern, output);
-            }
+                subs.AddOrUpdate(pattern, output);
 
             return true;
+        }
+
+        public bool setArray(string name, ICollection<string> value)
+        {
+            //if (value == null || value.Count == 0 || value[0] == Constants.UNDEF_TAG)
+            if (value == null || value.Count == 0)
+                arrays.Remove(name);
+            else
+                arrays.AddOrUpdate(name, value);
+
+            return true;
+        }
+
+        /// <summary>
+        /// This is equivalent to <sub> in RiveScript. Returns null if the variable isn't defined.
+        /// </summary>
+        /// <param name="pattern">pattern the variable name</param>
+        /// <returns></returns>
+        public string getSubstitution(string pattern)
+        {
+            return subs.GetOrDefault(pattern);
         }
 
         /// <summary>
@@ -445,19 +495,22 @@ namespace RiveScript
         /// <returns></returns>
         public bool setPersonSubstitution(string pattern, string output)
         {
-            if (output == null || output == "<undef>")
-            {
+            if (output == null || output == Constants.UNDEF_TAG)
                 person.Remove(pattern);
-            }
             else
-            {
-                if (person.ContainsKey(pattern))
-                    person[pattern] = output;
-                else
-                    person.Add(pattern, output);
-            }
+                person.AddOrUpdate(pattern, output);
 
             return true;
+        }
+
+        /// <summary>
+        /// This is equivalent to <person> in RiveScript. Returns null if the variable isn't defined.
+        /// </summary>
+        /// <param name="pattern">pattern the variable name</param>
+        /// <returns></returns>
+        public string getPersonSubstitution(string pattern)
+        {
+            return person.GetOrDefault(pattern);
         }
 
         /// <summary>
@@ -470,18 +523,17 @@ namespace RiveScript
         /// <returns></returns>
         public bool setUservar(string user, string name, string value)
         {
-            if (value == null || value == "<undef>")
+            if (value == null || value == Constants.UNDEF_TAG)
             {
-                clients.client(user).delete(name);
+                sessions.remove(user, name);
             }
             else
             {
                 // Topic? And are we forcing case?
-                if (name == "topic" && this.forceCase)
+                if (name == "topic" && forceCase)
                     value = value.ToLower();
 
-
-                clients.client(user).set(name, value);
+                sessions.set(user, name, value);
             }
 
             return true;
@@ -498,10 +550,11 @@ namespace RiveScript
         /// <returns></returns>
         public bool setUservars(string user, IDictionary<string, string> data)
         {
-            // TODO: this should be handled more sanely. ;)
-            clients.client(user).replaceData(data);
+            sessions.set(user, data);
             return true;
         }
+
+
 
         /// <summary>
         /// Get a list of all the user IDs the bot knows about.
@@ -509,8 +562,14 @@ namespace RiveScript
         public string[] getUsers()
         {
             // Get the user list from the clients object.
-            return clients.listClients();
+            return sessions.getAll().Keys.ToArray();
         }
+
+        /// <summary>
+        /// Return the sessions manager instance
+        /// </summary>
+        /// <returns>current session manager instance</returns>
+        public ISessionManager getSessionManager() => sessions;
 
         /// <summary>
         ///  Retrieve a listing of all the uservars for a user as a HashMap.
@@ -520,14 +579,7 @@ namespace RiveScript
         /// <returns></returns>
         public IDictionary<string, string> getUserVars(string user)
         {
-            if (clients.clientExists(user))
-            {
-                return clients.client(user).getData;
-            }
-            else
-            {
-                return null;
-            }
+            return sessions.get(user).getVariables();
         }
 
         /// <summary>
@@ -541,14 +593,7 @@ namespace RiveScript
         /// <returns></returns>
         public string getUserVar(string user, string name)
         {
-            if (clients.clientExists(user))
-            {
-                return clients.client(user).get(name);
-            }
-            else
-            {
-                return null;
-            }
+            return sessions.get(user, name);
         }
 
         public string currentUser()
@@ -560,693 +605,56 @@ namespace RiveScript
 
         #region  Parsing Methods
 
-        private bool parse(string filename, string[] code)
+        bool parse(string filename, string[] code)
         {
-            // Track some state variables for this parsing round.
-            string topic = "random"; // Default topic = random
-            int lineno = 0;
-            bool comment = false; // In a multi-line comment
-            bool inobj = false; // In an object
-            string objName = "";    // Name of the current object
-            string objLang = "";    // Programming language of the object
-            ICollection<string> objBuff = null;  // Buffer for the current object
-            string onTrig = "";    // Trigger we're on
-            //string lastcmd = "";    // Last command code //Never Used
-            string isThat = "";    // Is a %Previous trigger
+            var root = parser.parse(filename, code);
 
-            // File scoped parser options.
-            IDictionary<string, string> local_options = new Dictionary<string, string>();
-            local_options.AddOrUpdate("concat", "none");
-            //local_options.Add("concat", "space");
-            //local_options.Add("concat", "newline");
-
-            // The given "code" is an array of lines, so jump right in.
-            for (int i = 0; i < code.Length; i++)
+            //Passing all ast variables to rivescript class
+            //globals
+            foreach (var item in root.begin.globals)
             {
-                lineno++; // Increment the line counter.
-                string line = code[i];
-                say("Original Line: " + line);
+                setGlobal(item.Key, item.Value);
+            }
 
+            //vars
+            foreach (var item in root.begin.vars)
+            {
+                setVariable(item.Key, item.Value);
+            }
 
+            //sub
+            foreach (var item in root.begin.subs)
+            {
+                setSubstitution(item.Key, item.Value);
+            }
 
-                // Trim the line of whitespaces.
-                line = Util.Strip(line);
+            //person
+            foreach (var item in root.begin.person)
+            {
+                setPersonSubstitution(item.Key, item.Value);
+            }
 
-                if (line.Length == 0)
-                    continue; //Skip blank line
+            //array
+            foreach (var item in root.begin.arrays)
+            {
+                setArray(item.Key, item.Value);
+            }
 
-                // Are we inside an object?
-                if (inobj)
+            //objects macro
+            foreach (var item in root.objects)
+            {
+                if (handlers.ContainsKey(item.Language))
                 {
-                    if (line.StartsWith("<object") || line.StartsWith("< object"))
-                    { // TODO regexp
-                      // End of the object. Did we have a handler?
-                        if (handlers.ContainsKey(objLang))
-                        {
-                            // Yes, call the handler's onLoad function.
-                            handlers[objLang].onLoad(objName, objBuff.ToArray());
-
-                            // Map the name to the language.
-                            objects.Add(objName, objLang);
-                        }
-
-                        objName = "";
-                        objLang = "";
-                        objBuff = null;
-                        inobj = false;
-                        continue;
-                    }
-
-                    // Collect the code.
-                    objBuff.Add(line);
-                    continue;
-                }
-
-                // Look for comments.
-                if (line.StartsWith("/*"))
-                {
-                    // Beginning a multi-line comment.
-                    if (line.IndexOf("*/") > -1)
-                    {
-                        // It ends on the same line.
-                        continue;
-                    }
-                    comment = true;
-                }
-                else if (line.StartsWith("/"))
-                {
-                    // A single line comment.
-                    continue;
-                }
-                else if (line.IndexOf("*/") > -1)
-                {
-                    // End a multi-line comment.
-                    comment = false;
-                    continue;
-                }
-                if (comment)
-                {
-                    continue;
-                }
-
-                // Skip any blank lines and weird lines.
-                if (line.Length < 2)
-                {
-                    warn($"Weird single-character line '#" + line + "' found (in topic #" + topic + ")");
-                    continue;
-                }
-
-                // Separate the command from the rest of the line.
-                string cmd = line.Substring(0, 1);
-                line = Util.Strip(line.Substring(1));
-
-
-                say("\tCmd: " + cmd);
-
-                // Ignore inline comments.
-                if (line.IndexOf(" // ") > -1)
-                {
-                    string[] split = line.Split(new[] { " // " }, StringSplitOptions.None);
-                    line = split[0];
-                }
-
-
-                // In the event of a +Trigger, if we are force-lowercasing it, then do so
-                // now before the syntax check.
-                if (this.forceCase && cmd == CMD_TRIGGER)
-                    line = line.ToLower();
-
-
-                //Run a syntax check on this line
-                var syntaxError = checkSyntax(cmd, line);
-                if (syntaxError != "")
-                {
-                    var err = "Syntax error: " + syntaxError + " at " + filename + " line " + lineno + " near " + cmd + " " + line;
-
-                    if (strict)
-                        error(err);
-                    else
-                        warn(err);
-                }
-
-
-                // Reset the %Previous if this is a new +Trigger.
-                if (cmd.Equals(CMD_TRIGGER))
-                {
-                    isThat = "";
-                }
-
-                // Do a look-ahead to see ^Continue and %Previous.
-                for (int j = (i + 1); j < code.Length; j++)
-                {
-                    // Peek ahead.
-                    string peek = Util.Strip(code[j]);
-
-                    // Skip blank.
-                    if (peek.Length == 0)
-                    {
-                        continue;
-                    }
-
-                    // Get the command.
-                    string peekCmd = peek.Substring(0, 1);
-                    peek = Util.Strip(peek.Substring(1));
-
-                    // Only continue if the lookahead line has any data.
-                    if (peek.Length > 0)
-                    {
-                        // The lookahead command has to be a % or a ^
-                        if (peekCmd.Equals(CMD_CONTINUE) == false && peekCmd.Equals(CMD_PREVIOUS) == false)
-                        {
-                            break;
-                        }
-
-                        // If the current command is a +, see if the following is a %.
-                        if (cmd.Equals(CMD_TRIGGER))
-                        {
-                            if (peekCmd.Equals(CMD_PREVIOUS))
-                            {
-                                // It has a %Previous!
-                                isThat = peek;
-                                break;
-                            }
-                            else
-                            {
-                                isThat = "";
-                            }
-                        }
-
-                        // If the current command is a ! and the next command(s) are
-                        // ^, we'll tack each extension on as a "line break".
-                        if (cmd.Equals(CMD_DEFINE))
-                        {
-                            if (peekCmd.Equals(CMD_CONTINUE))
-                            {
-                                line += "<crlf>" + peek;
-                            }
-                        }
-
-                        // If the current command is not a ^ and the line after is
-                        // not a %, but the line after IS a ^, then tack it onto the
-                        // end of the current line.
-                        if (cmd.Equals(CMD_CONTINUE) == false && cmd.Equals(CMD_PREVIOUS) == false && cmd.Equals(CMD_DEFINE) == false)
-                        {
-                            if (peekCmd.Equals(CMD_CONTINUE))
-                            {
-                                // Concatenation character?
-                                string concat = "";
-                                if (local_options["concat"] == "space")
-                                {
-                                    concat = " ";
-                                }
-                                else if (local_options["concat"] == "newline")
-                                {
-                                    concat = "\n";
-                                }
-
-                                line += concat + peek;
-                            }
-                            else
-                            {
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                // Start handling command types.
-                if (cmd.Equals(CMD_DEFINE))
-                {
-                    say("\t! DEFINE");
-                    //string[] whatis = line.split("\\s*=\\s*", 2);
-                    string[] whatis = new Regex("\\s*=\\s*").Split(line, 2);
-                    //string[] left = whatis[0].split("\\s+", 2);
-                    string[] left = new Regex("\\s+").Split(whatis[0], 2);
-                    string type = left[0];
-                    string var = "";
-                    string value = "";
-                    bool delete = false;
-                    if (left.Length == 2)
-                    {
-                        var = left[1].Trim().ToLower();
-                    }
-                    if (whatis.Length == 2)
-                    {
-                        value = whatis[1].Trim();
-                    }
-
-                    // Remove line breaks unless this is an array.
-                    if (!type.Equals("array"))
-                    {
-                        value = value.Replace("<crlf>", "");
-                    }
-
-                    // Version is the only type that doesn't have a var.
-                    if (type.Equals("version"))
-                    {
-                        say("\tUsing RiveScript version " + value);
-
-                        // Convert the value into a double, catch exceptions.
-                        double version = 0;
-                        try
-                        {
-                            version = double.Parse(value ?? "", new NumberFormatInfo { CurrencyDecimalSeparator = "." });
-                        }
-                        catch (FormatException)
-                        {
-                            warn("RiveScript version \"" + value + "\" not a valid floating number", filename, lineno);
-                            continue;
-                        }
-
-                        if (version > RS_VERSION)
-                        {
-                            warn("We can't parse RiveScript v" + value + " documents", filename, lineno);
-                            return false;
-                        }
-
-                        continue;
-                    }
-                    else
-                    {
-                        // All the other types require a variable and value.
-                        if (var.Equals(""))
-                        {
-                            warn("Missing a " + type + " variable name", filename, lineno);
-                            continue;
-                        }
-                        if (value.Equals(""))
-                        {
-                            warn("Missing a " + type + " value", filename, lineno);
-                            continue;
-                        }
-                        if (value.Equals("<undef>"))
-                        {
-                            // Deleting its value.
-                            delete = true;
-                        }
-                    }
-
-                    // Handle the variable set types.
-                    if (type.Equals("local"))
-                    {
-                        // Local file scoped parser options
-                        say("\tSet local parser option " + var + " = " + value);
-                        local_options.AddOrUpdate(var, value);
-                    }
-                    else if (type.Equals("global"))
-                    {
-                        // Is it a special global? (debug or depth or etc).
-                        say("\tSet global " + var + " = " + value);
-                        this.setGlobal(var, value);
-                    }
-                    else if (type.Equals("var"))
-                    {
-                        // Set a bot variable.
-                        say("\tSet bot variable " + var + " = " + value);
-                        this.setVariable(var, value);
-                    }
-                    else if (type.Equals("array"))
-                    {
-                        // Set an array.
-                        say("\tSet array " + var);
-
-                        // Deleting it?
-                        if (delete)
-                        {
-                            arrays.Remove(var);
-                            continue;
-                        }
-
-                        // Did the array have multiple lines?
-                        //string[] parts = value.split("<crlf>");
-                        //WARN:
-                        string[] parts = value.Split("<crlf>");
-                        ICollection<string> items = new List<string>();
-                        for (int a = 0; a < parts.Length; a++)
-                        {
-                            // Split at pipes or spaces?
-                            string[] pieces;
-                            if (parts[a].IndexOf("|") > -1)
-                            {
-                                //pieces = parts[a].split("\\|");
-                                pieces = new Regex("\\|").Split(parts[a]);
-                            }
-                            else
-                            {
-                                pieces = new Regex("\\s+").Split(parts[a]);
-                            }
-
-                            // Add the pieces to the final array.
-                            for (int b = 0; b < pieces.Length; b++)
-                            {
-                                items.Add(pieces[b]);
-                            }
-                        }
-
-                        // Store this array.
-                        arrays.Add(var, items);
-                    }
-                    else if (type.Equals("sub"))
-                    {
-                        // Set a substitution.
-                        say("\tSubstitution " + var + " => " + value);
-                        this.setSubstitution(var, value);
-                    }
-                    else if (type.Equals("person"))
-                    {
-                        // Set a person substitution.
-                        say("\tPerson substitution " + var + " => " + value);
-                        this.setPersonSubstitution(var, value);
-                    }
-                    else
-                    {
-                        warn("Unknown definition type \"" + type + "\"", filename, lineno);
-                        continue;
-                    }
-                }
-                else if (cmd.Equals(CMD_LABEL))
-                {
-                    // > LABEL
-                    say("\t> LABEL");
-                    //string[] label =  line.split("\\s+");
-                    string[] label = line.SplitRegex("\\s+");
-                    string type = "";
-                    string name = "";
-                    if (label.Length >= 1)
-                    {
-                        type = label[0].Trim().ToLower();
-                    }
-                    if (label.Length >= 2)
-                    {
-                        name = label[1].Trim();
-                    }
-
-                    // Handle the label types.
-                    if (type.Equals("begin"))
-                    {
-                        // The BEGIN statement.
-                        say("\tFound the BEGIN Statement.");
-
-                        // A BEGIN is just a special topic.
-                        type = "topic";
-                        name = "__begin__";
-                    }
-
-                    if (type.Equals("topic"))
-                    {
-                        if (this.forceCase)
-                            name = name.ToLower();
-
-
-                        // Starting a new topic.
-                        say("\tSet topic to " + name);
-                        onTrig = "";
-                        topic = name;
-
-                        // Does this topic include or inherit another one?
-                        if (label.Length >= 3)
-                        {
-                            int mode_includes = 1;
-                            int mode_inherits = 2;
-                            int mode = 0;
-                            for (int a = 2; a < label.Length; a++)
-                            {
-                                if (label[a].ToLowerInvariant().Equals("includes"))
-                                {
-                                    mode = mode_includes;
-                                }
-                                else if (label[a].ToLowerInvariant().Equals("inherits"))
-                                {
-                                    mode = mode_inherits;
-                                }
-                                else if (mode > 0)
-                                {
-                                    // This topic is either inherited or included.
-                                    if (mode == mode_includes)
-                                    {
-                                        topics.topic(topic).includes(label[a]);
-                                    }
-                                    else if (mode == mode_inherits)
-                                    {
-                                        topics.topic(topic).inherits(label[a]);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (type.Equals("object"))
-                    {
-                        // If a field was provided, it should be the programming language.
-                        string lang = "";
-                        if (label.Length >= 3)
-                        {
-                            lang = label[2].ToLower();
-                        }
-
-                        // Only try to parse a language we support.
-                        onTrig = "";
-                        if (lang.Length == 0)
-                        {
-                            warn("Trying to parse unknown programming language (assuming it's JavaScript)", filename, lineno);
-                            lang = "javascript"; // Assume it's JavaScript
-                        }
-                        if (!handlers.ContainsKey(lang))
-                        {
-                            // We don't have a handler for this language.
-                            say("We can't handle " + lang + " object code!");
-                            continue;
-                        }
-
-                        // Start collecting its code!
-                        objName = name;
-                        objLang = lang;
-                        objBuff = new List<string>();
-                        inobj = true;
-                    }
-                }
-                else if (cmd.Equals(CMD_ENDLABEL))
-                {
-                    // < ENDLABEL
-                    say("\t< ENDLABEL");
-                    string type = line.Trim().ToLower();
-
-                    if (type.Equals("begin") || type.Equals("topic"))
-                    {
-                        say("\t\tEnd topic label.");
-                        topic = "random";
-                    }
-                    else if (type.Equals("object"))
-                    {
-                        say("\t\tEnd object label.");
-                        inobj = false;
-                    }
-                    else
-                    {
-                        warn("Unknown end topic type \"" + type + "\"", filename, lineno);
-                    }
-                }
-                else if (cmd.Equals(CMD_TRIGGER))
-                {
-                    // + TRIGGER
-                    say("\t+ TRIGGER: " + line);
-
-                    if (isThat.Length > 0)
-                    {
-                        // This trigger had a %Previous. To prevent conflict, tag the
-                        // trigger with the "that" text.
-                        onTrig = line + "{previous}" + isThat;
-                        topics.topic(topic).trigger(line).hasPrevious(true);
-                        topics.topic(topic).addPrevious(line, isThat);
-                    }
-                    else
-                    {
-                        // Set the current trigger to this.
-                        onTrig = line;
-                    }
-                }
-                else if (cmd.Equals(CMD_REPLY))
-                {
-                    // - REPLY
-                    say("\t- REPLY: " + line);
-
-                    // This can't come before a trigger!
-                    if (onTrig.Length == 0)
-                    {
-                        warn("Reply found before trigger", filename, lineno);
-                        continue;
-                    }
-
-                    // Add the reply to the trigger.
-                    topics.topic(topic).trigger(onTrig).addReply(line);
-                }
-                else if (cmd.Equals(CMD_PREVIOUS))
-                {
-                    // % PREVIOUS
-                    // This was handled above.
-                }
-                else if (cmd.Equals(CMD_CONTINUE))
-                {
-                    // ^ CONTINUE
-                    // This was handled above.
-                }
-                else if (cmd.Equals(CMD_REDIRECT))
-                {
-                    // @ REDIRECT
-                    say("\t@ REDIRECT: " + line);
-
-                    // This can't come before a trigger!
-                    if (onTrig.Length == 0)
-                    {
-                        warn("Redirect found before trigger", filename, lineno);
-                        continue;
-                    }
-
-                    // Add the redirect to the trigger.
-                    // TODO: this extends RiveScript, not compat w/ Perl yet
-                    topics.topic(topic).trigger(onTrig).addRedirect(line);
-                }
-                else if (cmd.Equals(CMD_CONDITION))
-                {
-                    // * CONDITION
-                    say("\t* CONDITION: " + line);
-
-                    // This can't come before a trigger!
-                    if (onTrig.Length == 0)
-                    {
-                        warn("Redirect found before trigger", filename, lineno);
-                        continue;
-                    }
-
-                    // Add the condition to the trigger.
-                    topics.topic(topic).trigger(onTrig).addCondition(line);
+                    handlers[item.Language].Load(item.Name, item.Code.ToArray());
+                    objectLanguages.Add(item.Name, item.Language);
                 }
                 else
                 {
-                    warn("Unrecognized command \"" + cmd + "\"", filename, lineno);
+                    logger.Warn($"Object '{item.Name}' not loaded as no handler was found for programming language '{item.Language}'");
                 }
             }
 
             return true;
-        }
-
-        private string checkSyntax(string cmd, string line)
-        {
-            //Run syntax tests based on the command used.
-
-            if (cmd == "!")
-            {
-                // ! Definition
-                // - Must be formatted like this:
-                //   ! type name = value
-                //   OR
-                //   ! type = value
-                if (false == line.MatchRegex(@"^.+(?:\s +.+|)\s*=\s*.+?$"))
-                {
-                    return "Invalid format for !Definition line: must be '! type name = value' OR '! type = value'";
-                }
-            }
-            else if (cmd == ">")
-            {
-                // > Label
-                // - The "begin" label must have only one argument ("begin")
-                // - The "topic" label must be lowercased but can inherit other topics
-                // - The "object" label must follow the same rules as "topic", but don't
-                //   need to be lowercased.
-                var parts = line.SplitRegex(@"\s+");
-
-                if (parts[0] == "begin" && parts.Length > 1)
-                {
-                    return "The 'begin' label takes no additional arguments";
-                }
-                else if (parts[0] == "topic")
-                {
-                    if (this.forceCase && line.MatchRegex(@"[^a-z0-9_\-\s]"))
-                    {
-                        return "Topics should be lowercased and contain only letters and numbers";
-                    }
-                    else if (line.MatchRegex(@"[^A-Za-z0-9_\-\s]"))
-                    {
-                        return "Topics should contain only letters and numbers in forceCase mode";
-                    }
-                }
-                else if (parts[0] == "object")
-                {
-                    if (line.MatchRegex(@"[^A-Za-z0-9_\-\s]"))
-                    {
-                        return "Objects can only contain numbers and letters";
-                    }
-                }
-            }
-            else if (cmd == "+" || cmd == "%" || cmd == "@")
-            {
-                // + Trigger, % Previous, @ Redirect
-                // This one is strict. The triggers are to be run through the regexp
-                // engine, therefore it should be acceptable for the regexp engine.
-                // - Entirely lowercase
-                // - No symbols except: ( | ) [ ] * _ // { } < > =
-                // - All brackets should be matched.
-                var parens = 0;
-                var square = 0;
-                var curly = 0;
-                var angle = 0; // Count the brackets
-
-                // Look for obvious errors first.
-                if (utf8)
-                {
-                    // In UTF-8 mode, most symbols are allowed.
-                    if (line.MatchRegex("[A-Z\\.]"))
-                    {
-                        return "Triggers can't contain uppercase letters, backslashes or dots in UTF - 8 mode";
-                    }
-                }
-                else if (line.MatchRegex(@"[^a-z0-9(|)\[\]*_//@{}<>=\s]"))
-                {
-                    return "Triggers may only contain lowercase letters, numbers, and these symbols: ( | )[ ] * _ // { } < > =";
-                }
-
-                // Count the brackets.
-                foreach (char c in line.ToCharArray())
-                {
-
-                    switch (c)
-                    {
-                        case '(': parens++; break;
-                        case ')': parens--; break;
-                        case '[': square++; break;
-                        case ']': square--; break;
-                        case '{': curly++; break;
-                        case '}': curly--; break;
-                        case '<': angle++; break;
-                        case '>': angle--; break;
-                        default: break;
-                    }
-
-                }
-
-
-                // Any mismatches?
-                if (parens != 0)
-                    return "Unmatched parenthesis brackets";
-                if (square != 0)
-                    return "Unmatched square brackets";
-                if (curly != 0)
-                    return "Unmatched curly brackets";
-                if (angle != 0)
-                    return "Unmatched angle brackets";
-            }
-            else if (cmd == "*")
-            {
-                // * Condition
-                // Syntax for a conditional is as follows:
-                // * value symbol value => response
-                if (false == line.MatchRegex(@"^.+?\s*(?:==|eq|!=|ne|<>|<|<=|>|>=)\s*.+?=>.+?$"))
-                {
-                    return "Invalid format for !Condition: should be like '* value symbol value => response'";
-                }
-            }
-
-            // No problems!
-            return "";
         }
 
         #endregion
@@ -1260,8 +668,8 @@ namespace RiveScript
         public void sortReplies()
         {
             // We need to make sort buffers under each topic.
-            var topics = this.topics.listTopics();
-            say("There are " + topics.Length + " topics to sort replies for.");
+            var topics = this.topics.listTopicsName();
+            logger.Debug("There are " + topics.Length + " topics to sort replies for.");
 
             // Tell the topic manager to sort its topics' replies.
             this.topics.sortReplies();
@@ -1284,54 +692,59 @@ namespace RiveScript
         /// <returns></returns>
         public string reply(string username, string message)
         {
-            say("Asked reply to [" + username + "] " + message);
+            logger.Debug("Asked reply to [" + username + "] " + message);
+
+            var startTime = DateTime.Now.Ticks;
 
             _currentUser.Value = username;
 
-            // Format their message first.
-            message = formatMessage(message);
-
-            // This will hold the final reply.
-            string reply = "";
-
-            // If the BEGIN statement exists, consult it first.
-            if (topics.exists("__begin__"))
+            try
             {
-                string begin = this.reply(username, "request", true, 0);
+                // Initialize a user profile for this user?
+                sessions.init(username);
 
-                // OK to continue?
-                if (begin.IndexOf("{ok}") > -1)
+                // Format their message first.
+                message = formatMessage(message);
+
+                // This will hold the final reply.
+                string reply = "";
+
+                // If the BEGIN statement exists, consult it first.
+                if (topics.exists("__begin__"))
                 {
-                    // Get a reply then.
-                    reply = this.reply(username, message, false, 0);
-                    begin = begin.ReplaceRegex("\\{ok\\}", reply);
+                    string begin = getReply(username, "request", true, 0);
+
+                    // OK to continue? // Get a reply then.
+                    if (begin.IndexOf("{ok}") > -1)
+                    {
+                        reply = getReply(username, message, false, 0);
+                        begin = begin.ReplaceRegex("\\{ok\\}", reply);
+                    }
+
+
                     reply = begin;
+                    // Run final substitutions.
+                    reply = processTags(username, sessions.get(username), message, reply,
+                        new List<string>(), new List<string>(),
+                        0);
                 }
                 else
                 {
-                    reply = begin;
+                    // No BEGIN, just continue.
+                    reply = getReply(username, message, false, 0);
                 }
 
+                // Save their chat history.
+                sessions.addHistory(username, message, reply);
+                _currentUser.Value = Constants.Undefined;
 
-                // Run final substitutions.
-                reply = processTags(username, clients.client(username), message, reply,
-                    new List<string>(), new List<string>(),
-                    0);
+                // Return their reply.
+                return reply;
             }
-            else
+            finally
             {
-                // No BEGIN, just continue.
-                reply = this.reply(username, message, false, 0);
+
             }
-
-            // Save their chat history.
-            clients.client(username).addInput(message);
-            clients.client(username).addReply(reply);
-
-            _currentUser.Value = Constants.Undefined;
-
-            // Return their reply.
-            return reply;
         }
 
         /// <summary>
@@ -1342,7 +755,7 @@ namespace RiveScript
         /// <param name="begin">Whether the context is that we're in the BEGIN statement or not.</param>
         /// <param name="step">The recursion depth that we're at so far.</param>
         /// <returns></returns>
-        private string reply(string user, string message, bool begin, int step)
+        string getReply(string user, string message, bool begin, int step)
         {
             /*-----------------------*/
             /*-- Collect User Info --*/
@@ -1352,27 +765,26 @@ namespace RiveScript
             var stars = new List<string>(); // Wildcard matches
             var botstars = new List<string>(); // Wildcards in %Previous
             var _reply = "";                   // The eventual reply
-            Client profile = null;                  // The user's profile object
-
+            UserData profile = null;                  // The user's profile object
             // Get the user's profile.
-            profile = clients.client(user);
+            profile = sessions.get(user);
 
             // Update their topic.
-            topic = profile.get("topic");
+            topic = profile.getVariable("topic");
 
             // Avoid letting the user fall into a missing topic.
             if (topics.exists(topic) == false)
             {
-                warn("User " + user + " was in a missing topic named \"" + topic + "\"!");
+                logger.Warn("User " + user + " was in a missing topic named \"" + topic + "\"!");
                 topic = "random";
-                profile.set("topic", "random");
+                profile.setVariable("topic", "random");
             }
 
             // Avoid deep recursion.
             if (step > depth)
             {
-                _reply = this.errors.deepRecursion;
-                warn(_reply);
+                _reply = errors.deepRecursion;
+                logger.Warn(_reply);
                 return _reply;
             }
 
@@ -1398,75 +810,79 @@ namespace RiveScript
             // be the same as it was the first time, resulting in an infinite loop!
             if (step == 0)
             {
-                say("Looking for a %Previous");
+                logger.Debug("Looking for a %Previous");
                 string[] allTopics = { topic };
 
-                if (this.topics.topic(topic).includes().Length > 0 || this.topics.topic(topic).inherits().Length > 0)
+                if (topics.topic(topic).includes().Length > 0 || topics.topic(topic).inherits().Length > 0)
                 {
                     // We need to walk the topic tree.
-                    allTopics = this.topics.getTopicTree(topic, 0);
+                    allTopics = topics.getTopicTree(topic, 0);
                 }
 
 
                 for (int i = 0; i < allTopics.Length; i++)
                 {
                     // Does this topic have a %Previous anywhere?
-                    say("Seeing if " + allTopics[i] + " has a %Previous");
-                    if (this.topics.topic(allTopics[i]).hasPrevious())
+                    logger.Debug("Seeing if " + allTopics[i] + " has a %Previous");
+                    if (topics.topic(allTopics[i]).hasPrevious())
                     {
-                        say("Topic " + allTopics[i] + " has at least one %Previous");
+                        logger.Debug("Topic " + allTopics[i] + " has at least one %Previous");
 
                         // Get them.
-                        string[] previous = this.topics.topic(allTopics[i]).listPrevious();
+                        string[] previous = topics.topic(allTopics[i]).listPrevious();
                         for (int j = 0; j < previous.Length; j++)
                         {
-                            say("Candidate: " + previous[j]);
+                            logger.Debug("Candidate: " + previous[j]);
 
                             // Try to match the bot's last reply against this.
-                            string lastReply = formatMessage(profile.getReply(1), true);
+                            string lastReply = formatMessage(profile.history.getReply(1), true);
                             string regexp = triggerRegexp(user, profile, previous[j]);
-                            say("Compare " + lastReply + " <=> " + previous[j] + " (" + regexp + ")");
+                            logger.Debug("Compare " + lastReply + " <=> " + previous[j] + " (" + regexp + ")");
 
                             // Does it match?
                             Regex re = new Regex("^" + regexp + "$");
                             foreach (Match m in re.Matches(lastReply))
                             {
-                                say("OMFG the lastReply matches!");
+                                logger.Debug("OMFG the lastReply matches!");
 
                                 // Harvest the botstars.
                                 for (int s = 1; s <= m.Groups.Count; s++)
                                 {
-                                    say("Add botstar: " + m.Groups[s].Value);
+                                    logger.Debug("Add botstar: " + m.Groups[s].Value);
                                     botstars.Add(m.Groups[s].Value);
                                 }
 
                                 // Now see if the user matched this trigger too!
-                                string[] candidates = this.topics.topic(allTopics[i]).listPreviousTriggers(previous[j]);
+                                string[] candidates = topics.topic(allTopics[i]).listPreviousTriggers(previous[j]);
                                 for (int k = 0; k < candidates.Length; k++)
                                 {
-                                    say("Does the user's message match " + candidates[k] + "?");
+                                    logger.Debug("Does the user's message match " + candidates[k] + "?");
                                     string humanside = triggerRegexp(user, profile, candidates[k]);
-                                    say("Compare " + message + " <=> " + candidates[k] + " (" + humanside + ")");
+                                    logger.Debug("Compare " + message + " <=> " + candidates[k] + " (" + humanside + ")");
 
                                     Regex reH = new Regex("^" + humanside + "$");
                                     foreach (Match mH in reH.Matches(message))
                                     {
-                                        say("It's a match!!!");
+                                        logger.Debug("It's a match!!!");
 
                                         // Make sure it's all valid.
                                         string realTrigger = candidates[k] + "{previous}" + previous[j];
-                                        if (this.topics.topic(allTopics[i]).triggerExists(realTrigger))
+                                        if (topics.topic(allTopics[i]).triggerExists(realTrigger))
                                         {
                                             // Seems to be! Collect the stars.
                                             for (int s = 1; s <= mH.Groups.Count; s++)
                                             {
-                                                say("Add star: " + mH.Groups[s].Value);
-                                                stars.Add(mH.Groups[s].Value);
+                                                var star = mH.Groups[s].Value;
+                                                if (star == null)
+                                                    star = "";
+
+                                                logger.Debug("Add star: " + star);
+                                                stars.Add(star);
                                             }
 
                                             foundMatch = true;
                                             matchedTrigger = candidates[k];
-                                            matched = this.topics.topic(allTopics[i]).trigger(realTrigger);
+                                            matched = topics.topic(allTopics[i]).trigger(realTrigger);
                                         }
 
                                         break;
@@ -1488,7 +904,7 @@ namespace RiveScript
             }
 
             // Search their topic for a match to their trigger.
-            if (foundMatch == false)
+            if (!foundMatch)
             {
                 // Go through the sort buffer for their topic.
                 string[] triggers = topics.topic(topic).listTriggers();
@@ -1498,34 +914,34 @@ namespace RiveScript
 
                     // Prepare the trigger for the regular expression engine.
                     string regexp = triggerRegexp(user, profile, trigger);
-                    say("Try to match \"" + message + "\" against \"" + trigger + "\" (" + regexp + ")");
+                    logger.Debug("Try to match \"" + message + "\" against \"" + trigger + "\" (" + regexp + ")");
 
                     // Is it a match?
                     Regex re = new Regex("^" + regexp + "$");
                     foreach (Match m in re.Matches(message))
                     {
-                        say("The trigger matches! Star count: " + m.Groups.Count);
+                        logger.Debug("The trigger matches! Star count: " + m.Groups.Count);
 
                         // Harvest the stars.
                         int starcount = m.Groups.Count;
                         for (int s = 1; s <= starcount; s++)
                         {
                             string star = (m.Groups[s].Value ?? "");
-                            say("Add star: " + star);
+                            logger.Debug("Add star: " + star);
                             stars.Add(star);
                         }
 
                         // We found a match, but what if the trigger we matched belongs to
                         // an inherited topic? Check for that.
-                        if (this.topics.topic(topic).triggerExists(trigger))
+                        if (topics.topic(topic).triggerExists(trigger))
                         {
                             // No, the trigger does belong to us.
-                            matched = this.topics.topic(topic).trigger(trigger);
+                            matched = topics.topic(topic).trigger(trigger);
                         }
                         else
                         {
-                            say("Trigger doesn't exist under this topic, trying to find it!");
-                            matched = this.topics.findTriggerByInheritance(topic, trigger, 0);
+                            logger.Debug("Trigger doesn't exist under this topic, trying to find it!");
+                            matched = topics.findTriggerByInheritance(topic, trigger, 0);
                         }
 
                         foundMatch = true;
@@ -1541,12 +957,12 @@ namespace RiveScript
             }
 
             // Store what trigger they matched on (matchedTrigger can be blank if they didn't match).
-            profile.set("__lastmatch__", matchedTrigger);
+            profile.setVariable("__lastmatch__", matchedTrigger);
 
             // Did they match anything?
             if (foundMatch)
             {
-                say("They were successfully matched to a trigger!");
+                logger.Debug("They were successfully matched to a trigger!");
 
                 /*---------------------------------*/
                 /*-- Process Their Matched Reply --*/
@@ -1558,20 +974,20 @@ namespace RiveScript
                     // Exists?
                     if (matched == null)
                     {
-                        warn("Unknown error: they matched trigger " + matchedTrigger + ", but it doesn't exist?");
+                        logger.Warn("Unknown error: they matched trigger " + matchedTrigger + ", but it doesn't exist?");
                         foundMatch = false;
                         break;
                     }
 
                     // Get the trigger object.
                     Trigger trigger = matched;
-                    say("The trigger matched belongs to topic " + trigger.topic());
+                    logger.Debug("The trigger matched belongs to topic " + trigger.getTopic());
 
                     // Check for conditions.
                     string[] conditions = trigger.listConditions();
                     if (conditions.Length > 0)
                     {
-                        say("This trigger has some conditions!");
+                        logger.Debug("This trigger has some conditions!");
 
                         // See if any conditions are true.
                         bool truth = false;
@@ -1593,7 +1009,7 @@ namespace RiveScript
                                 // Process tags on both halves.
                                 left = processTags(user, profile, message, left, stars, botstars, step + 1);
                                 right = processTags(user, profile, message, right, stars, botstars, step + 1);
-                                say("Compare: " + left + " " + eq + " " + right);
+                                logger.Debug("Compare: " + left + " " + eq + " " + right);
 
                                 // Defaults
                                 if (left.Length == 0)
@@ -1711,13 +1127,13 @@ namespace RiveScript
                                 {
                                     for (int j = 0; j < weight; j++)
                                     {
-                                        say("Trigger has a redirect (weight " + weight + "): " + redirects[i]);
+                                        logger.Debug("Trigger has a redirect (weight " + weight + "): " + redirects[i]);
                                         bucket.Add(i);
                                     }
                                 }
                                 else
                                 {
-                                    say("Trigger has a redirect (weight " + weight + "): " + redirects[i]);
+                                    logger.Debug("Trigger has a redirect (weight " + weight + "): " + redirects[i]);
                                     bucket.Add(i);
                                 }
 
@@ -1727,7 +1143,7 @@ namespace RiveScript
                         }
                         else
                         {
-                            say("Trigger has a redirect: " + redirects[i]);
+                            logger.Debug("Trigger has a redirect: " + redirects[i]);
                             bucket.Add(i);
                         }
                     }
@@ -1746,13 +1162,13 @@ namespace RiveScript
                                 {
                                     for (int j = 0; j < weight; j++)
                                     {
-                                        say("Trigger has a reply (weight " + weight + "): " + replies[i]);
+                                        logger.Debug("Trigger has a reply (weight " + weight + "): " + replies[i]);
                                         bucket.Add(redirects.Length + i);
                                     }
                                 }
                                 else
                                 {
-                                    say("Trigger has a reply (weight " + weight + "): " + replies[i]);
+                                    logger.Debug("Trigger has a reply (weight " + weight + "): " + replies[i]);
                                     bucket.Add(redirects.Length + i);
                                 }
 
@@ -1762,7 +1178,7 @@ namespace RiveScript
                         }
                         else
                         {
-                            say("Trigger has a reply: " + replies[i]);
+                            logger.Debug("Trigger has a reply: " + replies[i]);
                             bucket.Add(redirects.Length + i);
                         }
                     }
@@ -1772,15 +1188,15 @@ namespace RiveScript
                     if (choices.Length > 0)
                     {
                         int choice = choices[rand.Next(choices.Length)];
-                        say("Possible choices: " + choices.Length + "; chosen: " + choice);
+                        logger.Debug("Possible choices: " + choices.Length + "; chosen: " + choice);
                         if (choice < redirects.Length)
                         {
                             // The choice was a redirect!
                             string redirect = redirects[choice].ReplaceRegex("\\{weight=\\d+\\}", "");
                             redirect = processTags(user, profile, message, redirect, stars, botstars, step);
 
-                            say("Chosen a redirect to " + redirect + "!");
-                            _reply = reply(user, redirect, begin, step + 1);
+                            logger.Debug("Chosen a redirect to " + redirect + "!");
+                            _reply = getReply(user, redirect, begin, step + 1);
                         }
                         else
                         {
@@ -1788,7 +1204,7 @@ namespace RiveScript
                             choice -= redirects.Length;
                             if (choice < replies.Length)
                             {
-                                say("Chosen a reply: " + replies[choice]);
+                                logger.Debug("Chosen a reply: " + replies[choice]);
                                 _reply = replies[choice];
                             }
                         }
@@ -1799,14 +1215,14 @@ namespace RiveScript
             // Still no reply?
             if (!foundMatch)
             {
-                _reply = this.errors.replyNotMatched;
+                _reply = errors.replyNotMatched;
             }
             else if (_reply.Length == 0)
             {
-                _reply = this.errors.replyNotFound;
+                _reply = errors.replyNotFound;
             }
 
-            say("Final reply: " + _reply + "(begin: " + begin + ")");
+            logger.Debug("Final reply: " + _reply + "(begin: " + begin + ")");
 
             // Special tag processing for the BEGIN statement.
             if (begin)
@@ -1823,7 +1239,7 @@ namespace RiveScript
                         string value = mSet.Groups[2].Value;
 
                         // Set the uservar.
-                        profile.set(var, value);
+                        profile.setVariable(var, value);
                         _reply = _reply.Replace(tag, "");
                     }
                 }
@@ -1836,8 +1252,8 @@ namespace RiveScript
                     {
                         string tag = mTopic.Groups[0].Value;
                         topic = mTopic.Groups[1].Value;
-                        say("Set user's topic to: " + topic);
-                        profile.set("topic", topic);
+                        logger.Debug("Set user's topic to: " + topic);
+                        profile.setVariable("topic", topic);
                         _reply = _reply.Replace(tag, "");
                     }
                 }
@@ -1858,21 +1274,22 @@ namespace RiveScript
         /// <param name="profile">Client profile</param>
         /// <param name="trigger">The raw trigger text.</param>
         /// <returns></returns>
-        private string triggerRegexp(string user, Client profile, string trigger)
+        string triggerRegexp(string user, UserData profile, string trigger)
         {
             // If the trigger is simply '*', it needs to become (.*?) so it catches the empty string.
             var regexp = trigger.ReplaceRegex("^\\*$", "<zerowidthstar>");
 
             // Simple regexps are simple.
-            regexp = regexp.ReplaceRegex("\\*", "(.+?)");             // *  ->  (.+?)
-            regexp = regexp.ReplaceRegex("#", "(\\d+?)");         // #  ->  (\d+?)
-            regexp = regexp.ReplaceRegex("_", "(\\w+?)");     // _  ->  ([A-Za-z ]+?)
-            regexp = regexp.ReplaceRegex("\\s*\\{weight=\\d+\\}\\s*", ""); // Remove {weight} tags
-            regexp = regexp.ReplaceRegex("<zerowidthstar>", "(.*?)"); // *  ->  (.*?)
+            regexp = regexp.ReplaceRegex("\\*", "(.+?)");                   // *  ->  (.+?)
+            regexp = regexp.ReplaceRegex("#", "(\\d+?)");                   // #  ->  (\d+?)
+            regexp = regexp.ReplaceRegex("_", "(\\w+?)");                   // _  ->  ([A-Za-z ]+?)
 
-            regexp = regexp.ReplaceRegex("\\|{ 2,}", "|"); //Remove empty entities
-            regexp = regexp.ReplaceRegex("(\\(|\\[)\\|", "$1"); //Remove empty entities from start of alt/opts
-            regexp = regexp.ReplaceRegex("\\| (\\) |\\])", "$1"); //Remove empty entities from end of alt/opts
+            regexp = regexp.ReplaceRegex("\\s*\\{weight=\\d+\\}\\s*", "");  // Remove {weight} tags
+            regexp = regexp.ReplaceRegex("<zerowidthstar>", "(.*?)");       // *  ->  (.*?)
+
+            regexp = regexp.ReplaceRegex("\\|{ 2,}", "|");          //Remove empty entities
+            regexp = regexp.ReplaceRegex("(\\(|\\[)\\|", "$1");     //Remove empty entities from start of alt/opts
+            regexp = regexp.ReplaceRegex("\\| (\\) |\\])", "$1");   //Remove empty entities from end of alt/opts
 
             // Handle optionals.
             if (regexp.IndexOf("[") > -1)
@@ -1927,7 +1344,7 @@ namespace RiveScript
 
             // Make \w more accurate for our purposes.
 
-            if (this.utf8)
+            if (utf8)
             {
                 regexp = regexp.Replace("\\w", "[\\p{L}]");
             }
@@ -2012,8 +1429,8 @@ namespace RiveScript
                 {
                     string tag = mGet.Groups[0].Value;
                     string var = mGet.Groups[1].Value;
-                    //string value = profile.get(var).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
-                    string value = Util.StripNasties(profile.get(var).ToLower(), utf8);
+                    //string value = profile.getVariable(var).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
+                    string value = Util.StripNasties(profile.getVariable(var).ToLower(), utf8);
 
                     // Have this?
                     regexp = regexp.Replace(tag, value);
@@ -2033,7 +1450,7 @@ namespace RiveScript
                     string tag = mInput.Groups[0].Value;
                     int index = int.Parse(mInput.Groups[1].Value);
                     //string text = profile.getInput(index).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
-                    string text = Util.StripNasties(profile.getInput(index).ToLower(), utf8);
+                    string text = Util.StripNasties(profile.history.getInput(index).ToLower(), utf8);
                     regexp = regexp.Replace(tag, text);
                 }
             }
@@ -2046,15 +1463,13 @@ namespace RiveScript
                     string tag = mReply.Groups[0].Value;
                     int index = int.Parse(mReply.Groups[1].Value);
                     //string text = profile.getReply(index).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
-                    string text = Util.StripNasties(profile.getReply(index).ToLower(), utf8);
+                    string text = Util.StripNasties(profile.history.getReply(index).ToLower(), utf8);
                     regexp = regexp.Replace(tag, text);
                 }
             }
 
             return regexp;
         }
-
-
 
         /// <summary>
         /// Process reply tags.
@@ -2067,7 +1482,7 @@ namespace RiveScript
         /// <param name="vbst">The vector of wildcards in any %Previous.</param>
         /// <param name="step">The current recursion depth limit.</param>
         /// <returns></returns>
-        private string processTags(string user, Client profile, string message, string reply,
+        string processTags(string user, UserData profile, string message, string reply,
                                    List<string> vst, List<string> vbst, int step)
         {
             // Pad the stars.
@@ -2106,7 +1521,7 @@ namespace RiveScript
                 {
                     if (giveup++ > depth)
                     {
-                        warn("Infinite loop looking for arrays in reply!");
+                        logger.Warn("Infinite loop looking for arrays in reply!");
                         giveup = 0;
                         break;
                     }
@@ -2170,7 +1585,7 @@ namespace RiveScript
                 {
                     if (giveup++ > depth)
                     {
-                        warn("Infinite loop looking for inputs!");
+                        logger.Warn("Infinite loop looking for inputs!");
                         giveup = 0;
                         break;
                     }
@@ -2178,11 +1593,11 @@ namespace RiveScript
 
                     string tag = mInput.Groups[0].Value;
                     int index = int.Parse(mInput.Groups[1].Value);
-                    //string text = profile.getInput(index).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
-                    string text = Util.StripNasties(profile.getInput(index).ToLower(), utf8);
+                    string text = Util.StripNasties(profile.history.getInput(index).ToLower(), utf8);
                     reply = reply.Replace(tag, text);
                 }
             }
+
             if (reply.IndexOf("<reply") > -1)
             {
                 Regex reReply = new Regex("<reply([0-9])>");
@@ -2190,7 +1605,7 @@ namespace RiveScript
                 {
                     if (giveup++ > depth)
                     {
-                        warn("Infinite loop looking for reply!");
+                        logger.Warn("Infinite loop looking for reply!");
                         giveup = 0;
                         break;
                     }
@@ -2198,7 +1613,7 @@ namespace RiveScript
                     string tag = mReply.Groups[0].Value;
                     int index = int.Parse(mReply.Groups[1].Value);
                     //string text = profile.getReply(index).ToLower().ReplaceRegex("[^a-z0-9 ]+", "");
-                    string text = Util.StripNasties(profile.getReply(index).ToLower(), utf8);
+                    string text = Util.StripNasties(profile.history.getReply(index).ToLower(), utf8);
                     reply = reply.Replace(tag, text);
                 }
             }
@@ -2217,7 +1632,7 @@ namespace RiveScript
                 {
                     if (giveup++ > depth)
                     {
-                        warn("Infinite loop looking for random tag!");
+                        logger.Warn("Infinite loop looking for random tag!");
                         giveup = 0;
                         break;
                     }
@@ -2239,10 +1654,10 @@ namespace RiveScript
                 {
                     string tag = mStream.Groups[0].Value;
                     string code = mStream.Groups[1].Value;
-                    say("Stream new code in: " + code);
+                    logger.Debug("Stream new code in: " + code);
 
                     // Stream it.
-                    this.stream(code);
+                    stream(code);
                     reply = reply.Replace(tag, "");
                 }
             }
@@ -2264,9 +1679,9 @@ namespace RiveScript
                         if (tags[i] == "person")
                         {
                             // Run person substitutions.
-                            say("Run person substitutions: before: " + text);
-                            text = Util.Substitute(person_s, person, text);
-                            say("After: " + text);
+                            logger.Debug("Run person substitutions: before: " + text);
+                            text = substitute(text, person_s, person);
+                            logger.Debug("After: " + text);
                             reply = reply.Replace(tag, text);
                         }
                         else
@@ -2324,7 +1739,7 @@ namespace RiveScript
                         parts = data.Split("=", 2);
                         string name = parts[0];
                         string value = parts[1];
-                        say("Set " + tag + " variable " + name + " = " + value);
+                        logger.Debug("Set " + tag + " variable " + name + " = " + value);
 
                         target.AddOrUpdate(name, value);
                     }
@@ -2347,9 +1762,9 @@ namespace RiveScript
                     parts = data.Split("=", 2);
                     string name = parts[0];
                     string value = parts[1];
-                    say("Set user var " + name + "=" + value);
+                    logger.Debug("Set user var " + name + "=" + value);
                     // Set the uservar.
-                    profile.set(name, value);
+                    profile.setVariable(name, value);
                 }
                 else if (tag == "add" || tag == "sub" || tag == "mult" || tag == "div")
                 {
@@ -2359,9 +1774,9 @@ namespace RiveScript
                     int result = 0;
 
                     // Initialize the variable?
-                    if (profile.get(name) == Constants.Undefined)
+                    if (profile.getVariable(name) == Constants.Undefined)
                     {
-                        profile.set(name, "0");
+                        profile.setVariable(name, "0");
                     }
 
 
@@ -2370,7 +1785,7 @@ namespace RiveScript
                         int value = int.Parse(parts[1]);
                         try
                         {
-                            result = int.Parse(profile.get(name));
+                            result = int.Parse(profile.getVariable(name));
 
                             // Run the operation.
                             if (tag == "add")
@@ -2409,13 +1824,13 @@ namespace RiveScript
                     // No errors?
                     if (insert == "")
                     {
-                        profile.set(name, result.ToString());
+                        profile.setVariable(name, result.ToString());
                     }
                 }
                 else if (tag == "get")
                 {
                     // Get the user var.
-                    insert = profile.get(data);
+                    insert = profile.getVariable(data);
                 }
                 else
                 {
@@ -2439,8 +1854,8 @@ namespace RiveScript
                 {
                     string tag = mTopic.Groups[0].Value;
                     string topic = mTopic.Groups[1].Value;
-                    say("Set user's topic to: " + topic);
-                    profile.set("topic", topic);
+                    logger.Debug("Set user's topic to: " + topic);
+                    profile.setVariable("topic", topic);
                     reply = reply.Replace(tag, "");
                 }
             }
@@ -2457,7 +1872,7 @@ namespace RiveScript
                     string target = mRed.Groups[1].Value.Trim();
 
                     // Do the reply redirect.
-                    string subreply = this.reply(user, target, false, step + 1);
+                    string subreply = this.getReply(user, target, false, step + 1);
                     reply = reply.Replace(tag, subreply);
                 }
             }
@@ -2470,36 +1885,33 @@ namespace RiveScript
                 Regex reCall = new Regex("<call>(.+?)<\\/call>");
                 foreach (Match mCall in reCall.Matches(reply))
                 {
-                    string tag = mCall.Groups[0].Value;
-                    string data = mCall.Groups[1].Value;
-                    string[] parts = data.Split(" ");
-                    string name = parts[0];
-                    List<String> args = new List<String>();
+                    var tag = mCall.Groups[0].Value;
+                    var data = mCall.Groups[1].Value;
+                    var parts = data.Split(" ");
+                    var name = parts[0];
+                    var args = new List<string>();
                     for (int i = 1; i < parts.Length; i++)
                     {
                         args.Add(parts[i]);
                     }
 
                     // See if we know of this object.
-                    if (objects.ContainsKey(name))
+                    if (objectLanguages.ContainsKey(name))
                     {
                         // What language handles it?
-                        string lang = objects[name];
-                        string result = handlers[lang].onCall(name, this, args.ToArray());
+                        string lang = objectLanguages[name];
+                        string result = handlers[lang].Call(name, this, args.ToArray());
                         reply = reply.Replace(tag, result);
                     }
                     else
                     {
-                        reply = reply.Replace(tag, this.errors.objectNotFound);
+                        reply = reply.Replace(tag, errors.objectNotFound);
                     }
                 }
             }
 
             return reply;
-
-
         }
-
 
         /// <summary>
         /// Reformats a string in a certain way: formal, uppercase, lowercase, sentence.
@@ -2507,7 +1919,7 @@ namespace RiveScript
         /// <param name="format">The format you want the string in.</param>
         /// <param name="text">  The text to format.</param>
         /// <returns></returns>
-        private string stringTransform(string format, string text)
+        string stringTransform(string format, string text)
         {
             if (format.Equals("uppercase"))
             {
@@ -2521,19 +1933,19 @@ namespace RiveScript
             {
                 // Capitalize Each First Letter
                 string[] words = text.Split(" ");
-                say("wc: " + words.Length);
+                logger.Debug("wc: " + words.Length);
                 for (int i = 0; i < words.Length; i++)
                 {
-                    say("word: " + words[i]);
+                    logger.Debug("word: " + words[i]);
                     //string[] letters = words[i].split("");
                     string[] letters = words[i].SplitRegex("");
-                    say("cc: " + letters.Length);
+                    logger.Debug("cc: " + letters.Length);
                     if (letters.Length > 1)
                     {
                         //Note : On splitregex, first and last are blank spaces, so use 1 index
                         letters[1] = letters[1].ToUpper();
                         words[i] = String.Join("", letters);
-                        say("new word: " + words[i]);
+                        logger.Debug("new word: " + words[i]);
                     }
                 }
                 return String.Join(" ", words);
@@ -2556,20 +1968,19 @@ namespace RiveScript
             }
         }
 
-
         /// <summary>
         /// Format the user's message to begin reply matching. Lowercases it, runs substitutions,
 	    /// and neutralizes what's left.
         /// </summary>
         /// <param name="message"></param>
         /// <returns></returns>
-        private string formatMessage(string message, bool botReply = false)
+        string formatMessage(string message, bool botReply = false)
         {
             // Lowercase it first.
             message = message.ToLower();
 
             // Run substitutions sanitize.
-            message = Util.Substitute(subs_s, subs, message);
+            message = substitute(message, subs_s, subs);
 
             //Trim start and end
             message = message.TrimStart();
@@ -2582,9 +1993,9 @@ namespace RiveScript
             {
                 message = message.ReplaceRegex("[\\<>]+", "");
 
-                if (this.unicodePunctuation != null)
+                if (unicodePunctuation != null)
                 {
-                    message = this.unicodePunctuation.Replace(message, "");
+                    message = unicodePunctuation.Replace(message, "");
                 }
 
                 // For the bot's reply, also strip common punctuation.
@@ -2602,6 +2013,60 @@ namespace RiveScript
             return message;
         }
 
+        /// <summary>
+        /// Run a substitutions on a string
+        /// </summary>
+        /// <param name="text">Text to apply the substitution</param>
+        /// <param name="sorted"> The sorted list os substitutions patterns to process</param>
+        /// <param name="hash">A hash that pairs the sorted list with the replacement texts</param>
+        /// <returns></returns>
+        string substitute(string text, string[] sorted, IDictionary<string, string> hash)
+        {
+            var ph = new List<string>();
+            var pi = 0;
+
+            for (int i = 0; i < sorted.Length; i++)
+            {
+                var pattern = sorted[i];
+                var result = hash[sorted[i]];
+                //var rot13 = Rot13.Transform(result);
+                ph.Add(result);
+                var placeholder = "<rot13sub>" + pi + "<bus31tor>";
+                pi++;
+
+                //Original JavaCode: var quotemeta = @pattern;
+                //Run escape make sure no conflict like * in substitution
+                var quotemeta = Regex.Escape(@pattern);
+
+                text = text.ReplaceRegex(("^" + quotemeta + "$"), placeholder);
+                text = text.ReplaceRegex(("^" + quotemeta + "(\\W+)"), ("" + placeholder + "$1"));
+                text = text.ReplaceRegex(("(\\W+)" + quotemeta + "(\\W+)"), ("$1" + placeholder + "$2"));
+                text = text.ReplaceRegex(("(\\W+)" + quotemeta + "$"), ("$1" + placeholder + ""));
+            }
+
+            var tries = 0;
+            while (text.IndexOf("<rot13sub>") > -1)
+            {
+                tries++;
+                if (tries > 50)
+                {
+                    Console.WriteLine("[RS] Too many loops in substitution placeholders!");
+                    break;
+                }
+
+                var re = new Regex("<rot13sub>(.+?)<bus31tor>");
+                var mc = re.Matches(text);
+                foreach (Match m in mc)
+                {
+                    var block = m.Groups[0].Value;
+                    var idx = int.Parse(m.Groups[1].Value);
+                    text = text.Replace(block, ph[idx]);
+                }
+            }
+
+            return text;
+        }
+
 
         #endregion
 
@@ -2612,7 +2077,7 @@ namespace RiveScript
         /// </summary>
         public void dumpSorted()
         {
-            var topics = this.topics.listTopics();
+            var topics = this.topics.listTopicsName();
             for (int t = 0; t < topics.Length; t++)
             {
                 var topic = topics[t];
@@ -2634,7 +2099,7 @@ namespace RiveScript
         {
             // Dump the topic list.
             println("{");
-            var topicList = topics.listTopics();
+            var topicList = topics.listTopicsName();
             for (int t = 0; t < topicList.Length; t++)
             {
                 var topic = topicList[t];
@@ -2711,69 +2176,12 @@ namespace RiveScript
             }
         }
 
-        #endregion
-
-        #region Debug Methods
-
         protected void println(string line)
         {
             if (debug)
                 Console.WriteLine(line);
             else
                 System.Diagnostics.Debug.WriteLine(line);
-        }
-
-        /// <summary>
-        /// Print a line of debug text to the terminal.
-        /// </summary>
-        /// <param name="line"></param>
-        protected void say(string line)
-        {
-            if (!debug)
-                return;
-
-            line = "[RS] " + line;
-
-            if (onDebug != null)
-                onDebug.Invoke(line);
-            else
-                Console.WriteLine(line);
-        }
-
-        /// <summary>
-        /// Print a line of warning text including a file name and line number.
-        /// </summary>
-        /// <param name="text"></param>
-        /// <param name="file"></param>
-        /// <param name="line"></param>
-        protected void warn(string text, string file = null, int? line = null)
-        {
-            if (file != null && line != null)
-                text += (" at " + file + " line " + line + ".");
-
-            text = "<RS> " + text;
-
-            if (onDebug != null)
-                onDebug.Invoke(text);
-            else if (debug)
-                Console.WriteLine(text);
-            else
-                System.Diagnostics.Debug.WriteLine(text);
-        }
-
-        /// <summary>
-        /// Print a stack trace to the terminal when debug mode is on.
-        /// </summary>
-        /// <param name="e"></param>
-        protected void trace(System.IO.IOException e)
-        {
-            if (!debug)
-                return;
-
-            if (onDebug != null)
-                onDebug.Invoke(e.StackTrace);
-            else
-                System.Diagnostics.Debug.WriteLine(e.StackTrace);
         }
 
         #endregion

@@ -1,9 +1,4 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RiveScript.Tests
 {
@@ -13,7 +8,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Optional_Start_End_Full_Middle_Alternation()
         {
-            var rs = new RiveScript(true);
+            var rs = new RiveScriptEngine(Config.Debug);
 
             rs.stream(new[] { "+ [*] (when were you born|what is your birthday|what is your bday) [*]",
                               "",
@@ -43,7 +38,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Optional_Start_End_Partial_Middle_Alternation()
         {
-            var rs = new RiveScript(true);
+            var rs = new RiveScriptEngine(Config.Debug);
 
             rs.stream(new[] { "+ [*] when is your (birthday|bday) [*]",
                               "",

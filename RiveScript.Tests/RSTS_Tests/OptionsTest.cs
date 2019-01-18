@@ -1,6 +1,4 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Linq;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace RiveScript.Tests.RSTS
 {
@@ -11,7 +9,7 @@ namespace RiveScript.Tests.RSTS
         public void RSTS_Options__concat()
         {
             //# The concat option is file scoped and doesn't persist across streams.
-            var rs = new RiveScript(debug: true);
+            var rs = new RiveScriptEngine(Config.Debug);
 
             rs.stream(new[] { "// Default concat mode = none",
                               "+ test concat default",

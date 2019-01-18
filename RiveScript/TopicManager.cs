@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RiveScript.AST;
+using System;
 using System.Collections.Generic;
 
 namespace RiveScript
@@ -8,8 +9,9 @@ namespace RiveScript
     /// </summary>
     public class TopicManager
     {
-        private Dictionary<string, Topic> topics = new Dictionary<string, Topic>(); // Hash of managed topics
-        private ICollection<string> lTopics = new List<string>(); // A vector of topics
+        Dictionary<string, Topic> topics = new Dictionary<string, Topic>(); // Hash of managed topics
+        ICollection<string> lTopics = new List<string>(); // A vector of topics
+
 
         /// <summary>
         /// Create a topic manager. Only one per RiveScript interpreter needed.
@@ -23,7 +25,7 @@ namespace RiveScript
         /// <returns></returns>
         public Topic topic(string topic)
         {
-            if (false == topics.ContainsKey(topic))
+            if (!topics.ContainsKey(topic))
             {
                 topics.Add(topic, new Topic(topic));
                 lTopics.Add(topic);
@@ -43,12 +45,17 @@ namespace RiveScript
         }
 
         /// <summary>
-        ///  Retrieve a list of the existing topics.
+        ///  Retrieve a list of the existing topics name.
         /// </summary>
-        public string[] listTopics()
-        {
-            return lTopics.ToArray();
-        }
+        public string[] listTopicsName() => lTopics.ToArray();
+
+
+        /// <summary>
+        ///  Retrieve a list of the existing topics name.
+        /// </summary>
+        public IDictionary<string, Topic> listTopics() => topics;
+
+        public int countTopics() => lTopics.Count;
 
         /// <summary>
         /// Sort the replies in all the topics.This will build trigger lists of
@@ -57,16 +64,19 @@ namespace RiveScript
         /// </summary>
         public void sortReplies()
         {
-            foreach (var topic in this.listTopics())
+            foreach (var topic in listTopicsName())
             {
-
-                var allTrig = this.topicTriggers(topic, 0, 0, false);
+                var allTrig = topicTriggers(topic, 0, 0, false);
 
                 // Make this topic sort using this trigger list.
                 this.topic(topic).sortTriggers(allTrig);
 
                 // Make the topic update its %Previous buffer.
                 this.topic(topic).sortPrevious();
+
+
+                //cache de 
+
             }
         }
 
@@ -78,7 +88,7 @@ namespace RiveScript
         /// <param name="inheritance"></param>
         /// <param name="inherited"></param>
         /// <returns></returns>
-        private string[] topicTriggers(string topic, int depth, int inheritance, bool inherited)
+        string[] topicTriggers(string topic, int depth, int inheritance, bool inherited)
         {
             // Break if we're too deep.
             if (depth > 50)
@@ -112,7 +122,7 @@ namespace RiveScript
                 for (int i = 0; i < includes.Length; i++)
                 {
                     // Recurse.
-                    var recursive = this.topicTriggers(includes[i], (depth + 1), inheritance, false);
+                    var recursive = topicTriggers(includes[i], (depth + 1), inheritance, false);
                     for (int j = 0; j < recursive.Length; j++)
                     {
                         triggers.Add(recursive[j]);
@@ -127,7 +137,7 @@ namespace RiveScript
                 for (int i = 0; i < inherits.Length; i++)
                 {
                     // Recurse.
-                    var recursive = this.topicTriggers(inherits[i], (depth + 1), (inheritance + 1), true);
+                    var recursive = topicTriggers(inherits[i], (depth + 1), (inheritance + 1), true);
                     for (int j = 0; j < recursive.Length; j++)
                     {
                         triggers.Add(recursive[j]);
@@ -208,7 +218,7 @@ namespace RiveScript
                 else
                 {
                     // Recurse.
-                    var match = this.findTriggerByInheritance(inherits[i], pattern, (depth + 1));
+                    var match = findTriggerByInheritance(inherits[i], pattern, (depth + 1));
                     if (match != null)
                     {
                         // Found it!
@@ -230,7 +240,7 @@ namespace RiveScript
                 else
                 {
                     // Recurse.
-                    var match = this.findTriggerByInheritance(includes[i], pattern, (depth + 1));
+                    var match = findTriggerByInheritance(includes[i], pattern, (depth + 1));
                     if (match != null)
                     {
                         // Found it!
@@ -267,7 +277,7 @@ namespace RiveScript
             for (int i = 0; i < includes.Length; i++)
             {
                 //Recurse.
-                var children = this.getTopicTree(includes[i], (depth + 1));
+                var children = getTopicTree(includes[i], (depth + 1));
                 for (int j = 0; j < children.Length; j++)
                 {
                     result.Add(children[j]);
@@ -279,7 +289,7 @@ namespace RiveScript
             for (int i = 0; i < inherits.Length; i++)
             {
                 //Recurse
-                var children = this.getTopicTree(inherits[i], (depth + 1));
+                var children = getTopicTree(inherits[i], (depth + 1));
                 for (int j = 0; j < children.Length; j++)
                 {
                     result.Add(children[j]);

@@ -1,27 +1,28 @@
 ﻿using Microsoft.CSharp;
+using RiveScript.Macro;
 using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 
-namespace RiveScript.lang
+namespace RiveScript.Lang
 {
     public class CSharp : IObjectHandler
     {
-        //THINK: Shoud i have cache assemblies and func delegates or just delegates?
-        private IDictionary<string, Assembly> assemblies = new Dictionary<string, Assembly>();
-        private IDictionary<string, Func<RiveScript, string[], string>> methods = new Dictionary<string, Func<RiveScript, string[], string>>();
-        private string ns = "RiveScript.Objects";
-        private readonly string currentAssembly = null;
-        private readonly string riveAssembly;
+        const string ns = "RiveScript.Objects";
+        readonly string currentAssembly = null;
+        readonly string riveAssembly;
 
-        public CSharp() : this(true) { }
+        readonly IDictionary<string, Assembly> assemblies = new Dictionary<string, Assembly>();
+        readonly IDictionary<string, ISubroutine> macros = new Dictionary<string, ISubroutine>();
+        readonly RiveScriptEngine rs;
 
+        public CSharp(RiveScriptEngine rs) : this(rs, true) { }
 
-        public CSharp(bool tryAddEntryAssembly)
+        public CSharp(RiveScriptEngine rs, bool tryAddEntryAssembly)
         {
+            this.rs = rs ?? throw new ArgumentNullException(nameof(rs), "RiveScript instance muts not be null");
+
             //Get entry assembly name
             if (tryAddEntryAssembly && Assembly.GetEntryAssembly() != null)
             {
@@ -31,45 +32,35 @@ namespace RiveScript.lang
             riveAssembly = System.IO.Path.GetFileName(typeof(IObjectHandler).Assembly.Location);
         }
 
-        public string onCall(string name, RiveScript rs, string[] args)
+        public string Call(string name, RiveScriptEngine rs, string[] args)
         {
-            if (false == assemblies.ContainsKey(name) ||
-                false == methods.ContainsKey(name))
+            if (!macros.ContainsKey(name))
                 return "ERR: Could not find a object code for " + name + ".";
 
-            var del = methods[name];
-
-            return del(rs, args);
+            return macros[name].Call(rs, args);
         }
 
-        public bool onLoad(string name, string[] code)
+        public void Load(string name, string[] code)
         {
             ValidateCode(name, code);
 
             var ass = CreateAssembly(name, code);
             var method = ass.GetType(ns + "." + name).GetMethod("method");
-            var del = (Func<RiveScript, string[], string>)Delegate.CreateDelegate(typeof(Func<RiveScript, string[], string>), method);
+            var del = (Func<RiveScriptEngine, string[], string>)Delegate.CreateDelegate(typeof(Func<RiveScriptEngine, string[], string>), method);
 
-            if (false == assemblies.ContainsKey(name))
-            {
-                assemblies.Add(name, ass);
-            }
-            else
-            {
-                assemblies[name] = ass;
-            }
-
-            if (false == methods.ContainsKey(name))
-            {
-                methods.Add(name, del);
-            }
-            else
-            {
-                methods[name] = del;
-            }
-
-            return true;
+            assemblies.AddOrUpdate(name, ass);
+            macros.AddOrUpdate(name, new DelegateMacro(del));
         }
+
+        public void AddSubroutine(string name, ISubroutine subroutine)
+        {
+            if (subroutine == null)
+                throw new ArgumentNullException(nameof(subroutine), "Subroutine must not be null");
+
+            macros.AddOrUpdate(name, subroutine);
+        }
+
+
 
         protected Assembly CreateAssembly(string name, string[] code)
         {
@@ -172,5 +163,8 @@ namespace RiveScript.lang
             if (false == cs.Contains("return"))
                 throw new InvalidOperationException("ERR: object " + name + " - Has no return statement");
         }
+
+
+
     }
 }

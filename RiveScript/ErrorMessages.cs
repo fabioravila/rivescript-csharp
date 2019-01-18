@@ -1,20 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace RiveScript
+﻿namespace RiveScript
 {
     public class ErrorMessages
     {
         public string replyNotMatched { get; set; }
-
         public string replyNotFound { get; set; }
-
         public string objectNotFound { get; set; }
-
         public string deepRecursion { get; set; }
-
 
         public static ErrorMessages Default
         {

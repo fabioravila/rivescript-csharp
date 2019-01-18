@@ -1,9 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using RiveScript.Exceptions;
 
 namespace RiveScript.Tests
 {
@@ -13,7 +9,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Load_Older_Version_File()
         {
-            var rs = new RiveScript(true);
+            var rs = new RiveScriptEngine(Config.Debug);
 
             var result = rs.stream("! version = 1.8");
             Assert.IsTrue(result);
@@ -23,7 +19,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Load_Same_Version_File()
         {
-            var rs = new RiveScript(true);
+            var rs = new RiveScriptEngine(Config.Debug);
 
             var result = rs.stream("! version = 2.0");
             Assert.IsTrue(result);
@@ -33,10 +29,19 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Load_Newer_Version_File()
         {
-            var rs = new RiveScript(true);
+            var rs = new RiveScriptEngine(Config.Debug);
 
-            var result = rs.stream("! version = 2.1");
-            Assert.IsFalse(result);
+            try
+            {
+                var result = rs.stream("! version = 2.1");
+                Assert.IsFalse(result);
+            }
+            catch (ParserException ex)
+            {
+                return;
+            }
+
+            Assert.Fail();
         }
 
     }

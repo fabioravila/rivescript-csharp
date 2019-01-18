@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -18,7 +19,7 @@ namespace RiveScript
             }
         }
 
-        public static void AddOrUpdate(this IDictionary<string, string> dic, string key, string value)
+        public static void AddOrUpdate<TKey, TValue>(this IDictionary<TKey, TValue> dic, TKey key, TValue value)
         {
             if (dic.ContainsKey(key))
                 dic[key] = value;
@@ -26,11 +27,38 @@ namespace RiveScript
                 dic.Add(key, value);
         }
 
+        public static TValue GetOrDefault<Tkey, TValue>(this IDictionary<Tkey, TValue> dic, Tkey key)
+        {
+            return GetOrDefault(dic, key, default(TValue));
+        }
+
+        public static TValue GetOrDefault<Tkey, TValue>(this IDictionary<Tkey, TValue> dic, Tkey key, TValue defaultValue)
+        {
+            if (dic.ContainsKey(key))
+                return dic[key];
+
+
+            return defaultValue;
+        }
+
+        public static TValue GetOrDefault<Tkey, TValue>(this ConcurrentDictionary<Tkey, TValue> dic, Tkey key, TValue defaultValue)
+        {
+            if (dic.TryGetValue(key, out TValue value))
+                return value;
+
+            return defaultValue;
+        }
+
+        public static TValue GetOrDefault<Tkey, TValue>(this ConcurrentDictionary<Tkey, TValue> dic, Tkey key)
+        {
+            return GetOrDefault(dic, key, default(TValue));
+        }
+
+
         public static string[] Split(this string @this, string pattern)
         {
             return @this.Split(new[] { pattern }, StringSplitOptions.None);
         }
-
 
         public static string[] Split(this string @this, string pattern, int count)
         {

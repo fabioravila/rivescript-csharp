@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace RiveScript.Tests
 {
@@ -9,7 +8,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Simple_Reply()
         {
-            var rs = new RiveScript(utf8: true, debug: true);
+            var rs = new RiveScriptEngine(Config.DebugUTF8);
 
             rs.streamForTest(new[] { "+ olá bot",
                                      "- Olá humano!" });
@@ -23,7 +22,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Complex_Random_With_Conditionals_And_Arrays_Triggers_UTF8()
         {
-            var rs = new RiveScript(utf8: true);
+            var rs = new RiveScriptEngine(Config.UTF8);
 
             rs.streamForTest(new[] { "! array oi = olá oi",
                                      "^ boa noite|bom dia",

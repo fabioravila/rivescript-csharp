@@ -2,18 +2,19 @@
 
 namespace RiveScript
 {
-    internal class StringLongToShortComparer : StringComparer
+    internal class StringWordCountLongToShortComparer : StringComparer
     {
         public override int Compare(string x, string y)
         {
-            //??
-            //x.Length.CompareTo(y.Length);
+            var x_count = Util.CountWords(x);
+            var y_count = Util.CountWords(x);
 
-            if (x.Length < y.Length)
+
+            if (x_count < y_count)
             {
                 return 1;
             }
-            else if (x.Length > y.Length)
+            else if (x_count > y_count)
             {
                 return -1;
             }
@@ -23,7 +24,7 @@ namespace RiveScript
 
         public override bool Equals(string x, string y)
         {
-            return this.Compare(x, y) == 0;
+            return Compare(x, y) == 0;
         }
 
         public override int GetHashCode(string obj)

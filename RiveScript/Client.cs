@@ -72,7 +72,7 @@ namespace RiveScript
         {
             get
             {
-                return this.data;
+                return data;
             }
         }
 
@@ -83,7 +83,7 @@ namespace RiveScript
         /// <returns></returns>
         public bool replaceData(IDictionary<string, string> newData)
         {
-            this.data = newData;
+            data = newData;
             return true;
         }
 

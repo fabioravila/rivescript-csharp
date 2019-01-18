@@ -1,14 +1,13 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace RiveScript.Tests
 {
     [TestClass]
     public class InheritsIncludesTest
     {
-        private RiveScript getWithGlobalTopic(string[] code)
+        RiveScriptEngine getWithGlobalTopic(string[] code)
         {
-            var rs = new RiveScript(true);
+            var rs = new RiveScriptEngine(Config.Debug);
             rs.stream(new[] { "+ go topic *",
                               "- {topic=<star>}ok",
                               "> topic global",

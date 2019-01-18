@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using RiveScript;
-using RiveScript.lang;
 using System.Threading;
 
 namespace Playground
@@ -24,7 +19,8 @@ namespace Playground
         {
             //It is an experience space for the library being developed
 
-            //var rs = new RiveScript.RiveScript();
+            var rs = new RiveScript.RiveScriptEngine();
+
             //rs.setHandler("csharp", new CSharp());
             //rs.stream(new[] { "",
             //                  "",

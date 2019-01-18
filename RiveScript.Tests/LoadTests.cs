@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace RiveScript.Tests
 {
@@ -13,7 +12,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Load_Simple_File_Commom_Extension()
         {
-            var rs = new RiveScript(true);
+            var rs = new RiveScriptEngine(Config.Debug);
 
             var result = rs.loadFile("TestData/basic_reply_1.rs");
             Assert.IsTrue(result);
@@ -26,7 +25,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Load_Simple_File_Commom_Extension_2()
         {
-            var rs = new RiveScript(true);
+            var rs = new RiveScriptEngine(Config.Debug);
 
             var result = rs.loadFile("TestData/basic_reply_2.rive");
             Assert.IsTrue(result);
@@ -39,7 +38,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Load_Simple_File_Non_Common_Extension()
         {
-            var rs = new RiveScript(true);
+            var rs = new RiveScriptEngine(Config.Debug);
 
             var result = rs.loadFile("TestData/basic_reply_3.txt");
             Assert.IsTrue(result);
@@ -52,7 +51,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Load_All_Directory_No_Extension_Specify()
         {
-            var rs = new RiveScript(true);
+            var rs = new RiveScriptEngine(Config.Debug);
 
             var result = rs.loadDirectory("TestData");
             Assert.IsTrue(result);
@@ -68,7 +67,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Load_All_Directory_With_Extension_Specify()
         {
-            var rs = new RiveScript(true);
+            var rs = new RiveScriptEngine(Config.Debug);
 
             var result = rs.loadDirectory("TestData", new[] { ".rs" });
             Assert.IsTrue(result);
@@ -85,7 +84,7 @@ namespace RiveScript.Tests
         [TestMethod]
         public void Load_Stream_Single_String()
         {
-            var rs = new RiveScript(true);
+            var rs = new RiveScriptEngine(Config.Debug);
 
             var result = rs.stream("+ hello bot\n - Hello human!");
             Assert.IsTrue(result);
