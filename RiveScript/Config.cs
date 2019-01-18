@@ -9,6 +9,8 @@ namespace RiveScript
         public const int DEFAULT_DEPTH = 50;
         public static readonly string DEFAULT_UNICODE_PUNCTUATION_PATTERN = "[., !?;:]";
 
+        public static ConcatMode DEFAULT_CONCAT = ConcatMode.NONE;
+
 
         public bool debug { get; set; }
         public bool utf8 { get; set; }
@@ -21,6 +23,8 @@ namespace RiveScript
         public Action<string> onDebug { get; set; }
         public ILogger logger { get; set; }
         public ISessionManager sessionManager { get; set; }
+        public ConcatMode concat { get; set; }
+
 
         public static Config Default
         {
@@ -38,7 +42,8 @@ namespace RiveScript
                     strict = true,
                     utf8 = false,
                     logger = null,
-                    sessionManager = null
+                    sessionManager = null,
+                    concat = DEFAULT_CONCAT
                 };
             }
         }

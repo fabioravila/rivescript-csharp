@@ -7,9 +7,10 @@ using System.Reflection;
 
 namespace RiveScript.Lang
 {
-    public class CSharp : IObjectHandler
+    public class CSharpObjectHandler : IObjectHandler
     {
         const string ns = "RiveScript.Objects";
+        static string rs_engine_class_name = typeof(RiveScriptEngine).Name;
         readonly string currentAssembly = null;
         readonly string riveAssembly;
 
@@ -17,9 +18,9 @@ namespace RiveScript.Lang
         readonly IDictionary<string, ISubroutine> macros = new Dictionary<string, ISubroutine>();
         readonly RiveScriptEngine rs;
 
-        public CSharp(RiveScriptEngine rs) : this(rs, true) { }
+        public CSharpObjectHandler(RiveScriptEngine rs) : this(rs, true) { }
 
-        public CSharp(RiveScriptEngine rs, bool tryAddEntryAssembly)
+        public CSharpObjectHandler(RiveScriptEngine rs, bool tryAddEntryAssembly)
         {
             this.rs = rs ?? throw new ArgumentNullException(nameof(rs), "RiveScript instance muts not be null");
 
@@ -124,7 +125,7 @@ namespace RiveScript.Lang
             final.Add("{");
             final.Add("   public class " + name);
             final.Add("   {");
-            final.Add("       public static string method(RiveScript rs, string[] args)");
+            final.Add($"       public static string method({rs_engine_class_name} rs, string[] args)");
             final.Add("       {");
             final.AddRange(code);
             final.Add("       }");
@@ -134,7 +135,7 @@ namespace RiveScript.Lang
 
             using (var provider = new CSharpCodeProvider())
             {
-                var result = provider.CompileAssemblyFromSource(parameters, String.Join(Environment.NewLine, final));
+                var result = provider.CompileAssemblyFromSource(parameters, string.Join(Environment.NewLine, final));
                 if (result.Errors.HasErrors)
                 {
                     var sr = "";

@@ -57,6 +57,7 @@
     <Compile Include="DocumentVersionTest.cs" />
     <Compile Include="Helper\ContextHelper.cs" />
     <Compile Include="Issue19JavaVersionTest.cs" />
+    <Compile Include="Issue40JavaVersionTest.cs" />
     <Compile Include="MultiUsersTest.cs" />
     <Compile Include="OptionalsWithAlternationsTest.cs" />
     <Compile Include="RandomReplyTest.cs" />
