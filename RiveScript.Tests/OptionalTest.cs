@@ -211,5 +211,21 @@ namespace RiveScript.Tests
             Assert.AreEqual("reply", r9);
             Assert.AreEqual("reply", r10);
         }
+
+        [Ignore]
+        [TestMethod]
+        
+        public void Optional_With_WildCard_Multiple_Issue_42_JavaVersion()
+        {
+            var rs = TestHelper.getStreamed(new[] { "+ my favorite [_] is *",
+                                                    "- Why is it <star1>?",
+                                                    "",
+                                                    "+ i have [#] questions about *",
+                                                    "- Well I don't have any answers about <star1>.",
+                                                    });
+
+            rs.reply("my favorite color is red").AssertAreEqual("Why is it red?");
+            rs.reply("i have 2 questions about bots").AssertAreEqual("Well I don't have any answers about bots.");
+        }
     }
 }

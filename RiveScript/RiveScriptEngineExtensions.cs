@@ -3,7 +3,7 @@ using System;
 
 namespace RiveScript
 {
-    public static class RiveScriptExtensions
+    public static class RiveScriptEngineExtensions
     {
      
     }

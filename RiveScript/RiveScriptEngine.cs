@@ -27,6 +27,7 @@ namespace RiveScript
         Regex unicodePunctuation;
         Action<string> onDebug = null;
         string _error = "";                  // Last error text
+        ConcatMode concat;
 
         //Logger
         ILogger logger;
@@ -35,7 +36,7 @@ namespace RiveScript
         // Bot's users' data structure.
         ISessionManager sessions;
 
-        CSharp csharpHandler;
+        CSharpObjectHandler csharpHandler;
 
         //THe AST parser
         Parser parser;
@@ -99,6 +100,7 @@ namespace RiveScript
             onDebug = config.onDebug;
             unicodePunctuation = new Regex($"{config.unicodePonctuations}/g");
             depth = config.depth;
+            concat = config.concat;
 
             if (depth <= 0) depth = Config.DEFAULT_DEPTH;//Adjust depth
 
@@ -109,9 +111,9 @@ namespace RiveScript
             topics = new TopicManager();
 
             //Create parser
-            parser = new Parser(new ParserConfig(strict: strict, utf8: utf8, forceCase: forceCase), topics);
+            parser = new Parser(new ParserConfig(strict: strict, utf8: utf8, forceCase: forceCase, concat: concat, logger: logger), topics);
 
-            csharpHandler = new CSharp(this);
+            csharpHandler = new CSharpObjectHandler(this);
             //CSharp handler is default
             handlers.Add(Constants.CSharpHandlerName, csharpHandler);
         }
@@ -323,9 +325,10 @@ namespace RiveScript
         public void setSubroutine(string name, ISubroutine subroutine)
         {
             csharpHandler.AddSubroutine(name, subroutine);
+            objectLanguages.Add(name, Constants.CSharpHandlerName);
         }
 
-        public void setSubroutine(this RiveScriptEngine rs, string name, Func<RiveScriptEngine, string[], string> subroutine)
+        public void setSubroutine(RiveScriptEngine rs, string name, Func<RiveScriptEngine, string[], string> subroutine)
         {
             rs.setSubroutine(name, new DelegateMacro(subroutine));
         }
@@ -441,6 +444,17 @@ namespace RiveScript
         public string getVariable(string name)
         {
             return vars.GetOrDefault(name);
+        }
+
+        public IDictionary<string, string> getVariables()
+        {
+            return vars;
+        }
+
+
+        public IDictionary<string, Topic> getTopics()
+        {
+            return topics.listTopics();
         }
 
         /// <summary>
@@ -1289,7 +1303,10 @@ namespace RiveScript
 
             regexp = regexp.ReplaceRegex("\\|{ 2,}", "|");          //Remove empty entities
             regexp = regexp.ReplaceRegex("(\\(|\\[)\\|", "$1");     //Remove empty entities from start of alt/opts
-            regexp = regexp.ReplaceRegex("\\| (\\) |\\])", "$1");   //Remove empty entities from end of alt/opts
+            regexp = regexp.ReplaceRegex("\\|(\\)|\\])", "$1");   //Remove empty entities from end of alt/opts
+
+
+
 
             // Handle optionals.
             if (regexp.IndexOf("[") > -1)
@@ -1322,16 +1339,13 @@ namespace RiveScript
                     }
                     string pipes = re.ToString();
 
+                    //TODO: this should fix the Issue#42 Java, but cause a infinite loop in some cases
                     // If this optional had a star or anything in it, e.g. [*],
                     // make it non-matching.
                     //pipes = pipes.ReplaceRegex("\\(.+?\\)", "(?:.+?)");
-                    //pipes = pipes.ReplaceRegex("\\(\\d+?\\)", "(?:\\\\d+?)");
-                    //pipes = pipes.ReplaceRegex("\\(\\w+?\\)", "(?:\\\\w+?)");
+                    //pipes = pipes.ReplaceRegex("\\(\\d+?\\)", "(?:\\d+?)");
+                    //pipes = pipes.ReplaceRegex("\\(\\w+?\\)", "(?:\\w+?)");
 
-
-                    pipes = pipes.ReplaceRegex("\\(\\.\\+\\?\\)", "(?:.+?)");
-                    pipes = pipes.ReplaceRegex("\\(\\d\\+\\?\\)", "(?:\\\\d+?)");
-                    pipes = pipes.ReplaceRegex("\\(\\w\\+\\?\\)", "(?:\\\\w+?)");
 
                     // Put the new text in.
                     //pipes = "(?:" + pipes + "|\\s*)";
@@ -1467,6 +1481,7 @@ namespace RiveScript
                     regexp = regexp.Replace(tag, text);
                 }
             }
+
 
             return regexp;
         }
@@ -1732,7 +1747,7 @@ namespace RiveScript
                 if (tag == "bot" || tag == "env")
                 {
                     // <bot> and <env> tags are similar
-                    IDictionary<string, string> target = (tag == "bot") ? vars : globals;
+                    var target = (tag == "bot") ? vars : globals;
                     if (data.IndexOf("=") > -1)
                     {
                         // Assigning a variable
@@ -1760,16 +1775,26 @@ namespace RiveScript
                 {
                     // <set> user vars
                     parts = data.Split("=", 2);
-                    string name = parts[0];
-                    string value = parts[1];
-                    logger.Debug("Set user var " + name + "=" + value);
-                    // Set the uservar.
-                    profile.setVariable(name, value);
+
+                    if (parts.Length > 1)
+                    {
+                        string name = parts[0];
+                        string value = parts[1];
+                        logger.Debug("Set user var " + name + "=" + value);
+                        // Set the uservar.
+                        profile.setVariable(name, value);
+                    }
+                    else
+                    {
+                        logger.Warn($"Malformed <set> tag: {match}");
+                    }
+
+
                 }
                 else if (tag == "add" || tag == "sub" || tag == "mult" || tag == "div")
                 {
                     // Math operator tags
-                    parts = data.Split("=");
+                    parts = data.Split("=", 2);
                     string name = parts[0];
                     int result = 0;
 
@@ -1887,13 +1912,16 @@ namespace RiveScript
                 {
                     var tag = mCall.Groups[0].Value;
                     var data = mCall.Groups[1].Value;
-                    var parts = data.Split(" ");
+
+                    var parts = data.Split(" ", 2);
                     var name = parts[0];
+
                     var args = new List<string>();
-                    for (int i = 1; i < parts.Length; i++)
+                    if (parts.Length >= 2)
                     {
-                        args.Add(parts[i]);
+                        args = parseCallArgsString(parts[1]);
                     }
+
 
                     // See if we know of this object.
                     if (objectLanguages.ContainsKey(name))
@@ -1907,6 +1935,9 @@ namespace RiveScript
                     {
                         reply = reply.Replace(tag, errors.objectNotFound);
                     }
+
+                    if (reply == null)
+                        reply = "";
                 }
             }
 
@@ -2067,6 +2098,52 @@ namespace RiveScript
             return text;
         }
 
+        List<string> parseCallArgsString(string args)
+        {
+            if (string.IsNullOrWhiteSpace(args))
+                return new List<string>();
+
+            var result = new List<string>();
+            var buffer = "";
+            bool insideAString = false;
+
+            if (args != null)
+            {
+                foreach (var c in args.ToCharArray())
+                {
+                    if (char.IsWhiteSpace(c) && !insideAString)
+                    {
+                        if (buffer.Length > 0)
+                        {
+                            result.Add(buffer);
+                        }
+                        buffer = "";
+                        continue;
+                    }
+                    if (c == '"')
+                    {
+                        if (insideAString)
+                        {
+                            if (buffer.Length > 0)
+                            {
+                                result.Add(buffer);
+                            }
+                            buffer = "";
+                        }
+                        insideAString = !insideAString;
+                        continue;
+                    }
+                    buffer += c;
+                }
+
+                if (buffer.Length > 0)
+                {
+                    result.Add(buffer);
+                }
+            }
+
+            return result;
+        }
 
         #endregion
 

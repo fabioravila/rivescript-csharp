@@ -27,21 +27,17 @@ namespace RiveScript.Parse
         const string CMD_CONDITION = "*";
         const string CMD_LABEL = ">";
         const string CMD_ENDLABEL = "<";
-        static IDictionary<string, string> concatModes;
-
 
         static Parser()
         {
-            concatModes = new Dictionary<string, string>();
-            concatModes.Add("none", "");
-            concatModes.Add("newline", "\n");
-            concatModes.Add("space", " ");
+
         }
 
         bool strict;
         bool utf8;
         bool forceCase;
-        ILogger logger = new EmptyLogger(); //TODO adjust
+        ConcatMode concat;
+        ILogger logger;
         TopicManager topicManager;
 
         public Parser(TopicManager topicManager) : this(null, topicManager) { }
@@ -53,10 +49,11 @@ namespace RiveScript.Parse
 
             this.topicManager = topicManager ?? throw new ArgumentNullException(nameof(topicManager), "Topicmanager instance must be not null");
 
-
             strict = config.strict;
             utf8 = config.utf8;
             forceCase = config.forceCase;
+            concat = config.concat;
+            logger = config.logger ?? new EmptyLogger();
         }
 
         public Root parse(string filename, string[] code)
@@ -97,13 +94,12 @@ namespace RiveScript.Parse
             for (int i = 0; i < code.Length; i++)
             {
                 lineno++; // Increment the line counter.
-                string line = code[i];
+                string line = code[i] ?? "";
                 logger.Debug("Original Line: " + line);
-
-
 
                 // Trim the line of whitespaces.
                 line = Util.Strip(line);
+
 
                 if (line.Length == 0)
                     continue; //Skip blank line
@@ -139,6 +135,7 @@ namespace RiveScript.Parse
 
                     continue;
                 }
+               
 
                 // Look for comments.
                 if (line.StartsWith("/*"))
@@ -277,12 +274,14 @@ namespace RiveScript.Parse
                                 if (peekCmd.Equals(CMD_CONTINUE))
                                 {
                                     // Concatenation character?
-                                    string concatMode = local_options["concat"];
-                                    string concatChar = "";
-                                    if (concatMode != null && concatModes.ContainsKey(concatMode))
-                                        concatChar = concatModes[concatMode];
+                                    ConcatMode concatMode = null;
+                                    if (local_options.ContainsKey("concat"))
+                                        concatMode = ConcatMode.FromName(local_options["concat"]);
 
-                                    line += concatChar + peek;
+                                    if (concatMode == null)
+                                        concatMode = concat ?? Config.DEFAULT_CONCAT;
+
+                                    line += concatMode.ConcatChar + peek;
                                 }
                                 else
                                 {
@@ -581,7 +580,7 @@ namespace RiveScript.Parse
                 {
                     // + TRIGGER
                     logger.Debug("\t+ TRIGGER pattern: " + line);
-                    
+
                     //currentTriggerObject = new Trigger(line);
 
                     //if (previous.Length > 0)

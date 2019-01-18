@@ -11,7 +11,7 @@ namespace RiveScript.Tests
         public void Hello_World_Simple_Code_AndChsrpHandlerIsDefault()
         {
             var rs = new RiveScriptEngine();
-            var oh = new CSharp(rs);
+            var oh = new CSharpObjectHandler(rs);
 
             oh.Load("test", new string[] { "return \"Hello world\"; " });
 
@@ -24,7 +24,7 @@ namespace RiveScript.Tests
         public void Reply_RS_Instance()
         {
             var rs = new RiveScriptEngine();
-            var oh = new CSharp(rs);
+            var oh = new CSharpObjectHandler(rs);
 
             oh.Load("test", new string[] { "return rs.GetHashCode().ToString(); " });
 
@@ -37,7 +37,7 @@ namespace RiveScript.Tests
         public void Reply_Concatenet_Args_Id()
         {
             var rs = new RiveScriptEngine();
-            var oh = new CSharp(rs);
+            var oh = new CSharpObjectHandler(rs);
 
             oh.Load("test", new string[] { "return String.Join(\",\", args); " });
 
@@ -50,7 +50,7 @@ namespace RiveScript.Tests
         public void Reply_CurrentUser_Not_Initialized()
         {
             var rs = new RiveScriptEngine();
-            var oh = new CSharp(rs);
+            var oh = new CSharpObjectHandler(rs);
 
             oh.Load("test", new string[] { "return rs.currentUser();" });
 

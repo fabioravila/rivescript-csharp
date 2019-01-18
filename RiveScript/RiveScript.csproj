@@ -46,6 +46,7 @@
     <Compile Include="Client.cs" />
     <Compile Include="ClientManager.cs" />
     <Compile Include="Cmd\Shell.cs" />
+    <Compile Include="ConcatMode.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="ErrorMessages.cs" />
     <Compile Include="Exceptions\DeepRecursonExcetion.cs" />
@@ -63,7 +64,7 @@
     <Compile Include="ILogger.cs" />
     <Compile Include="Macro\DelegateMacro.cs" />
     <Compile Include="Macro\IObjectHandler.cs" />
-    <Compile Include="Lang\CSharp.cs" />
+    <Compile Include="Lang\CSharpObjectHandler.cs" />
     <Compile Include="Macro\ISubroutine.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Parse\Parser.cs" />
@@ -74,11 +75,12 @@
     <Compile Include="Regexp\Regexp.cs" />
     <Compile Include="RiveScriptEngine.cs" />
     <Compile Include="RiveScriptException.cs" />
-    <Compile Include="RiveScriptExtensions.cs" />
+    <Compile Include="RiveScriptEngineExtensions.cs" />
     <Compile Include="AST\Topic.cs" />
     <Compile Include="Session\ConcurrentDictionarySessionManager.cs" />
     <Compile Include="Session\History.cs" />
     <Compile Include="Session\ISessionManager.cs" />
+    <Compile Include="Session\NoOpSessionManager.cs" />
     <Compile Include="Session\ThawAction.cs" />
     <Compile Include="Session\UserData.cs" />
     <Compile Include="Sorting\SortBuffer.cs" />
