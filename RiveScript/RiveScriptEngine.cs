@@ -47,7 +47,6 @@ namespace RiveScript
         // Object handlers //TODO: At this moment, just have a CSHarpHander
         IDictionary<string, IObjectHandler> handlers = new Dictionary<string, IObjectHandler>();
         IDictionary<string, string> objectLanguages = new Dictionary<string, string>(); // name->language mappers
-        IDictionary<string, ISubroutine> subroutines;        // Java object handlers
 
         // Simpler internal data structures.
         ICollection<string> listTopics = new List<string>();                                                // vector containing topic list (for quicker lookups)
