@@ -1,0 +1,12 @@
+C:\Users\effacestudios\Documents\Visual Studio 2017\Projects\RiveScript CSharp\RiveScript CSharp\obj\Debug\RiveScript CSharp.csprojAssemblyReference.cache
+C:\Users\effacestudios\Documents\Visual Studio 2017\Projects\RiveScript CSharp\RiveScript CSharp\obj\Debug\RiveScript_CSharp.Form1.resources
+C:\Users\effacestudios\Documents\Visual Studio 2017\Projects\RiveScript CSharp\RiveScript CSharp\obj\Debug\RiveScript_CSharp.Properties.Resources.resources
+C:\Users\effacestudios\Documents\Visual Studio 2017\Projects\RiveScript CSharp\RiveScript CSharp\obj\Debug\RiveScript CSharp.csproj.GenerateResource.cache
+C:\Users\effacestudios\Documents\Visual Studio 2017\Projects\RiveScript CSharp\RiveScript CSharp\obj\Debug\RiveScript CSharp.csproj.CoreCompileInputs.cache
+C:\Users\effacestudios\Documents\Visual Studio 2017\Projects\RiveScript CSharp\RiveScript CSharp\bin\Debug\RiveScript CSharp.exe.config
+C:\Users\effacestudios\Documents\Visual Studio 2017\Projects\RiveScript CSharp\RiveScript CSharp\bin\Debug\RiveScript CSharp.exe
+C:\Users\effacestudios\Documents\Visual Studio 2017\Projects\RiveScript CSharp\RiveScript CSharp\bin\Debug\RiveScript CSharp.pdb
+C:\Users\effacestudios\Documents\Visual Studio 2017\Projects\RiveScript CSharp\RiveScript CSharp\bin\Debug\RiveScript.dll
+C:\Users\effacestudios\Documents\Visual Studio 2017\Projects\RiveScript CSharp\RiveScript CSharp\obj\Debug\RiveScript CSharp.csproj.CopyComplete
+C:\Users\effacestudios\Documents\Visual Studio 2017\Projects\RiveScript CSharp\RiveScript CSharp\obj\Debug\RiveScript CSharp.exe
+C:\Users\effacestudios\Documents\Visual Studio 2017\Projects\RiveScript CSharp\RiveScript CSharp\obj\Debug\RiveScript CSharp.pdb
