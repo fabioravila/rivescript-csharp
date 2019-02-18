@@ -29,7 +29,7 @@ PS: This is my first public library, then I'm sorry for the lack of knowledge of
 - [x] Push to github on public repository
 - [x] Develop a native objects for csharp
 - [x] Migrate last fixes and changes from rivescript-java since jan-2016 (some push a lot)
-- [x] Create a RSBot Demo Script ([By Efface Studios](https://www.effacestudios.com)) 
+- [x] Create a RSBot Demo Script (By [Efface Studios](https://www.effacestudios.com)) 
 - [ ] Complete test based on rsts
 - [ ] Complete the code documentation and adjust appveyor to build and release on tag
 - [ ] [...]
