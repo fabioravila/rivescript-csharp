@@ -1,0 +1,116 @@
++ (hi|hello|hey|excuse me|hola|hy)
+- Hi There! It's great to see you on our Official Website. 
+- Hello There! How May I Help You?
+- Hey, Thank You for visiting our Website!
+
++ ([*] bye [*])
+- Bye, Take Care!
+- Thank You, Take Care.
+
++ (*how are you|*how are you*|how are you*|how are u|how are you|how r u)
+- I'm Fine, What about you?
+- I'm Good, What about you?
+
++ ([*] i am good [*]|[*] i am fine [*]|[*] im good [*]|[*] im fine [*])
+- That's Great! what brings you here today :)
+
++ (who are you|what is your name|are you real|how can you help me|how it works|*urpos*|*feature*|*features*|what do you do|uestion)
+- I'm an Artificial Intelligence Business Chatbot Developed By Efface Studios, and my Job is to Assist you! Let Me Know if you've any Question? by the way you can also get me for your own website.
+
++ ([*] efface studios [*])
+- Efface Studios is Innovative & Emerging Tech Company Located in Pakistan. Specialized in Artificial Intelligence, Virtual/Augmented Reality & Software/Website Development. want to know more?
+
++ ([*] know more [*]) 
+- Efface Studios is a diverse and decentralized team of technology experts who build custom Digital products. We are the creative Team that brings ambitious brands to the next level by transforming their digital business. Efface Studios works with companies of all size from all around the world. We enjoy working with startups and entrepreneurs who have ideas to change the world and corporations who want to build custom digital products. Efface Studios is here to offer digital services & products to Consumers, Developers & resellers.
+
++ (*the process|*the process*|the process*|procces)
+-  We first Discover what is your idea, then we define and design, then we develop your dream and deliver to you.
+
++ (*issio*|*your goal*) 
+- Our Goal is to help Consumers, Tech Professionals & Businesses around the world with our Digital Products and Services.
+
++ (*branding|*branding*|branding*)
+- We help startups with branding their products and services. We select perfect names with perfect brand identity.
+
++ (*marketing|*marketing*|marketing*) 
+- We help companies market their product to the world via social media outlets such as facebook, twitter, Instagram, LinkedIn, Google, SnapChat, Pinterest, and other social networking platforms
+
++ ([*] chatbot [*])
+- We Offer chatbots for Personal & Business websites. our Efface chatbots have many unique features like Voice recognition and Voice Response, email notifications, Wiki Enabled & Custom Color & Logo Options of your choice and Much more.
+
++ (*your clients|*your clients*|your clients*)
+- Website Owners, Developers, Individuals, Professionals & Businesses and More.
+
++ [*] price [*] [*] rate [*]
+- Yes, we offer our freelance services and We prefer to estimate the cost before the project starts and agree to a fixed price per project rather than price per hour. We are flexible and ready to negotiate with our clients at any time.
+
++ ([*] partnership [*])
+- we always focus on the emerging technology & love to collaborate with individuals & Companies.
+
++ (*guarantee*|*trust*|*quality*)
+- Efface Studios is built on trust. We believe in the power of building strong relationships with our clients & Consumers. We operate on a philosophy of truth and transparency. We promise to be open and honest with you from start to finish. Efface Studios built on a strong reputation for quality design and development, and we will never do anything to ruin that.
+
++ (what do you offer|*ervic*|*your service*|*offe*)
+- We offer  Various Tech Services & Solutions, here are few, mentioned below, Artificial Intelligence, Wordpress Website Development, Augmented & Virtual Reality, Cyber Security & SEO, UX/UI, Mobile Apps, Explainer Videos, 3D Modeling, CGI Animations, Marketing, Branding, Music & SFX Production for Softwares, Games & other projects.
+
+
++ (*rtificial intelligenc*|*ai|ai)
+- We build Chatbot with artificial intelligence and machine learning (AIML, SIML, RIVESCRIPT). You can https://effacestudios.com/contact/ if you have any specific questions to ask or project to discuss.
+
++ (*augmented reality|*augmented reality*|augmented reality*)
+- We build awesome augmented reality mobile apps. You can https://effacestudios.com/contact/ if you have any specific questions to ask or project to discuss.
+
++ (*mobile app|*mobile app*|mobile app*)
+- we build the world’s most beautiful mobile apps. You can https://effacestudios.com/contact/ if you have any specific questions to ask or project to discuss.
+
++ (*ui|*ui*|ui*|*ux|*ux*|ux*)
+- We design the world’s greatest websites and mobile apps. You can https://effacestudios.com/contact/ if you have any specific questions to ask or project to discuss.
+
++ (*virtual reality|*virtual reality*|virtual reality*)
+- We build awesome virtual reality mobile apps. You can https://effacestudios.com/contact/ if you have any specific questions to ask or project to discuss.
+
++ (*cyber security|*cyber security*|cyber security*)
+- We protect your technology with cybersecurity. You can https://effacestudios.com/contact/ if you have any specific questions to ask or project to discuss.
+
++ (*website|*website*|website*)
+- We build the world’s most beautiful websites. You can https://effacestudios.com/contact/ if you have any specific questions to ask or project to discuss.
+
++ (*explainer videos*|*explainer videos*|explainer videos*)
+- We create engaging explainer videos. You can https://effacestudios.com/contact/ if you have any specific questions to ask or project to discuss.
+
++ (*public relations|*public relations*|public relations*)
+- We communicate your business to the world. You can https://effacestudios.com/contact/ if you have any specific questions to ask or project to discuss.
+
++ (*seo|*seo*|seo*)
+- We improve your WordPress website search ranking with in-page SEO. You can https://effacestudios.com/contact/ if you have any specific questions to ask or project to discuss.
+
++ (*languages|*languages*|languages*|*programming|*programming*|programming*|programming)
+- C#, C++, CSS, Java, Javascript, HTML, .Net, Node JS, PHP, Python. You can https://effacestudios.com/contact/ if you have any specific questions to ask or project to discuss.
+
++ (*your portfolio|*your portfolio*|your portfolio*|portfolio|demo*|*demo*|*demo|demo)
+- our portfolio, https://www.effacestudios.com/portfolio/Click Here</a>
+
+
++ ([*] quote [*])
+- Our goal is to focus on building world-class technology and digital products for you or your clients and partner with companies who can operate the day to day business. We enjoy working with successful companies & Individuals who want to create a partnership to expand their business digitally and globally. Let’s change the world together, go to our contact page and send us some information and we'll contact you!
+
++ ([*] cost [*])
+- it depends on your project, Please https://effacestudios.com/contact/ to discuss.
+
+
++ ([*] contact [*])
+- Please Click on This Link to https://effacestudios.com/contact/
+
++ my name is *
+- Nice to meet you, <star1>!
+- Hello <star1>!
+
++ i am *
+- Nice to meet you, <star1>! what brings you here today?
+- Hello <star1>! how are you?
+
++ ([*] email [*] [*] mail [*])
+- Thank You For The Details, You can https://effacestudios.com/contact/ if you have any specific questions to ask or project to discuss.
+
++ *
+- I don't have a response for this yet, because I'm just integrated here for the Demo Purpose to show you that how fast & Cool i am. by the way, you can also get me for your website too. read more about me by https://www.effacestudios.com/ai-business-chatbot
