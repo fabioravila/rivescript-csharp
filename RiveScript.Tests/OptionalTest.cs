@@ -212,7 +212,6 @@ namespace RiveScript.Tests
             Assert.AreEqual("reply", r10);
         }
 
-        [Ignore]
         [TestMethod]
         
         public void Optional_With_WildCard_Multiple_Issue_42_JavaVersion()

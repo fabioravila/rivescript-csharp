@@ -1300,7 +1300,7 @@ namespace RiveScript
             regexp = regexp.ReplaceRegex("\\s*\\{weight=\\d+\\}\\s*", "");  // Remove {weight} tags
             regexp = regexp.ReplaceRegex("<zerowidthstar>", "(.*?)");       // *  ->  (.*?)
 
-            regexp = regexp.ReplaceRegex("\\|{ 2,}", "|");          //Remove empty entities
+            regexp = regexp.ReplaceRegex("\\|{2,}", "|");          //Remove empty entities
             regexp = regexp.ReplaceRegex("(\\(|\\[)\\|", "$1");     //Remove empty entities from start of alt/opts
             regexp = regexp.ReplaceRegex("\\|(\\)|\\])", "$1");   //Remove empty entities from end of alt/opts
 
@@ -1338,13 +1338,10 @@ namespace RiveScript
                     }
                     string pipes = re.ToString();
 
-                    //TODO: this should fix the Issue#42 Java, but cause a infinite loop in some cases
-                    // If this optional had a star or anything in it, e.g. [*],
-                    // make it non-matching.
-                    //pipes = pipes.ReplaceRegex("\\(.+?\\)", "(?:.+?)");
-                    //pipes = pipes.ReplaceRegex("\\(\\d+?\\)", "(?:\\d+?)");
-                    //pipes = pipes.ReplaceRegex("\\(\\w+?\\)", "(?:\\w+?)");
-
+                    //If this optional had a star or anything in it, e.g. [*], make it non-matching.
+                    pipes = pipes.Replace("(.+?)", "(?:.+?)");
+                    pipes = pipes.Replace("(\\d+?)", "(?:\\d+?)");
+                    pipes = pipes.Replace("(\\w+?)", "(?:\\w+?)");
 
                     // Put the new text in.
                     //pipes = "(?:" + pipes + "|\\s*)";
