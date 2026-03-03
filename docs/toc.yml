@@ -1,0 +1,19 @@
+- name: Home
+  href: index.md
+- name: Getting Started
+  href: getting-started.md
+- name: API Reference
+  href: api/index.md
+- name: Architecture (C4)
+  href: architecture/index.md
+  items:
+    - name: Overview
+      href: architecture/index.md
+    - name: L1 — System Context
+      href: architecture/c4-context.md
+    - name: L2 — Container
+      href: architecture/c4-container.md
+    - name: L3 — Component
+      href: architecture/c4-component.md
+    - name: L4 — Code
+      href: architecture/c4-code.md
