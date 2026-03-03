@@ -1,0 +1,48 @@
+{
+  "metadata": [
+    {
+      "src": [
+        {
+          "files": [ "RiveScript/**.csproj" ],
+          "src": ".."
+        }
+      ],
+      "dest": "docs/api",
+      "disableGitFeatures": false,
+      "disableDefaultFilter": false
+    }
+  ],
+  "build": {
+    "content": [
+      {
+        "files": [ "**/*.{md,yml}" ],
+        "src": "docs",
+        "dest": "."
+      },
+      {
+        "files": [ "docs/api/**.yml", "docs/api/index.md" ]
+      }
+    ],
+    "resource": [
+      {
+        "files": [ "docs/images/**" ]
+      }
+    ],
+    "output": "_site",
+    "globalMetadataFiles": [],
+    "fileMetadataFiles": [],
+    "template": [ "default", "modern" ],
+    "globalMetadata": {
+      "_appTitle": "RiveScript C# — Documentation",
+      "_appName": "RiveScript C#",
+      "_appFooter": "RiveScript C# — MIT License | <a href='https://github.com/fabioravila/rivescript-csharp'>GitHub</a>",
+      "_enableSearch": true,
+      "_appLogoPath": "",
+      "_appFaviconPath": "",
+      "description": "C# implementation of the RiveScript chatbot scripting language interpreter"
+    },
+    "sitemap": {
+      "baseUrl": "https://fabioravila.github.io/rivescript-csharp"
+    }
+  }
+}

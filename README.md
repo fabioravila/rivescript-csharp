@@ -30,8 +30,9 @@ PS: This is my first public library, then I'm sorry for the lack of knowledge of
 - [x] Develop a native objects for csharp
 - [x] Migrate last fixes and changes from rivescript-java since jan-2016 (some push a lot)
 - [x] Create a RSBot Demo Script (By [Efface Studios](https://github.com/effacestudios/)) 
+- [x] Create documentation with C4 architecture diagrams and DocFX live documentation
 - [ ] Complete test based on rsts
-- [ ] Complete the code documentation and adjust appveyor to build and release on tag
+- [ ] Adjust appveyor to build and release on tag
 - [ ] [...]
 
 
@@ -44,7 +45,24 @@ PS: This is my first public library, then I'm sorry for the lack of knowledge of
 
 ## DOCUMENTATION
 
-:TODO - C# API documentation
+Full documentation lives in the [`docs/`](./docs/) folder and is served as a [DocFX](https://dotnet.github.io/docfx/) site.
+
+| Section | Description |
+|---|---|
+| [Getting Started](./docs/getting-started.md) | Install and create your first bot |
+| [API Reference](./docs/api/index.md) | Full public API reference |
+| [Architecture — C4 Model](./docs/architecture/index.md) | System Context, Container, Component, and Code diagrams |
+
+### Generating the Live Documentation Site
+
+Install [DocFX](https://dotnet.github.io/docfx/) and run:
+
+```bash
+dotnet tool install -g docfx
+docfx docfx.json --serve
+```
+
+Then open http://localhost:8080 in your browser to browse the documentation.
 
 Also check out the [**RiveScript Community Wiki**](https://github.com/aichaos/rivescript/wiki) 
 for common design patterns and tips & tricks for RiveScript.
